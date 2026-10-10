@@ -11,7 +11,7 @@ import Footer from '../../components/Footer.astro';
 const lang = 'ja';
 const siteTitle = "OmniTerminal - クロスプラットフォーム SSH/SFTP クライアント (無料・オープンソース)";
 const siteDescription = "サーバークラスター運用およびシステム開発向けのクロスプラットフォーム SSH/SFTP クライアント。Go 並行処理と WebGL GPU ハードウェア加速を採用し、ローカル AES-256-GCM 暗号化とサイドバイサイド SFTP を搭載。";
-const siteUrl = "https://omniterminal.app/ja/";
+const siteUrl = "https://omniterminal.leonlwq.com/ja/";
 ---
 
 <!doctype html>
@@ -23,13 +23,14 @@ const siteUrl = "https://omniterminal.app/ja/";
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <meta name="keywords" content="OmniTerminal, SSH クライアント, SFTP クライアント, Tera Term 代替, PuTTY 代替, Mac SSH クライアント, クロスプラットフォーム ターミナル, オープンソース SSH ツール, WebGL ターミナル" />
+    <link rel="canonical" href="https://omniterminal.leonlwq.com/ja/" />
     
     <!-- Language Alternates for SEO -->
-    <link rel="alternate" hreflang="en" href="https://omniterminal.app/" />
-    <link rel="alternate" hreflang="zh" href="https://omniterminal.app/zh/" />
-    <link rel="alternate" hreflang="ja" href="https://omniterminal.app/ja/" />
-    <link rel="alternate" hreflang="ko" href="https://omniterminal.app/ko/" />
-    <link rel="alternate" hreflang="x-default" href="https://omniterminal.app/" />
+    <link rel="alternate" hreflang="en" href="https://omniterminal.leonlwq.com/" />
+    <link rel="alternate" hreflang="zh" href="https://omniterminal.leonlwq.com/zh/" />
+    <link rel="alternate" hreflang="ja" href="https://omniterminal.leonlwq.com/ja/" />
+    <link rel="alternate" hreflang="ko" href="https://omniterminal.leonlwq.com/ko/" />
+    <link rel="alternate" hreflang="x-default" href="https://omniterminal.leonlwq.com/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -44,6 +45,26 @@ const siteUrl = "https://omniterminal.app/ja/";
     <meta property="twitter:title" content={siteTitle} />
     <meta property="twitter:description" content={siteDescription} />
     <meta property="twitter:image" content="/appicon.png" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "OmniTerminal",
+        "operatingSystem": "macOS, Windows, Linux",
+        "applicationCategory": "DeveloperApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "サーバークラスター運用およびシステム開発向けのクロスプラットフォーム SSH/SFTP クライアント。Go 並行処理と WebGL GPU ハードウェア加速を採用し、ローカル AES-256-GCM 暗号化とサイドバイサイド SFTP を搭載。",
+        "url": "https://omniterminal.leonlwq.com/ja/",
+        "softwareVersion": "1.0.0",
+        "license": "https://opensource.org/licenses/MIT"
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

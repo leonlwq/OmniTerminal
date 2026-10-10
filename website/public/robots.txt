@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://omniterminal.leonlwq.com/sitemap.xml

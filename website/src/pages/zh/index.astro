@@ -11,7 +11,7 @@ import Footer from '../../components/Footer.astro';
 const lang = 'zh';
 const siteTitle = "OmniTerminal - 跨平台 SSH/SFTP 终端客户端 (开源免费)";
 const siteDescription = "面向服务器集群运维与系统开发的跨平台 SSH/SFTP 终端客户端。基于 Go 并发长链路架构与 WebGL GPU 硬件加速，支持 AES-256-GCM 本地凭据加密与侧边 SFTP 联动。";
-const siteUrl = "https://omniterminal.app/zh/";
+const siteUrl = "https://omniterminal.leonlwq.com/zh/";
 ---
 
 <!doctype html>
@@ -23,13 +23,14 @@ const siteUrl = "https://omniterminal.app/zh/";
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <meta name="keywords" content="OmniTerminal, SSH客户端, SFTP客户端, Xshell替代品, SecureCRT替代品, Mac SSH客户端, 跨平台终端, 免费开源SSH工具, WebGL终端" />
+    <link rel="canonical" href="https://omniterminal.leonlwq.com/zh/" />
     
     <!-- Language Alternates for SEO -->
-    <link rel="alternate" hreflang="en" href="https://omniterminal.app/" />
-    <link rel="alternate" hreflang="zh" href="https://omniterminal.app/zh/" />
-    <link rel="alternate" hreflang="ja" href="https://omniterminal.app/ja/" />
-    <link rel="alternate" hreflang="ko" href="https://omniterminal.app/ko/" />
-    <link rel="alternate" hreflang="x-default" href="https://omniterminal.app/" />
+    <link rel="alternate" hreflang="en" href="https://omniterminal.leonlwq.com/" />
+    <link rel="alternate" hreflang="zh" href="https://omniterminal.leonlwq.com/zh/" />
+    <link rel="alternate" hreflang="ja" href="https://omniterminal.leonlwq.com/ja/" />
+    <link rel="alternate" hreflang="ko" href="https://omniterminal.leonlwq.com/ko/" />
+    <link rel="alternate" hreflang="x-default" href="https://omniterminal.leonlwq.com/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -44,6 +45,26 @@ const siteUrl = "https://omniterminal.app/zh/";
     <meta property="twitter:title" content={siteTitle} />
     <meta property="twitter:description" content={siteDescription} />
     <meta property="twitter:image" content="/appicon.png" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "OmniTerminal",
+        "operatingSystem": "macOS, Windows, Linux",
+        "applicationCategory": "DeveloperApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "面向服务器集群运维与系统开发的跨平台 SSH/SFTP 终端客户端。基于 Go 并发长链路架构与 WebGL GPU 硬件加速，支持 AES-256-GCM 本地凭据加密与侧边 SFTP 联动。",
+        "url": "https://omniterminal.leonlwq.com/zh/",
+        "softwareVersion": "1.0.0",
+        "license": "https://opensource.org/licenses/MIT"
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

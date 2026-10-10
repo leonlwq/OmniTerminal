@@ -11,7 +11,7 @@ import Footer from '../../components/Footer.astro';
 const lang = 'ko';
 const siteTitle = "OmniTerminal - 크로스 플랫폼 SSH/SFTP 터미널 클라이언트 (무료 오픈소스)";
 const siteDescription = "서버 클러스터 운영 및 시스템 개발을 위한 크로스 플랫폼 SSH/SFTP 터미널 클라이언트. Go 동시성 아키텍처와 WebGL GPU 가속을 기반으로 로컬 AES-256-GCM 인증 정보 암호화 및 사이드 SFTP 연동을 제공합니다.";
-const siteUrl = "https://omniterminal.app/ko/";
+const siteUrl = "https://omniterminal.leonlwq.com/ko/";
 ---
 
 <!doctype html>
@@ -23,13 +23,14 @@ const siteUrl = "https://omniterminal.app/ko/";
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <meta name="keywords" content="OmniTerminal, SSH 클라이언트, SFTP 클라이언트, Xshell 대체, SecureCRT 대체, Mac SSH 클라이언트, 크로스 플랫폼 터미널, 무료 오픈소스 SSH 도구, WebGL GPU 터미널" />
+    <link rel="canonical" href="https://omniterminal.leonlwq.com/ko/" />
     
     <!-- Language Alternates for SEO -->
-    <link rel="alternate" hreflang="en" href="https://omniterminal.app/" />
-    <link rel="alternate" hreflang="zh" href="https://omniterminal.app/zh/" />
-    <link rel="alternate" hreflang="ja" href="https://omniterminal.app/ja/" />
-    <link rel="alternate" hreflang="ko" href="https://omniterminal.app/ko/" />
-    <link rel="alternate" hreflang="x-default" href="https://omniterminal.app/" />
+    <link rel="alternate" hreflang="en" href="https://omniterminal.leonlwq.com/" />
+    <link rel="alternate" hreflang="zh" href="https://omniterminal.leonlwq.com/zh/" />
+    <link rel="alternate" hreflang="ja" href="https://omniterminal.leonlwq.com/ja/" />
+    <link rel="alternate" hreflang="ko" href="https://omniterminal.leonlwq.com/ko/" />
+    <link rel="alternate" hreflang="x-default" href="https://omniterminal.leonlwq.com/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -44,6 +45,26 @@ const siteUrl = "https://omniterminal.app/ko/";
     <meta property="twitter:title" content={siteTitle} />
     <meta property="twitter:description" content={siteDescription} />
     <meta property="twitter:image" content="/appicon.png" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "OmniTerminal",
+        "operatingSystem": "macOS, Windows, Linux",
+        "applicationCategory": "DeveloperApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "서버 클러스터 운영 및 시스템 개발을 위한 크로스 플랫폼 SSH/SFTP 터미널 클라이언트. Go 동시성 아키텍처와 WebGL GPU 가속을 기반으로 로컬 AES-256-GCM 인증 정보 암호화 및 사이드 SFTP 연동을 제공합니다.",
+        "url": "https://omniterminal.leonlwq.com/ko/",
+        "softwareVersion": "1.0.0",
+        "license": "https://opensource.org/licenses/MIT"
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
