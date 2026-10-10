@@ -1,0 +1,56 @@
+---
+import '../styles/global.css';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import Features from '../components/Features.astro';
+import Comparison from '../components/Comparison.astro';
+import DownloadMatrix from '../components/DownloadMatrix.astro';
+import QuickStart from '../components/QuickStart.astro';
+import Footer from '../components/Footer.astro';
+
+const siteTitle = "OmniTerminal - 现代跨平台 SSH/SFTP 生产力客户端 (开源免费)";
+const siteDescription = "专为开发者与 SRE 打造的跨平台 SSH/SFTP 生产力工作台。基于 Go 高性能并发与 WebGL GPU 硬件加速，融合 VS Code 现代暗黑美学，支持 macOS、Windows 与 Linux。";
+const siteUrl = "https://omniterminal.app";
+---
+
+<!doctype html>
+<html lang="zh-CN" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{siteTitle}</title>
+    <meta name="description" content={siteDescription} />
+    <meta name="keywords" content="OmniTerminal, SSH客户端, SFTP客户端, Xshell替代品, SecureCRT替代品, Mac SSH客户端, 跨平台终端, 免费开源SSH工具, WebGL终端" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={siteUrl} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={siteDescription} />
+    <meta property="og:image" content="/appicon.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={siteUrl} />
+    <meta property="twitter:title" content={siteTitle} />
+    <meta property="twitter:description" content={siteDescription} />
+    <meta property="twitter:image" content="/appicon.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-[#0a0c10] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+    <Navbar />
+    <main>
+      <Hero />
+      <Features />
+      <Comparison />
+      <DownloadMatrix />
+      <QuickStart />
+    </main>
+    <Footer />
+  </body>
+</html>

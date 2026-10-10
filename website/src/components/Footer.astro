@@ -1,0 +1,34 @@
+---
+const REPO = "leonlwq/OmniTerminal";
+---
+
+<footer class="border-t border-white/5 bg-slate-950/80 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="flex items-center gap-3">
+      <img src="/appicon.png" alt="OmniTerminal Logo" class="w-8 h-8 rounded-lg shadow-sm" />
+      <div>
+        <div class="text-sm font-bold text-white tracking-wide">OmniTerminal</div>
+        <div class="text-xs text-slate-500">现代跨平台 SSH/SFTP 生产力客户端</div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
+      <a href={`https://github.com/${REPO}`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
+        GitHub 仓库
+      </a>
+      <a href={`https://github.com/${REPO}/releases`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
+        版本发布 (Releases)
+      </a>
+      <a href={`https://github.com/${REPO}/issues`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
+        反馈与 Issue
+      </a>
+      <a href={`https://github.com/${REPO}/blob/main/LICENSE`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
+        MIT 许可证
+      </a>
+    </div>
+
+    <div class="text-xs text-slate-500 font-mono text-center md:text-right">
+      © {new Date().getFullYear()} OmniTerminal Team. Free & Open Source.
+    </div>
+  </div>
+</footer>

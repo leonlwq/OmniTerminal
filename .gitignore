@@ -18,10 +18,13 @@ build/obj/
 *.dll
 vendor/
 
-# Node.js / Frontend
+# Node.js / Frontend & Website
 frontend/node_modules/
 frontend/dist/
 frontend/.npm-cache/
+website/node_modules/
+website/dist/
+website/.astro/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

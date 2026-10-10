@@ -78,6 +78,7 @@
   - [x] 多阶段 Dockerfile：支持 Node.js 前端编译、Go + WebKit2GTK Linux 桌面无头编译、BuildKit 本地快速导出与轻量运行时桌面镜像
   - [x] 配置 `.dockerignore` 排除构建缓存与临时文件，实现高效极速镜像层构建
   - [x] GitHub Actions 多平台自动化发布流水线（`.github/workflows/release.yml`：支持 `v*` 标签触发，矩阵并行构建 macOS Apple Silicon/Intel DMG 与 ZIP、Windows x64/arm64 ZIP、Linux tar.gz，单节点聚合原子发布至 GitHub Releases 并自动生成 Release Notes）
+  - [x] 官方开源推广与文档官网体系（`website/`：采用 Astro + Tailwind CSS + React 现代极客架构，内置 OS 自适应下载起飞台、交互式微终端仿真体验器、Bento Grid 核心特性阵列、横向选型对比矩阵、全平台下载表与 Docs / Changelog 内容集合体系）
 
 ---
 

@@ -1,0 +1,76 @@
+---
+const steps = [
+  {
+    step: "01",
+    title: "下载与解压安装",
+    desc: "macOS 用户双击 DMG 镜像拖拽至 Applications；Windows / Linux 用户解压 ZIP 或 tar.gz 即可绿色运行，零环境依赖捆绑。",
+  },
+  {
+    step: "02",
+    title: "快速直连或树状管理",
+    desc: "在顶栏 Omnibar 输入 ssh://user@host:port 回车免建直连；或在左侧资源管理器右键新建多级文件夹、配置跳板机与端口转发。",
+  },
+  {
+    step: "03",
+    title: "开启主密码金融级加锁",
+    desc: "首次进入提示设置 Master Password，系统将自动采用 AES-256-GCM 保护所有会话凭证，闲置时自动进入磨砂锁屏。",
+  },
+];
+
+const shortcuts = [
+  { key: "Cmd/Ctrl + C", action: "有选区时复制文本，无选区时透传 SIGINT 中断信号" },
+  { key: "Cmd/Ctrl + Shift + F", action: "呼出实时日志过滤器 (Live Buffer Filter)，正则抓取关键句" },
+  { key: "Ctrl + Enter", action: "在底部 Compose 多行撰写面板中一键向所有终端广播指令" },
+  { key: "Cmd/Ctrl + F", action: "终端内快速全文检索并正则高亮匹配" },
+  { key: "F11", action: "一键切换无边框极客全屏沉浸式工作模式" },
+  { key: "双击 Tab 栏空白", action: "极速新建会话或打开本地 Shell 终端" },
+];
+---
+
+<section id="quickstart" class="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto scroll-mt-20">
+  <div class="text-center max-w-3xl mx-auto mb-16">
+    <div class="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-3">
+      30 秒快速上手
+    </div>
+    <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
+      开箱即用的生产力工作台
+    </h2>
+    <p class="text-slate-400 text-base sm:text-lg">
+      无需复杂的环境依赖配置，三步即可拥有极致平滑的服务器管理体验。
+    </p>
+  </div>
+
+  <!-- 3 Steps -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+    {steps.map((s) => (
+      <div class="glass-card rounded-2xl p-6 relative">
+        <span class="text-3xl font-black text-blue-500/20 font-mono absolute top-6 right-6">
+          {s.step}
+        </span>
+        <h3 class="text-lg font-bold text-white mb-2">{s.title}</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+      </div>
+    ))}
+  </div>
+
+  <!-- Shortcuts Cheat Sheet -->
+  <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>⚡</span> 生产力快捷键地图
+      </h3>
+      <span class="text-xs text-slate-400 font-mono">原生终端使用习惯</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {shortcuts.map((sc) => (
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/5">
+          <span class="text-xs text-slate-300 font-medium">{sc.action}</span>
+          <kbd class="px-2.5 py-1 text-xs font-mono text-blue-300 bg-slate-800 rounded border border-slate-700 shadow shrink-0 ml-3">
+            {sc.key}
+          </kbd>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
