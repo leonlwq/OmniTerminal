@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-secondary: var(--app-surface-secondary);
+  --color-app-border: var(--app-border);
+  --color-app-border-subtle: var(--app-border-subtle);
+  --color-app-text: var(--app-text);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-hover: var(--app-hover);
+  --color-app-active: var(--app-active);
+  --color-app-toolbar: var(--app-toolbar);
+  --color-app-tab: var(--app-tab);
+  --color-app-tab-active: var(--app-tab-active);
+  --color-app-tab-border-active: var(--app-tab-border-active);
+  --color-app-input: var(--app-input);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-card: var(--app-card);
+}
+
+:root, .theme-dark, html.theme-dark, body.theme-dark {
+  /* VS Code Dark Modern Precision Palette */
+  --app-bg: #1e1e1e;                  /* Main editor & terminal canvas (Neutral Dark Grey) */
+  --app-surface: #181818;             /* Sidebars, Activity Bar, header chrome */
+  --app-surface-secondary: #252526;   /* Modals, panels, tooltips, cards */
+  --app-border: #2b2b2b;              /* Clean 1px neutral structural divider */
+  --app-border-subtle: #333333;       /* Subtle inner border / inputs */
+  --app-text: #cccccc;                /* Crisp neutral readable text (VS Code standard) */
+  --app-text-muted: #858585;          /* Secondary muted text */
+  --app-hover: #2a2d2e;               /* Smooth hover state (VS Code tree hover) */
+  --app-active: #04395e;              /* Active selection background (VS Code active item) */
+  --app-toolbar: #181818;             /* Top header bar */
+  --app-tab: #181818;                 /* Inactive tab track */
+  --app-tab-active: #1e1e1e;          /* Active tab (VS Code canvas seamless) */
+  --app-tab-border-active: transparent;
+  --app-input: #252526;               /* Form inputs & omnibar */
+  --app-accent: #0078d4;              /* Classic VS Code blue accent */
+  --app-accent-hover: #006cbe;        /* Accent hover */
+  --app-card: #252526;                /* Card surface */
+  color-scheme: dark;
+}
+
+.theme-light, html.theme-light, body.theme-light, :root.theme-light {
+  /* Modern Clean Light Theme (VS Code Light Modern) */
+  --app-bg: #ffffff;                  /* Main clean canvas */
+  --app-surface: #f8f8f8;             /* Clean surface panels & sidebars */
+  --app-surface-secondary: #f3f3f3;   /* Modals, panels, tooltips, cards */
+  --app-border: #e5e5e5;              /* Clean 1px neutral divider */
+  --app-border-subtle: #eeeeee;       /* Soft inner border */
+  --app-text: #1f1f1f;                /* Crisp readable dark slate/black text */
+  --app-text-muted: #616161;          /* Readable secondary text */
+  --app-hover: #e8e8e8;               /* Clean hover state */
+  --app-active: #e4e4e4;              /* Active selection */
+  --app-toolbar: #f8f8f8;             /* Header and footer canvas */
+  --app-tab: #ececec;                 /* Inactive tab */
+  --app-tab-active: #ffffff;          /* Active tab elevated */
+  --app-tab-border-active: #c4c6ca;   /* Active tab border */
+  --app-input: #ffffff;               /* Input field background */
+  --app-accent: #0078d4;              /* Classic VS Code blue accent */
+  --app-accent-hover: #006cbe;        /* Accent hover */
+  --app-card: #ffffff;                /* Card surface */
+  color-scheme: light;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: transparent !important;
+    color: var(--app-text);
+    /* Modern Clean Desktop Font Stack */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Inter", "Microsoft YaHei", sans-serif;
+    font-size: 13px;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+}
+
+#app, #root {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+}
+
+/* Xterm transparent canvas & viewport rules */
+.xterm, 
+.xterm .xterm-viewport, 
+.xterm-viewport, 
+.xterm-screen, 
+.xterm-screen canvas, 
+.xterm-rows, 
+.xterm-rows > div {
+  background-color: transparent !important;
+}
+
+
+/* Custom scrollbars for modern sleek look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Wails Frameless & Custom TitleBar Window Drag Rules */
+.wails-drag {
+  --wails-draggable: drag;
+  -webkit-app-region: drag;
+}
+
+.wails-no-drag {
+  --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
+}
+

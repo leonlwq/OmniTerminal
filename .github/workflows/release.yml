@@ -1,0 +1,132 @@
+name: Release OmniTerminal
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送形如 v1.0.0 的版本标签时自动触发发布
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin/arm64
+            arch: macos-arm64
+          - os: macos-latest
+            platform: darwin/amd64
+            arch: macos-intel
+          - os: windows-latest
+            platform: windows/amd64
+            arch: windows-amd64
+          - os: windows-latest
+            platform: windows/arm64
+            arch: windows-arm64
+          - os: ubuntu-latest
+            platform: linux/amd64
+            arch: linux-amd64
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev || sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci || npm install
+
+      - name: Build Wails App
+        shell: bash
+        run: wails build -platform ${{ matrix.platform }} -clean
+
+      - name: Package Assets (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cd build/bin
+          for app in *.app; do
+            if [ -d "$app" ] && [ "$app" != "OmniTerminal.app" ]; then
+              rm -rf OmniTerminal.app
+              cp -R "$app" OmniTerminal.app
+              break
+            fi
+          done
+          zip -r -q "../../OmniTerminal-${{ matrix.arch }}.zip" OmniTerminal.app
+          hdiutil create -volname "OmniTerminal" -srcfolder "OmniTerminal.app" -ov -format UDZO "../../OmniTerminal-${{ matrix.arch }}.dmg"
+
+      - name: Package Assets (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd build/bin
+          EXE_FILE=$(ls omniterminal*.exe | head -n 1)
+          cp "$EXE_FILE" OmniTerminal.exe
+          7z a -tzip "../../OmniTerminal-${{ matrix.arch }}.zip" OmniTerminal.exe
+
+      - name: Package Assets (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd build/bin
+          BIN_FILE=$(ls omniterminal* | head -n 1)
+          cp "$BIN_FILE" omniterminal
+          chmod +x omniterminal
+          tar -czvf "../../OmniTerminal-${{ matrix.arch }}.tar.gz" omniterminal
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.arch }}
+          path: |
+            OmniTerminal-${{ matrix.arch }}.*
+
+  publish:
+    name: Publish Release to GitHub
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: ./dist
+
+      - name: List Release Files
+        run: ls -la ./dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./dist/*
+          generate_release_notes: true
