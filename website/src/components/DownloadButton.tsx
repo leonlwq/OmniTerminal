@@ -114,21 +114,22 @@ export default function DownloadButton() {
   };
 
   return (
-    <div className="relative inline-block text-left" id="download-cta">
-      <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-[1px] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-all">
+    <div className="relative inline-flex flex-col items-center sm:items-start text-left" id="download-cta">
+      {/* Button wrapper: inline-flex so it only hugs its own buttons, items-stretch for identical height */}
+      <div className="inline-flex items-stretch rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-[1px] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-all">
         {/* Main CTA Button */}
         <a
           href={primary.url}
-          className="flex items-center gap-3 px-6 py-3.5 bg-slate-950/90 hover:bg-slate-900 text-white rounded-l-xl font-medium text-base transition-colors group"
+          className="flex items-center gap-3 px-5 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-l-xl font-medium text-base transition-colors group"
         >
-          <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30 transition-colors">
+          <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30 transition-colors shrink-0">
             {getOsIcon(primary.os)}
           </div>
           <div className="text-left">
-            <div className="text-sm font-semibold tracking-wide flex items-center gap-1.5">
+            <div className="text-sm font-semibold tracking-wide flex items-center gap-1.5 leading-tight">
               立即下载 <span className="text-blue-300 font-normal">{primary.label.split(' ')[0]}</span>
             </div>
-            <div className="text-xs text-slate-400 flex items-center gap-1">
+            <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 leading-tight">
               <span>{primary.badge}</span> • <span>{VERSION}</span>
             </div>
           </div>
@@ -140,7 +141,7 @@ export default function DownloadButton() {
           onClick={() => setDropdownOpen(!dropdownOpen)}
           aria-expanded={dropdownOpen}
           aria-label="选择其他平台安装包"
-          className="px-3.5 py-4 bg-slate-950/90 hover:bg-slate-900 text-slate-300 hover:text-white rounded-r-xl border-l border-white/10 transition-colors"
+          className="flex items-center justify-center px-3 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-white rounded-r-xl border-l border-white/10 transition-colors cursor-pointer"
         >
           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
         </button>
