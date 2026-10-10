@@ -179,7 +179,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
   }[lang];
 
   return (
-    <div className="relative inline-flex flex-col items-center sm:items-start text-left" id="download-cta">
+    <div className="relative inline-flex flex-col items-center text-center" id="download-cta">
       {/* Button wrapper */}
       <div className="inline-flex items-stretch rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-[1px] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-all">
         {/* Main CTA Button */}
@@ -213,7 +213,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
       </div>
 
       {/* Subtitle tag */}
-      <div className="mt-2.5 text-xs text-slate-400 flex items-center gap-2">
+      <div className="mt-2.5 text-xs text-slate-400 flex items-center justify-center gap-2">
         <span className="inline-flex items-center gap-1 text-emerald-400">
           <CheckCircle2 className="w-3.5 h-3.5" /> {freeText}
         </span>
@@ -228,7 +228,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
             className="fixed inset-0 z-40"
             onClick={() => setDropdownOpen(false)}
           />
-          <div className="absolute left-0 sm:left-auto sm:right-0 mt-3 w-80 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute left-1/2 -translate-x-1/2 mt-3 w-80 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
             <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">
               {releaseTitle}
             </div>
