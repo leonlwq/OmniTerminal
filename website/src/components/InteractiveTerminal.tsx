@@ -6,11 +6,10 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  lang?: 'zh' | 'en';
+  lang?: 'en' | 'zh' | 'ja' | 'ko';
 }
 
-export default function InteractiveTerminal({ lang = 'zh' }: Props) {
-  const isEn = lang === 'en';
+export default function InteractiveTerminal({ lang = 'en' }: Props) {
   const [activeTab, setActiveTab] = useState<'bastion' | 'redis' | 'local'>('bastion');
   const [sftpOpen, setSftpOpen] = useState(true);
   const [activeTheme, setActiveTheme] = useState<'vscode' | 'tokyonight' | 'catppuccin'>('vscode');
@@ -79,6 +78,29 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
 
   const currentTheme = themes[activeTheme];
 
+  const labels = {
+    theme: { en: 'Theme:', zh: '主题:', ja: 'テーマ:', ko: '테마:' }[lang],
+    explorer: { en: 'SESSION EXPLORER', zh: '会话资源管理器', ja: 'セッション管理', ko: '세션 탐색기' }[lang],
+    prod: { en: 'Production Cluster', zh: '生产机房 (Production)', ja: '本番環境 (Production)', ko: '운영 클러스터 (Production)' }[lang],
+    staging: { en: 'Staging Environment', zh: '测试环境 (Staging)', ja: 'ステージング環境 (Staging)', ko: '스테이징 환경 (Staging)' }[lang],
+    vault: { en: 'Master Vault', zh: '凭据主保险库', ja: 'マスター保管庫', ko: '마스터 볼트' }[lang],
+    vaultInfo: {
+      en: '12 sessions encrypted via AES-256-GCM derived key',
+      zh: '12 个会话已使用 Master Password 派生密钥加锁',
+      ja: '12個のセッションを AES-256-GCM で保護中',
+      ko: '12개 세션이 AES-256-GCM 파생 키로 보호 중',
+    }[lang],
+    sftpToggle: sftpOpen 
+      ? { en: 'Drawer Open', zh: '并排开', ja: 'ドロワー表示', ko: '패널 표시' }[lang]
+      : { en: 'Collapsed', zh: '收起', ja: '格納', ko: '숨김' }[lang],
+    tryDemo: { en: 'Try Interactive Demos:', zh: '体验一键特性演示:', ja: '機能デモを体験:', ko: '기능 데모 체험:' }[lang],
+    toggleSftp: { en: 'Toggle Side SFTP', zh: '切换并排 SFTP 抽屉', ja: '並行 SFTP 切替', ko: '사이드 SFTP 전환' }[lang],
+    filterBtn: { en: 'Cmd+Shift+F Live Filter', zh: 'Cmd+Shift+F 实时日志过滤', ja: 'Cmd+Shift+F リアルタイム抽出', ko: 'Cmd+Shift+F 실시간 필터' }[lang],
+    syncBtn: { en: 'Sync Panes Scroll', zh: '多分屏同步滚动联动', ja: 'マルチペイン同期スクロール', ko: '다중 분할 동기 스크롤' }[lang],
+    sftpTitle: { en: 'SFTP File Manager', zh: 'SFTP 传输中心', ja: 'SFTP ファイル管理', ko: 'SFTP 파일 관리자' }[lang],
+    connected: { en: 'CONNECTED', zh: '已连接', ja: '接続完了', ko: '연결됨' }[lang],
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto rounded-2xl p-[1px] bg-gradient-to-b from-blue-500/30 via-slate-700/40 to-slate-800/20 shadow-2xl shadow-blue-500/10">
       {/* Top Application Frame */}
@@ -105,7 +127,7 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
 
           {/* Right Tools & Theme Selector */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-400 hidden sm:inline">{isEn ? 'Theme:' : '主题:'}</span>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">{labels.theme}</span>
             <div className="flex bg-[#1e1e1e] p-0.5 rounded-lg border border-[#333333] text-xs">
               <button
                 onClick={() => setActiveTheme('vscode')}
@@ -134,7 +156,7 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
           {/* Left Session Tree (Desktop only) */}
           <div className="w-56 bg-[#181818] border-r border-[#2b2b2b] p-3 hidden lg:flex flex-col select-none">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-              <span>{isEn ? 'SESSION EXPLORER' : '会话资源管理器'}</span>
+              <span>{labels.explorer}</span>
               <span className="text-slate-500">AES-256 🔒</span>
             </div>
             
@@ -142,7 +164,7 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
               <div className="flex items-center gap-1.5 text-slate-300 font-medium py-1 px-1.5 rounded hover:bg-[#252526] cursor-pointer">
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 <Folder className="w-3.5 h-3.5 text-amber-400" />
-                <span>{isEn ? 'Production Cluster' : '生产机房 (Production)'}</span>
+                <span>{labels.prod}</span>
               </div>
               <div className="pl-4 space-y-0.5">
                 <div 
@@ -164,7 +186,7 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
               <div className="flex items-center gap-1.5 text-slate-400 py-1 px-1.5 rounded hover:bg-[#252526] cursor-pointer pt-2">
                 <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                 <Folder className="w-3.5 h-3.5 text-slate-500" />
-                <span>{isEn ? 'Staging Environment' : '测试环境 (Staging)'}</span>
+                <span>{labels.staging}</span>
               </div>
             </div>
 
@@ -172,10 +194,10 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
             <div className="mt-auto p-2 bg-[#1e1e1e] rounded-lg border border-[#2b2b2b]">
               <div className="flex items-center gap-1.5 text-slate-300 font-semibold mb-1">
                 <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{isEn ? 'Master Vault' : '凭据主保险库'}</span>
+                <span>{labels.vault}</span>
               </div>
               <div className="text-[10px] text-slate-400">
-                {isEn ? '12 sessions encrypted via AES-256-GCM derived key' : '12 个会话已使用 Master Password 派生密钥加锁'}
+                {labels.vaultInfo}
               </div>
             </div>
           </div>
@@ -213,7 +235,7 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
                   className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors flex items-center gap-1 ${sftpOpen ? 'bg-blue-600/20 text-blue-300 border-blue-500/40' : 'bg-[#1e1e1e] text-slate-400 border-[#333333] hover:text-white'}`}
                 >
                   <UploadCloud className="w-3 h-3" />
-                  <span>SFTP {sftpOpen ? (isEn ? 'Drawer' : '并排开') : (isEn ? 'Open' : '收起')}</span>
+                  <span>SFTP {labels.sftpToggle}</span>
                 </button>
               </div>
             </div>
@@ -245,28 +267,28 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
 
             {/* Interactive demo action buttons bar */}
             <div className="bg-[#181818] border-t border-[#2b2b2b] p-2 flex items-center justify-between text-xs overflow-x-auto">
-              <span className="text-slate-400 text-[11px] hidden sm:inline">{isEn ? 'Try Interactive Demos:' : '体验一键特性演示:'}</span>
+              <span className="text-slate-400 text-[11px] hidden sm:inline">{labels.tryDemo}</span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleRunCommand('sftp')}
                   className="px-2.5 py-1 bg-[#252526] hover:bg-[#2d2d30] border border-[#333] rounded text-slate-200 transition-colors flex items-center gap-1 text-[11px]"
                 >
                   <UploadCloud className="w-3 h-3 text-blue-400" />
-                  <span>{isEn ? 'Toggle Side SFTP' : '切换并排 SFTP 抽屉'}</span>
+                  <span>{labels.toggleSftp}</span>
                 </button>
                 <button
                   onClick={() => handleRunCommand('filter')}
                   className="px-2.5 py-1 bg-[#252526] hover:bg-[#2d2d30] border border-[#333] rounded text-slate-200 transition-colors flex items-center gap-1 text-[11px]"
                 >
                   <Search className="w-3 h-3 text-rose-400" />
-                  <span>{isEn ? 'Cmd+Shift+F Live Filter' : 'Cmd+Shift+F 实时日志过滤'}</span>
+                  <span>{labels.filterBtn}</span>
                 </button>
                 <button
                   onClick={() => handleRunCommand('sync')}
                   className="px-2.5 py-1 bg-[#252526] hover:bg-[#2d2d30] border border-[#333] rounded text-slate-200 transition-colors flex items-center gap-1 text-[11px]"
                 >
                   <RefreshCw className="w-3 h-3 text-emerald-400" />
-                  <span>{isEn ? 'Sync Panes Scroll' : '多分屏同步滚动联动'}</span>
+                  <span>{labels.syncBtn}</span>
                 </button>
               </div>
             </div>
@@ -278,10 +300,10 @@ export default function InteractiveTerminal({ lang = 'zh' }: Props) {
               <div className="p-2.5 bg-[#202020] border-b border-[#2b2b2b] flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-medium text-slate-200 text-xs">
                   <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
-                  <span>{isEn ? 'SFTP File Manager' : 'SFTP 传输中心'}</span>
+                  <span>{labels.sftpTitle}</span>
                 </div>
                 <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  {isEn ? 'CONNECTED' : '已连接'}
+                  {labels.connected}
                 </span>
               </div>
 

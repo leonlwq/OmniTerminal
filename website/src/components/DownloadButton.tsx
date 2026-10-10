@@ -2,15 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Download, ChevronDown, Apple, Monitor, Terminal, CheckCircle2 } from 'lucide-react';
 
 interface ReleaseAsset {
-  labelZh: string;
-  labelEn: string;
   filename: string;
-  archZh: string;
-  archEn: string;
   os: 'mac' | 'windows' | 'linux';
-  badgeZh: string;
-  badgeEn: string;
   url: string;
+  labels: Record<'en' | 'zh' | 'ja' | 'ko', { label: string; arch: string; badge: string }>;
 }
 
 const REPO = 'leonlwq/OmniTerminal';
@@ -19,82 +14,80 @@ const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
 
 const ALL_ASSETS: ReleaseAsset[] = [
   {
-    labelZh: 'macOS (Apple Silicon M系列)',
-    labelEn: 'macOS (Apple Silicon M-Series)',
     filename: 'OmniTerminal-macos-arm64.dmg',
-    archZh: 'arm64 (M1/M2/M3/M4)',
-    archEn: 'arm64 (M1/M2/M3/M4)',
     os: 'mac',
-    badgeZh: 'DMG 镜像',
-    badgeEn: 'DMG Image',
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.dmg`,
+    labels: {
+      en: { label: 'macOS (Apple Silicon M-Series)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG Image' },
+      zh: { label: 'macOS (Apple Silicon M系列)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG 镜像' },
+      ja: { label: 'macOS (Apple Silicon Mシリーズ)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG イメージ' },
+      ko: { label: 'macOS (Apple Silicon M시리즈)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG 이미지' },
+    },
   },
   {
-    labelZh: 'macOS (Apple Silicon ZIP)',
-    labelEn: 'macOS (Apple Silicon ZIP)',
     filename: 'OmniTerminal-macos-arm64.zip',
-    archZh: 'arm64 (免安装包)',
-    archEn: 'arm64 (Portable ZIP)',
     os: 'mac',
-    badgeZh: 'ZIP 压缩包',
-    badgeEn: 'ZIP Archive',
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.zip`,
+    labels: {
+      en: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (Portable ZIP)', badge: 'ZIP Archive' },
+      zh: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (免安装包)', badge: 'ZIP 压缩包' },
+      ja: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (ポータブル)', badge: 'ZIP アーカイブ' },
+      ko: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (포터블 무설치)', badge: 'ZIP 아카이브' },
+    },
   },
   {
-    labelZh: 'macOS (Intel 芯片)',
-    labelEn: 'macOS (Intel 64-bit)',
     filename: 'OmniTerminal-macos-intel.dmg',
-    archZh: 'x86_64',
-    archEn: 'x86_64',
     os: 'mac',
-    badgeZh: 'DMG 镜像',
-    badgeEn: 'DMG Image',
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-intel.dmg`,
+    labels: {
+      en: { label: 'macOS (Intel 64-bit)', arch: 'x86_64', badge: 'DMG Image' },
+      zh: { label: 'macOS (Intel 芯片)', arch: 'x86_64', badge: 'DMG 镜像' },
+      ja: { label: 'macOS (Intel プロセッサ)', arch: 'x86_64', badge: 'DMG イメージ' },
+      ko: { label: 'macOS (Intel 64비트)', arch: 'x86_64', badge: 'DMG 이미지' },
+    },
   },
   {
-    labelZh: 'Windows 64位 (绿色免安装)',
-    labelEn: 'Windows 64-bit (Portable)',
     filename: 'OmniTerminal-windows-amd64.zip',
-    archZh: 'x86_64 / amd64',
-    archEn: 'x86_64 / amd64',
     os: 'windows',
-    badgeZh: 'ZIP 绿色版',
-    badgeEn: 'Portable ZIP',
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-amd64.zip`,
+    labels: {
+      en: { label: 'Windows 64-bit (Portable)', arch: 'x86_64 / amd64', badge: 'Portable ZIP' },
+      zh: { label: 'Windows 64位 (绿色免安装)', arch: 'x86_64 / amd64', badge: 'ZIP 绿色版' },
+      ja: { label: 'Windows 64ビット (ポータブル)', arch: 'x86_64 / amd64', badge: 'ZIP ポータブル' },
+      ko: { label: 'Windows 64비트 (포터블 무설치)', arch: 'x86_64 / amd64', badge: 'ZIP 포터블' },
+    },
   },
   {
-    labelZh: 'Windows ARM64 (Surface / 骁龙)',
-    labelEn: 'Windows ARM64 (Surface / Snapdragon)',
     filename: 'OmniTerminal-windows-arm64.zip',
-    archZh: 'arm64',
-    archEn: 'arm64',
     os: 'windows',
-    badgeZh: 'ZIP 绿色版',
-    badgeEn: 'Portable ZIP',
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-arm64.zip`,
+    labels: {
+      en: { label: 'Windows ARM64 (Surface / Snapdragon)', arch: 'arm64', badge: 'Portable ZIP' },
+      zh: { label: 'Windows ARM64 (Surface / 骁龙)', arch: 'arm64', badge: 'ZIP 绿色版' },
+      ja: { label: 'Windows ARM64 (Surface / Snapdragon)', arch: 'arm64', badge: 'ZIP ポータブル' },
+      ko: { label: 'Windows ARM64 (Surface / Snapdragon)', arch: 'arm64', badge: 'ZIP 포터블' },
+    },
   },
   {
-    labelZh: 'Linux 64位 (通用标准包)',
-    labelEn: 'Linux 64-bit (Universal)',
     filename: 'OmniTerminal-linux-amd64.tar.gz',
-    archZh: 'x86_64 (glibc 2.35+)',
-    archEn: 'x86_64 (glibc 2.35+)',
     os: 'linux',
-    badgeZh: 'tar.gz 标准包',
-    badgeEn: 'tar.gz Archive',
     url: `${BASE_DOWNLOAD}/OmniTerminal-linux-amd64.tar.gz`,
+    labels: {
+      en: { label: 'Linux 64-bit (Universal)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz Archive' },
+      zh: { label: 'Linux 64位 (通用标准包)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz 标准包' },
+      ja: { label: 'Linux 64ビット (汎用標準)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz アーカイブ' },
+      ko: { label: 'Linux 64비트 (범용 표준 패키지)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz 아카이브' },
+    },
   },
 ];
 
 interface Props {
-  lang?: 'zh' | 'en';
+  lang?: 'en' | 'zh' | 'ja' | 'ko';
 }
 
-export default function DownloadButton({ lang = 'zh' }: Props) {
+export default function DownloadButton({ lang = 'en' }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [detectedOs, setDetectedOs] = useState<'mac-arm' | 'mac-intel' | 'windows' | 'linux'>('mac-arm');
-
-  const isEn = lang === 'en';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -139,8 +132,51 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
     }
   };
 
-  const primaryLabel = isEn ? primary.labelEn.split(' ')[0] : primary.labelZh.split(' ')[0];
-  const primaryBadge = isEn ? primary.badgeEn : primary.badgeZh;
+  const currentInfo = primary.labels[lang] || primary.labels.en;
+  const primaryLabel = currentInfo.label.split(' ')[0];
+  const primaryBadge = currentInfo.badge;
+
+  const downloadText = {
+    en: 'Download for',
+    zh: '立即下载',
+    ja: 'ダウンロード',
+    ko: '다운로드',
+  }[lang];
+
+  const selectOtherText = {
+    en: 'Select other platforms',
+    zh: '选择其他平台安装包',
+    ja: 'その他のプラットフォームを選択',
+    ko: '다른 플랫폼 패키지 선택',
+  }[lang];
+
+  const freeText = {
+    en: 'Free & Open Source (MIT)',
+    zh: '免费开源 (MIT)',
+    ja: '無料・オープンソース (MIT)',
+    ko: '무료 오픈소스 (MIT)',
+  }[lang];
+
+  const supportText = {
+    en: 'Supports macOS, Windows, Linux',
+    zh: '支持 macOS, Windows, Linux',
+    ja: 'macOS、Windows、Linux 対応',
+    ko: 'macOS, Windows, Linux 지원',
+  }[lang];
+
+  const releaseTitle = {
+    en: `Release Packages (${VERSION})`,
+    zh: `全平台正式发布包 (${VERSION})`,
+    ja: `公式リリースパッケージ (${VERSION})`,
+    ko: `공식 릴리즈 패키지 (${VERSION})`,
+  }[lang];
+
+  const viewNotesText = {
+    en: 'View Release Notes & Checksums on GitHub →',
+    zh: '前往 GitHub Release 查看 Release Notes 与校验和 →',
+    ja: 'GitHub Release ノートとチェックサムを確認 →',
+    ko: 'GitHub Release 노트 및 체크섬 확인 →',
+  }[lang];
 
   return (
     <div className="relative inline-flex flex-col items-center sm:items-start text-left" id="download-cta">
@@ -156,7 +192,7 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
           </div>
           <div className="text-left">
             <div className="text-sm font-semibold tracking-wide flex items-center gap-1.5 leading-tight">
-              {isEn ? 'Download for' : '立即下载'} <span className="text-blue-300 font-normal">{primaryLabel}</span>
+              {downloadText} <span className="text-blue-300 font-normal">{primaryLabel}</span>
             </div>
             <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 leading-tight">
               <span>{primaryBadge}</span> • <span>{VERSION}</span>
@@ -169,7 +205,7 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           aria-expanded={dropdownOpen}
-          aria-label={isEn ? "Select other platforms" : "选择其他平台安装包"}
+          aria-label={selectOtherText}
           className="flex items-center justify-center px-3 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-white rounded-r-xl border-l border-white/10 transition-colors cursor-pointer"
         >
           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -179,10 +215,10 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
       {/* Subtitle tag */}
       <div className="mt-2.5 text-xs text-slate-400 flex items-center gap-2">
         <span className="inline-flex items-center gap-1 text-emerald-400">
-          <CheckCircle2 className="w-3.5 h-3.5" /> {isEn ? 'Free & Open Source (MIT)' : '免费开源 (MIT)'}
+          <CheckCircle2 className="w-3.5 h-3.5" /> {freeText}
         </span>
         <span className="text-slate-600">•</span>
-        <span>{isEn ? 'Supports macOS, Windows, Linux' : '支持 macOS, Windows, Linux'}</span>
+        <span>{supportText}</span>
       </div>
 
       {/* Dropdown list */}
@@ -194,32 +230,35 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
           />
           <div className="absolute left-0 sm:left-auto sm:right-0 mt-3 w-80 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
             <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">
-              {isEn ? `Release Packages (${VERSION})` : `全平台正式发布包 (${VERSION})`}
+              {releaseTitle}
             </div>
             <div className="divide-y divide-slate-800/60 max-h-96 overflow-y-auto">
-              {ALL_ASSETS.map((asset) => (
-                <a
-                  key={asset.filename}
-                  href={asset.url}
-                  onClick={() => setDropdownOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/70 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-slate-800 border border-slate-700/60 group-hover:border-blue-500/40">
-                      {getOsIcon(asset.os)}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-slate-200 group-hover:text-blue-300 transition-colors">
-                        {isEn ? asset.labelEn : asset.labelZh}
+              {ALL_ASSETS.map((asset) => {
+                const info = asset.labels[lang] || asset.labels.en;
+                return (
+                  <a
+                    key={asset.filename}
+                    href={asset.url}
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/70 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-slate-800 border border-slate-700/60 group-hover:border-blue-500/40">
+                        {getOsIcon(asset.os)}
                       </div>
-                      <div className="text-xs text-slate-400 font-mono">
-                        {isEn ? asset.archEn : asset.archZh}
+                      <div>
+                        <div className="text-sm font-medium text-slate-200 group-hover:text-blue-300 transition-colors">
+                          {info.label}
+                        </div>
+                        <div className="text-xs text-slate-400 font-mono">
+                          {info.arch}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <Download className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
-                </a>
-              ))}
+                    <Download className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                  </a>
+                );
+              })}
             </div>
             <div className="p-2 bg-slate-950/60 rounded-xl mt-1 text-center">
               <a
@@ -228,7 +267,7 @@ export default function DownloadButton({ lang = 'zh' }: Props) {
                 rel="noreferrer"
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium"
               >
-                {isEn ? 'View Release Notes & Checksums on GitHub →' : '前往 GitHub Release 查看 Release Notes 与校验和 →'}
+                {viewNotesText}
               </a>
             </div>
           </div>

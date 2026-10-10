@@ -5,7 +5,7 @@ interface Props {
   lang?: Lang;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
 
 const rows = [
@@ -78,7 +78,7 @@ const rows = [
     <table class="w-full text-left border-collapse text-xs sm:text-sm">
       <thead>
         <tr class="bg-slate-900/90 border-b border-white/10 text-slate-300">
-          <th class="py-4 px-6 font-semibold">{lang === 'en' ? 'Core Feature Matrix' : '核心特性维度'}</th>
+          <th class="py-4 px-6 font-semibold">{t('comp.header.feature')}</th>
           <th class="py-4 px-6 font-bold text-blue-400 bg-blue-500/10 border-x border-blue-500/20">
             {t('comp.col.omni')}
           </th>

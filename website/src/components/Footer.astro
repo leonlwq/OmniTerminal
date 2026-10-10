@@ -5,7 +5,7 @@ interface Props {
   lang?: Lang;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
 const REPO = "leonlwq/OmniTerminal";
 ---

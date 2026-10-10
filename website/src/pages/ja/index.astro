@@ -1,0 +1,64 @@
+---
+import '../../styles/global.css';
+import Navbar from '../../components/Navbar.astro';
+import Hero from '../../components/Hero.astro';
+import Features from '../../components/Features.astro';
+import Comparison from '../../components/Comparison.astro';
+import DownloadMatrix from '../../components/DownloadMatrix.astro';
+import QuickStart from '../../components/QuickStart.astro';
+import Footer from '../../components/Footer.astro';
+
+const lang = 'ja';
+const siteTitle = "OmniTerminal - 次世代クロスプラットフォーム SSH/SFTP クライアント (無料・オープンソース)";
+const siteDescription = "開発者、DevOps、SRE のために設計された最新の SSH/SFTP ワークスペース。Go 言語の高並行処理エンジンと WebGL GPU 加速、VS Code ダーク美学を融合。macOS、Windows、Linux をネイティブサポート。";
+const siteUrl = "https://omniterminal.app/ja/";
+---
+
+<!doctype html>
+<html lang="ja" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{siteTitle}</title>
+    <meta name="description" content={siteDescription} />
+    <meta name="keywords" content="OmniTerminal, SSH クライアント, SFTP クライアント, Tera Term 代替, PuTTY 代替, Mac SSH クライアント, クロスプラットフォーム ターミナル, オープンソース SSH ツール, WebGL ターミナル" />
+    
+    <!-- Language Alternates for SEO -->
+    <link rel="alternate" hreflang="en" href="https://omniterminal.app/" />
+    <link rel="alternate" hreflang="zh" href="https://omniterminal.app/zh/" />
+    <link rel="alternate" hreflang="ja" href="https://omniterminal.app/ja/" />
+    <link rel="alternate" hreflang="ko" href="https://omniterminal.app/ko/" />
+    <link rel="alternate" hreflang="x-default" href="https://omniterminal.app/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={siteUrl} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={siteDescription} />
+    <meta property="og:image" content="/appicon.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={siteUrl} />
+    <meta property="twitter:title" content={siteTitle} />
+    <meta property="twitter:description" content={siteDescription} />
+    <meta property="twitter:image" content="/appicon.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-[#0a0c10] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+    <Navbar lang={lang} />
+    <main>
+      <Hero lang={lang} />
+      <Features lang={lang} />
+      <Comparison lang={lang} />
+      <DownloadMatrix lang={lang} />
+      <QuickStart lang={lang} />
+    </main>
+    <Footer lang={lang} />
+  </body>
+</html>

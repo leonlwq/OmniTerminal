@@ -5,62 +5,112 @@ interface Props {
   lang?: Lang;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
-const isEn = lang === 'en';
 
 const REPO = "leonlwq/OmniTerminal";
 const VERSION = "v1.0.0";
 const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
 
+const getFormat = (type: 'mac-dmg' | 'mac-zip' | 'win-zip' | 'linux-tar') => {
+  switch (type) {
+    case 'mac-dmg':
+      if (lang === 'zh') return 'DMG 拖拽安装镜像';
+      if (lang === 'ja') return 'DMG インストールイメージ';
+      if (lang === 'ko') return 'DMG 드래그 설치 이미지';
+      return 'DMG Disk Image';
+    case 'mac-zip':
+      if (lang === 'zh') return 'ZIP 压缩包';
+      if (lang === 'ja') return 'ZIP アーカイブ';
+      if (lang === 'ko') return 'ZIP 아카이브';
+      return 'ZIP Archive';
+    case 'win-zip':
+      if (lang === 'zh') return 'ZIP 绿色免安装包';
+      if (lang === 'ja') return 'ZIP ポータブル版';
+      if (lang === 'ko') return 'ZIP 포터블 무설치 패키지';
+      return 'ZIP Portable';
+    case 'linux-tar':
+      if (lang === 'zh') return 'tar.gz 标准包';
+      if (lang === 'ja') return 'tar.gz 標準パッケージ';
+      if (lang === 'ko') return 'tar.gz 표준 패키지';
+      return 'tar.gz Universal Archive';
+  }
+};
+
+const getTag = (key: 'rec-mac' | 'portable' | 'intel-mac' | 'rec-win' | 'win-arm' | 'linux') => {
+  switch (key) {
+    case 'rec-mac':
+      if (lang === 'zh') return '推荐 (Mac 用户)';
+      if (lang === 'ja') return '推奨 (Mac)';
+      if (lang === 'ko') return '추천 (Mac 사용자)';
+      return 'Recommended (Mac)';
+    case 'portable':
+      if (lang === 'zh') return '绿色版';
+      if (lang === 'ja') return 'ポータブル';
+      if (lang === 'ko') return '포터블';
+      return 'Portable';
+    case 'intel-mac':
+      return 'Intel Mac';
+    case 'rec-win':
+      if (lang === 'zh') return '推荐 (Win 用户)';
+      if (lang === 'ja') return '推奨 (Windows)';
+      if (lang === 'ko') return '추천 (Win 사용자)';
+      return 'Recommended (Win)';
+    case 'win-arm':
+      return 'Win ARM64';
+    case 'linux':
+      return 'Ubuntu / Debian / RHEL';
+  }
+};
+
 const downloads = [
   {
     platform: "macOS",
-    arch: isEn ? "Apple Silicon (M1/M2/M3/M4)" : "Apple Silicon (M1/M2/M3/M4)",
-    format: isEn ? "DMG Disk Image" : "DMG 拖拽安装镜像",
+    arch: "Apple Silicon (M1/M2/M3/M4)",
+    format: getFormat('mac-dmg'),
     file: "OmniTerminal-macos-arm64.dmg",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.dmg`,
-    tag: isEn ? "Recommended (Mac)" : "推荐 (Mac 用户)",
+    tag: getTag('rec-mac'),
   },
   {
     platform: "macOS",
-    arch: isEn ? "Apple Silicon (Portable)" : "Apple Silicon 免解压版",
-    format: isEn ? "ZIP Archive" : "ZIP 压缩包",
+    arch: "Apple Silicon (ARM64)",
+    format: getFormat('mac-zip'),
     file: "OmniTerminal-macos-arm64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.zip`,
-    tag: isEn ? "Portable" : "绿色版",
+    tag: getTag('portable'),
   },
   {
     platform: "macOS",
-    arch: isEn ? "Intel 64-bit CPU" : "Intel 64-bit 芯片",
-    format: isEn ? "DMG Disk Image" : "DMG 拖拽安装镜像",
+    arch: "Intel 64-bit CPU (x86_64)",
+    format: getFormat('mac-dmg'),
     file: "OmniTerminal-macos-intel.dmg",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-intel.dmg`,
-    tag: "Intel Mac",
+    tag: getTag('intel-mac'),
   },
   {
     platform: "Windows",
-    arch: isEn ? "x64 (64-bit Intel / AMD)" : "x64 (64位 Intel / AMD)",
-    format: isEn ? "ZIP Portable" : "ZIP 绿色免安装包",
+    arch: "x64 (64-bit Intel / AMD)",
+    format: getFormat('win-zip'),
     file: "OmniTerminal-windows-amd64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-amd64.zip`,
-    tag: isEn ? "Recommended (Win)" : "推荐 (Win 用户)",
+    tag: getTag('rec-win'),
   },
   {
     platform: "Windows",
-    arch: isEn ? "ARM64 (Surface / Snapdragon X)" : "ARM64 (Surface / 骁龙X)",
-    format: isEn ? "ZIP Portable" : "ZIP 绿色免安装包",
+    arch: "ARM64 (Surface / Snapdragon X)",
+    format: getFormat('win-zip'),
     file: "OmniTerminal-windows-arm64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-arm64.zip`,
-    tag: "Win ARM64",
+    tag: getTag('win-arm'),
   },
   {
     platform: "Linux",
-    arch: isEn ? "x86_64 (glibc 2.35+)" : "x86_64 (glibc 2.35+)",
-    format: isEn ? "tar.gz Universal Archive" : "tar.gz 标准包",
+    arch: "x86_64 (glibc 2.35+)",
+    format: getFormat('linux-tar'),
     file: "OmniTerminal-linux-amd64.tar.gz",
     url: `${BASE_DOWNLOAD}/OmniTerminal-linux-amd64.tar.gz`,
-    tag: "Ubuntu / Debian / CentOS",
+    tag: getTag('linux'),
   },
 ];
 ---

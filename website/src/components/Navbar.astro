@@ -5,14 +5,19 @@ interface Props {
   lang?: Lang;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
 const REPO = "leonlwq/OmniTerminal";
 
-// Switch language link target
-const targetLangUrl = lang === 'zh' ? '/en/' : '/';
-const switchLangLabel = lang === 'zh' ? 'English' : '简体中文';
-const homeUrl = lang === 'zh' ? '/' : '/en/';
+const langList = [
+  { code: 'en', label: 'English', flag: '🇺🇸', path: '/' },
+  { code: 'zh', label: '简体中文', flag: '🇨🇳', path: '/zh/' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵', path: '/ja/' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷', path: '/ko/' },
+];
+
+const currentLangItem = langList.find((l) => l.code === lang) || langList[0];
+const homeUrl = currentLangItem.path;
 ---
 
 <header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
@@ -27,31 +32,52 @@ const homeUrl = lang === 'zh' ? '/' : '/en/';
             v1.0.0
           </span>
         </span>
-        <span class="text-[10px] text-slate-400 -mt-0.5">{t('nav.subtitle')}</span>
+        <span class="text-[10px] text-slate-400 -mt-0.5 whitespace-nowrap truncate max-w-[200px] sm:max-w-xs md:max-w-none">{t('nav.subtitle')}</span>
       </div>
     </a>
 
     <!-- Navigation Links -->
-    <nav class="hidden md:flex items-center gap-8 text-sm text-slate-300">
-      <a href="#features" class="hover:text-blue-400 transition-colors">{t('nav.features')}</a>
-      <a href="#demo" class="hover:text-blue-400 transition-colors">{t('nav.demo')}</a>
-      <a href="#comparison" class="hover:text-blue-400 transition-colors">{t('nav.comparison')}</a>
-      <a href="#download" class="hover:text-blue-400 transition-colors">{t('nav.download')}</a>
-      <a href="#quickstart" class="hover:text-blue-400 transition-colors">{t('nav.quickstart')}</a>
+    <nav class="hidden md:flex items-center gap-5 lg:gap-8 text-sm text-slate-300">
+      <a href="#features" class="hover:text-blue-400 transition-colors whitespace-nowrap">{t('nav.features')}</a>
+      <a href="#demo" class="hover:text-blue-400 transition-colors whitespace-nowrap">{t('nav.demo')}</a>
+      <a href="#comparison" class="hover:text-blue-400 transition-colors whitespace-nowrap">{t('nav.comparison')}</a>
+      <a href="#download" class="hover:text-blue-400 transition-colors whitespace-nowrap">{t('nav.download')}</a>
+      <a href="#quickstart" class="hover:text-blue-400 transition-colors whitespace-nowrap">{t('nav.quickstart')}</a>
     </nav>
 
     <!-- Right Actions: Language Switcher, GitHub & Download CTA -->
-    <div class="flex items-center gap-2.5 sm:gap-3">
-      <!-- Language Switcher Pill -->
-      <a
-        href={targetLangUrl}
-        aria-label="Switch Language"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-blue-500/50 transition-all shadow-sm"
-      >
-        <span class="text-sm">🌐</span>
-        <span class="hidden sm:inline font-mono">{switchLangLabel}</span>
-        <span class="sm:hidden font-mono uppercase font-semibold">{lang === 'zh' ? 'EN' : '中'}</span>
-      </a>
+    <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+      <!-- 4-Language Switcher Dropdown -->
+      <div class="relative" id="lang-menu-wrapper">
+        <button
+          id="lang-menu-btn"
+          type="button"
+          aria-expanded="false"
+          aria-haspopup="true"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 hover:border-blue-500/50 transition-all shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+        >
+          <span class="text-xs">{currentLangItem.flag}</span>
+          <span class="font-medium font-sans whitespace-nowrap">{currentLangItem.label}</span>
+          <svg class="w-3.5 h-3.5 text-slate-400 ml-0.5 transition-transform shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+
+        <div
+          id="lang-dropdown"
+          class="hidden absolute right-0 mt-2 w-36 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-xl p-1.5 z-50"
+        >
+          {langList.map((item) => (
+            <a
+              href={item.path}
+              class={`flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors ${item.code === lang ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+            >
+              <span class="text-sm">{item.flag}</span>
+              <span class="font-sans">{item.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
 
       <!-- GitHub Stars -->
       <a
@@ -76,3 +102,22 @@ const homeUrl = lang === 'zh' ? '/' : '/en/';
     </div>
   </div>
 </header>
+
+<script>
+  const btn = document.getElementById('lang-menu-btn');
+  const dropdown = document.getElementById('lang-dropdown');
+  if (btn && dropdown) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('hidden');
+      const isExpanded = !dropdown.classList.contains('hidden');
+      btn.setAttribute('aria-expanded', String(isExpanded));
+    });
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+        dropdown.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+</script>

@@ -5,9 +5,8 @@ interface Props {
   lang?: Lang;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
-const isEn = lang === 'en';
 
 const steps = [
   {
@@ -27,31 +26,55 @@ const steps = [
   },
 ];
 
+const getShortcutAction = (id: 'copy' | 'filter' | 'compose' | 'search' | 'fullscreen' | 'newtab') => {
+  switch (id) {
+    case 'copy':
+      if (lang === 'zh') return '有选区时复制文本，无选区时透传 SIGINT 中断信号';
+      if (lang === 'ja') return '選択範囲がある時はコピー、無選択時は SIGINT 割り込みシグナルを透過';
+      if (lang === 'ko') return '선택 영역이 있을 때는 복사, 없을 때는 SIGINT 인터럽트 시그널 전달';
+      return 'Copy selected text, or pass SIGINT interrupt signal if no selection';
+    case 'filter':
+      if (lang === 'zh') return '呼出实时日志过滤器 (Live Buffer Filter)，正则抓取关键句';
+      if (lang === 'ja') return 'リアルタイムバッファ抽出 (Live Filter) を開き、正規表現でログ監視';
+      if (lang === 'ko') return '실시간 로그 필터(Live Filter) 호출, 정규식으로 핵심 라인 추출';
+      return 'Summon Live Buffer Filter pane with regex log streaming';
+    case 'compose':
+      if (lang === 'zh') return '在底部 Compose 多行撰写面板中一键向所有终端广播指令';
+      if (lang === 'ja') return 'Compose パネルから全ターミナルへ複数行コマンドを一斉ブロードキャスト';
+      if (lang === 'ko') return 'Compose 멀티라인 패널에서 모든 터미널로 명령 일괄 브로드캐스트';
+      return 'Broadcast multi-line command to all terminals via Compose Pane';
+    case 'search':
+      if (lang === 'zh') return '终端内快速全文检索并正则高亮匹配';
+      if (lang === 'ja') return 'ターミナル内を正規表現で全文検索 & 一致箇所をハイライト';
+      if (lang === 'ko') return '터미널 내 정규식 고속 검색 및 일치 항목 하이라이트';
+      return 'Fast in-terminal regex search and match highlights';
+    case 'fullscreen':
+      if (lang === 'zh') return '一键切换无边框极客全屏沉浸式工作模式';
+      if (lang === 'ja') return '枠線のない没入型フルスクリーンワークスペースへ切り替え';
+      if (lang === 'ko') return '테두리 없는 몰입형 풀스크린 작업 모드로 전환';
+      return 'Toggle borderless immersive geek fullscreen workspace';
+    case 'newtab':
+      if (lang === 'zh') return '极速新建会话或打开本地 Shell 终端';
+      if (lang === 'ja') return '新規セッションの作成またはローカルシェルを即座に起動';
+      if (lang === 'ko') return '새 세션을 신속하게 생성하거나 로컬 셸 터미널 실행';
+      return 'Quickly open a new session or launch local Shell';
+  }
+};
+
+const getNewTabKeyLabel = () => {
+  if (lang === 'zh') return '双击 Tab 栏空白';
+  if (lang === 'ja') return 'タブバー余白をダブルクリック';
+  if (lang === 'ko') return '탭 바 빈 영역 더블 클릭';
+  return 'Double click Tab bar';
+};
+
 const shortcuts = [
-  { 
-    key: "Cmd/Ctrl + C", 
-    action: isEn ? "Copy selected text, or pass SIGINT interrupt signal if no selection" : "有选区时复制文本，无选区时透传 SIGINT 中断信号" 
-  },
-  { 
-    key: "Cmd/Ctrl + Shift + F", 
-    action: isEn ? "Summon Live Buffer Filter pane with regex log streaming" : "呼出实时日志过滤器 (Live Buffer Filter)，正则抓取关键句" 
-  },
-  { 
-    key: "Ctrl + Enter", 
-    action: isEn ? "Broadcast multi-line command to all terminals via Compose Pane" : "在底部 Compose 多行撰写面板中一键向所有终端广播指令" 
-  },
-  { 
-    key: "Cmd/Ctrl + F", 
-    action: isEn ? "Fast in-terminal regex search and match highlights" : "终端内快速全文检索并正则高亮匹配" 
-  },
-  { 
-    key: "F11", 
-    action: isEn ? "Toggle borderless immersive geek fullscreen workspace" : "一键切换无边框极客全屏沉浸式工作模式" 
-  },
-  { 
-    key: isEn ? "Double click Tab bar" : "双击 Tab 栏空白", 
-    action: isEn ? "Quickly open a new session or launch local Shell" : "极速新建会话或打开本地 Shell 终端" 
-  },
+  { key: "Cmd/Ctrl + C", action: getShortcutAction('copy') },
+  { key: "Cmd/Ctrl + Shift + F", action: getShortcutAction('filter') },
+  { key: "Ctrl + Enter", action: getShortcutAction('compose') },
+  { key: "Cmd/Ctrl + F", action: getShortcutAction('search') },
+  { key: "F11", action: getShortcutAction('fullscreen') },
+  { key: getNewTabKeyLabel(), action: getShortcutAction('newtab') },
 ];
 ---
 
