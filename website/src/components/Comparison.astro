@@ -1,60 +1,62 @@
 ---
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'zh' } = Astro.props;
+const t = useTranslations(lang);
+
 const rows = [
   {
-    feature: "开源协议与价格",
-    omni: "MIT 完全免费开源",
-    xshell: "商业付费 / 严格限制",
-    securecrt: "昂贵商业买断 ($99+)",
-    termius: "月度订阅制 ($10+/月)",
-    highlight: true,
+    feature: t('comp.r1'),
+    omni: t('comp.r1.omni'),
+    xshell: t('comp.r1.xshell'),
+    securecrt: t('comp.r1.crt'),
+    termius: t('comp.r1.termius'),
   },
   {
-    feature: "跨平台原生支持",
-    omni: "macOS (Apple+Intel) / Win / Linux",
-    xshell: "仅 Windows (Mac 无法运行)",
-    securecrt: "各平台界面极古早割裂",
-    termius: "全平台 (Electron 内存占用高)",
-    highlight: true,
+    feature: t('comp.r2'),
+    omni: t('comp.r2.omni'),
+    xshell: t('comp.r2.xshell'),
+    securecrt: t('comp.r2.crt'),
+    termius: t('comp.r2.termius'),
   },
   {
-    feature: "并排无缝 SFTP 传输",
-    omni: "原生右侧并排抽屉联动",
-    xshell: "需独立弹窗唤起 Xftp",
-    securecrt: "独立复杂弹窗",
-    termius: "独立切换页面",
-    highlight: true,
+    feature: t('comp.r3'),
+    omni: t('comp.r3.omni'),
+    xshell: t('comp.r3.xshell'),
+    securecrt: t('comp.r3.crt'),
+    termius: t('comp.r3.termius'),
   },
   {
-    feature: "凭据本地主密码保险库",
-    omni: "AES-256-GCM 本地加密锁屏",
-    xshell: "易导出 / 风险凭证存盘",
-    securecrt: "传统配置存储",
-    termius: "强制云端同步账号体系",
-    highlight: true,
+    feature: t('comp.r4'),
+    omni: t('comp.r4.omni'),
+    xshell: t('comp.r4.xshell'),
+    securecrt: t('comp.r4.crt'),
+    termius: t('comp.r4.termius'),
   },
   {
-    feature: "终端渲染引擎",
-    omni: "xterm.js WebGL GPU 硬件加速",
-    xshell: "传统 GDI / DirectWrite",
-    securecrt: "传统 Win32 绘制",
-    termius: "Electron 软渲染",
-    highlight: true,
+    feature: t('comp.r5'),
+    omni: t('comp.r5.omni'),
+    xshell: t('comp.r5.xshell'),
+    securecrt: t('comp.r5.crt'),
+    termius: t('comp.r5.termius'),
   },
   {
-    feature: "UI 美学与现代交互",
-    omni: "VS Code Dark Modern 极客暗黑",
-    xshell: "旧版 Windows 拟物灰调",
-    securecrt: "90年代经典菜单栏风格",
-    termius: "现代移动端扁平风格",
-    highlight: false,
+    feature: t('comp.r6'),
+    omni: t('comp.r6.omni'),
+    xshell: t('comp.r6.xshell'),
+    securecrt: t('comp.r6.crt'),
+    termius: t('comp.r6.termius'),
   },
   {
-    feature: "多分屏视口比例同步联动",
-    omni: "独创视口比例同步平滑联动",
-    xshell: "无同步滚动功能",
-    securecrt: "无同步滚动功能",
-    termius: "无同步滚动功能",
-    highlight: true,
+    feature: t('comp.r7'),
+    omni: t('comp.r7.omni'),
+    xshell: t('comp.r7.none'),
+    securecrt: t('comp.r7.none'),
+    termius: t('comp.r7.none'),
   },
 ];
 ---
@@ -62,13 +64,13 @@ const rows = [
 <section id="comparison" class="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto scroll-mt-20">
   <div class="text-center max-w-3xl mx-auto mb-16">
     <div class="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-3">
-      横向对比与选型指南
+      {t('comp.tag')}
     </div>
     <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
-      为什么迁移到 OmniTerminal？
+      {t('comp.title')}
     </h2>
     <p class="text-slate-400 text-base sm:text-lg">
-      告别商业软件高昂授权费与陈旧落后的界面，体验新一代现代跨平台生产力终端。
+      {t('comp.desc')}
     </p>
   </div>
 
@@ -76,9 +78,9 @@ const rows = [
     <table class="w-full text-left border-collapse text-xs sm:text-sm">
       <thead>
         <tr class="bg-slate-900/90 border-b border-white/10 text-slate-300">
-          <th class="py-4 px-6 font-semibold">核心特性维度</th>
+          <th class="py-4 px-6 font-semibold">{lang === 'en' ? 'Core Feature Matrix' : '核心特性维度'}</th>
           <th class="py-4 px-6 font-bold text-blue-400 bg-blue-500/10 border-x border-blue-500/20">
-            OmniTerminal (推荐)
+            {t('comp.col.omni')}
           </th>
           <th class="py-4 px-6 font-medium text-slate-400">Xshell</th>
           <th class="py-4 px-6 font-medium text-slate-400">SecureCRT</th>

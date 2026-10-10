@@ -1,51 +1,54 @@
 ---
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'zh' } = Astro.props;
+const t = useTranslations(lang);
+
 const features = [
   {
-    title: "无限级嵌套会话管理",
-    subtitle: "Folder Cascading & Tags",
-    desc: "支持树状多级目录、拖拽重排、彩色会话图标与祖先配置级联继承。再多节点与复杂网络拓扑，依然井井有条。",
-    icon: "folder",
-    badge: "组织有序",
+    title: t('features.f1.title'),
+    subtitle: t('features.f1.sub'),
+    desc: t('features.f1.desc'),
+    badge: t('features.f1.badge'),
     gradient: "from-blue-500/20 to-indigo-500/5",
   },
   {
-    title: "并排联动 SFTP 传输中心",
-    subtitle: "Side-by-side Seamless SFTP",
-    desc: "彻底告别独立弹窗的割裂感。点击传输直接在终端右侧滑出，支持并发分片传输队列、断点续传与权限一键修改。",
-    icon: "sftp",
-    badge: "上下文一体",
+    title: t('features.f2.title'),
+    subtitle: t('features.f2.sub'),
+    desc: t('features.f2.desc'),
+    badge: t('features.f2.badge'),
     gradient: "from-cyan-500/20 to-blue-500/5",
   },
   {
-    title: "主密码 AES-256 凭证金库",
-    subtitle: "Zero Plaintext Security Vault",
-    desc: "拒绝明文裸奔。所有连接密码、私钥、TOTP 均经由主密码派生密钥高强度加密存盘；支持闲置超时自动高质感锁屏。",
-    icon: "shield",
-    badge: "金融级加锁",
+    title: t('features.f3.title'),
+    subtitle: t('features.f3.sub'),
+    desc: t('features.f3.desc'),
+    badge: t('features.f3.badge'),
     gradient: "from-emerald-500/20 to-teal-500/5",
   },
   {
-    title: "WebGL GPU 硬件加速渲染",
-    subtitle: "60 FPS & Zero Latency",
-    desc: "基于 xterm.js WebGL 与 Go 10ms 批处理流控窗口，高频打印万行日志毫无卡顿，并内置防丢包字符延时发送机制。",
-    icon: "cpu",
-    badge: "极致丝滑",
+    title: t('features.f4.title'),
+    subtitle: t('features.f4.sub'),
+    desc: t('features.f4.desc'),
+    badge: t('features.f4.badge'),
     gradient: "from-purple-500/20 to-pink-500/5",
   },
   {
-    title: "多分屏终端视口同步滚动",
-    subtitle: "Synchronized Panes Scrolling",
-    desc: "支持水平、垂直多分屏对比同屏会话。独创的视口比例同步滚动，多台机器日志对照排查效率提升数倍。",
-    icon: "split",
-    badge: "高效排障",
+    title: t('features.f5.title'),
+    subtitle: t('features.f5.sub'),
+    desc: t('features.f5.desc'),
+    badge: t('features.f5.badge'),
     gradient: "from-amber-500/20 to-orange-500/5",
   },
   {
-    title: "自动化指令与多行撰写",
-    subtitle: "Compose Pane & Expect Scripts",
-    desc: "内置底部快捷命令抽屉、多行编写广播控制台与 SSH Expect 登录自动应答。重复性繁琐巡检一键自动化完成。",
-    icon: "terminal",
-    badge: "解放双手",
+    title: t('features.f6.title'),
+    subtitle: t('features.f6.sub'),
+    desc: t('features.f6.desc'),
+    badge: t('features.f6.badge'),
     gradient: "from-rose-500/20 to-red-500/5",
   },
 ];
@@ -54,13 +57,13 @@ const features = [
 <section id="features" class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
   <div class="text-center max-w-3xl mx-auto mb-16">
     <div class="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-3">
-      核心亮点与生产力赋能
+      {t('features.tag')}
     </div>
     <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
-      专为复杂运维场景量身打造
+      {t('features.title')}
     </h2>
     <p class="text-slate-400 text-base sm:text-lg">
-      汲取现代代码编辑器的交互精髓，重新设计每一处终端交互细节，让你在服务器集群管理中游刃有余。
+      {t('features.desc')}
     </p>
   </div>
 
@@ -89,7 +92,7 @@ const features = [
 
         <div class="mt-8 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-500 font-mono">
           <span>OmniTerminal Engine</span>
-          <span class="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">了解更多 →</span>
+          <span class="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">{t('features.more')}</span>
         </div>
       </div>
     ))}

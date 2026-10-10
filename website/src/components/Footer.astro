@@ -1,4 +1,12 @@
 ---
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'zh' } = Astro.props;
+const t = useTranslations(lang);
 const REPO = "leonlwq/OmniTerminal";
 ---
 
@@ -8,27 +16,27 @@ const REPO = "leonlwq/OmniTerminal";
       <img src="/appicon.png" alt="OmniTerminal Logo" class="w-8 h-8 rounded-lg shadow-sm" />
       <div>
         <div class="text-sm font-bold text-white tracking-wide">OmniTerminal</div>
-        <div class="text-xs text-slate-500">现代跨平台 SSH/SFTP 生产力客户端</div>
+        <div class="text-xs text-slate-500">{t('nav.subtitle')}</div>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
       <a href={`https://github.com/${REPO}`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
-        GitHub 仓库
+        {t('footer.repo')}
       </a>
       <a href={`https://github.com/${REPO}/releases`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
-        版本发布 (Releases)
+        {t('footer.releases')}
       </a>
       <a href={`https://github.com/${REPO}/issues`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
-        反馈与 Issue
+        {t('footer.issues')}
       </a>
       <a href={`https://github.com/${REPO}/blob/main/LICENSE`} target="_blank" rel="noreferrer" class="hover:text-blue-400 transition-colors">
-        MIT 许可证
+        {t('footer.license')}
       </a>
     </div>
 
     <div class="text-xs text-slate-500 font-mono text-center md:text-right">
-      © {new Date().getFullYear()} OmniTerminal Team. Free & Open Source.
+      {t('footer.copy')}
     </div>
   </div>
 </footer>

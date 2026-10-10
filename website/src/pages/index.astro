@@ -8,6 +8,7 @@ import DownloadMatrix from '../components/DownloadMatrix.astro';
 import QuickStart from '../components/QuickStart.astro';
 import Footer from '../components/Footer.astro';
 
+const lang = 'zh';
 const siteTitle = "OmniTerminal - 现代跨平台 SSH/SFTP 生产力客户端 (开源免费)";
 const siteDescription = "专为开发者与 SRE 打造的跨平台 SSH/SFTP 生产力工作台。基于 Go 高性能并发与 WebGL GPU 硬件加速，融合 VS Code 现代暗黑美学，支持 macOS、Windows 与 Linux。";
 const siteUrl = "https://omniterminal.app";
@@ -23,6 +24,11 @@ const siteUrl = "https://omniterminal.app";
     <meta name="description" content={siteDescription} />
     <meta name="keywords" content="OmniTerminal, SSH客户端, SFTP客户端, Xshell替代品, SecureCRT替代品, Mac SSH客户端, 跨平台终端, 免费开源SSH工具, WebGL终端" />
     
+    <!-- Language Alternates for SEO -->
+    <link rel="alternate" hreflang="zh" href="https://omniterminal.app/" />
+    <link rel="alternate" hreflang="en" href="https://omniterminal.app/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://omniterminal.app/" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={siteUrl} />
@@ -43,14 +49,14 @@ const siteUrl = "https://omniterminal.app";
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-[#0a0c10] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
-    <Navbar />
+    <Navbar lang={lang} />
     <main>
-      <Hero />
-      <Features />
-      <Comparison />
-      <DownloadMatrix />
-      <QuickStart />
+      <Hero lang={lang} />
+      <Features lang={lang} />
+      <Comparison lang={lang} />
+      <DownloadMatrix lang={lang} />
+      <QuickStart lang={lang} />
     </main>
-    <Footer />
+    <Footer lang={lang} />
   </body>
 </html>

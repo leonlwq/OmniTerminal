@@ -1,4 +1,14 @@
 ---
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'zh' } = Astro.props;
+const t = useTranslations(lang);
+const isEn = lang === 'en';
+
 const REPO = "leonlwq/OmniTerminal";
 const VERSION = "v1.0.0";
 const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
@@ -6,48 +16,48 @@ const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
 const downloads = [
   {
     platform: "macOS",
-    arch: "Apple Silicon (M1/M2/M3/M4)",
-    format: "DMG 拖拽安装镜像",
+    arch: isEn ? "Apple Silicon (M1/M2/M3/M4)" : "Apple Silicon (M1/M2/M3/M4)",
+    format: isEn ? "DMG Disk Image" : "DMG 拖拽安装镜像",
     file: "OmniTerminal-macos-arm64.dmg",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.dmg`,
-    tag: "推荐 (Mac 用户)",
+    tag: isEn ? "Recommended (Mac)" : "推荐 (Mac 用户)",
   },
   {
     platform: "macOS",
-    arch: "Apple Silicon 免解压版",
-    format: "ZIP 压缩包",
+    arch: isEn ? "Apple Silicon (Portable)" : "Apple Silicon 免解压版",
+    format: isEn ? "ZIP Archive" : "ZIP 压缩包",
     file: "OmniTerminal-macos-arm64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.zip`,
-    tag: "绿色版",
+    tag: isEn ? "Portable" : "绿色版",
   },
   {
     platform: "macOS",
-    arch: "Intel 64-bit 芯片",
-    format: "DMG 拖拽安装镜像",
+    arch: isEn ? "Intel 64-bit CPU" : "Intel 64-bit 芯片",
+    format: isEn ? "DMG Disk Image" : "DMG 拖拽安装镜像",
     file: "OmniTerminal-macos-intel.dmg",
     url: `${BASE_DOWNLOAD}/OmniTerminal-macos-intel.dmg`,
     tag: "Intel Mac",
   },
   {
     platform: "Windows",
-    arch: "x64 (64位 Intel / AMD)",
-    format: "ZIP 绿色免安装包",
+    arch: isEn ? "x64 (64-bit Intel / AMD)" : "x64 (64位 Intel / AMD)",
+    format: isEn ? "ZIP Portable" : "ZIP 绿色免安装包",
     file: "OmniTerminal-windows-amd64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-amd64.zip`,
-    tag: "推荐 (Win 用户)",
+    tag: isEn ? "Recommended (Win)" : "推荐 (Win 用户)",
   },
   {
     platform: "Windows",
-    arch: "ARM64 (Surface / 骁龙X)",
-    format: "ZIP 绿色免安装包",
+    arch: isEn ? "ARM64 (Surface / Snapdragon X)" : "ARM64 (Surface / 骁龙X)",
+    format: isEn ? "ZIP Portable" : "ZIP 绿色免安装包",
     file: "OmniTerminal-windows-arm64.zip",
     url: `${BASE_DOWNLOAD}/OmniTerminal-windows-arm64.zip`,
     tag: "Win ARM64",
   },
   {
     platform: "Linux",
-    arch: "x86_64 (glibc 2.35+)",
-    format: "tar.gz 标准包",
+    arch: isEn ? "x86_64 (glibc 2.35+)" : "x86_64 (glibc 2.35+)",
+    format: isEn ? "tar.gz Universal Archive" : "tar.gz 标准包",
     file: "OmniTerminal-linux-amd64.tar.gz",
     url: `${BASE_DOWNLOAD}/OmniTerminal-linux-amd64.tar.gz`,
     tag: "Ubuntu / Debian / CentOS",
@@ -58,13 +68,13 @@ const downloads = [
 <section id="download" class="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto scroll-mt-20">
   <div class="text-center max-w-3xl mx-auto mb-16">
     <div class="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-3">
-      全平台发行版下载
+      {t('dl.tag')}
     </div>
     <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
-      获取适合你操作系统的安装包
+      {t('dl.title')}
     </h2>
     <p class="text-slate-400 text-base sm:text-lg">
-      所有二进制产物均经由 GitHub Actions 官方透明编译构建，安全纯净、无任何商业遥测后门。
+      {t('dl.desc')}
     </p>
   </div>
 
@@ -72,13 +82,13 @@ const downloads = [
     <div class="p-6 bg-slate-900/90 border-b border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
         <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          OmniTerminal {VERSION} 正式版
+          {t('dl.header.title')}
           <span class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Stable Release
+            {t('dl.header.stable')}
           </span>
         </h3>
         <p class="text-xs text-slate-400 mt-1">
-          发布日期: 2026-10-10 • 开源协议: MIT License • 构建矩阵: 7 大跨平台安装包
+          {t('dl.header.info')}
         </p>
       </div>
 
@@ -88,7 +98,7 @@ const downloads = [
         rel="noreferrer"
         class="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-mono"
       >
-        查看 Release 详细签名与校验和 →
+        {t('dl.header.checksum')}
       </a>
     </div>
 
@@ -121,7 +131,7 @@ const downloads = [
               <svg class="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
               </svg>
-              <span>立即下载</span>
+              <span>{t('dl.btn')}</span>
             </a>
           </div>
         </div>
