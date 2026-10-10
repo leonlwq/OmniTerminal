@@ -34,30 +34,30 @@ const getShortcutAction = (id: 'copy' | 'filter' | 'compose' | 'search' | 'fulls
       if (lang === 'ko') return '선택 영역이 있을 때는 복사, 없을 때는 SIGINT 인터럽트 시그널 전달';
       return 'Copy selected text, or pass SIGINT interrupt signal if no selection';
     case 'filter':
-      if (lang === 'zh') return '呼出实时日志过滤器 (Live Buffer Filter)，正则抓取关键句';
-      if (lang === 'ja') return 'リアルタイムバッファ抽出 (Live Filter) を開き、正規表現でログ監視';
-      if (lang === 'ko') return '실시간 로그 필터(Live Filter) 호출, 정규식으로 핵심 라인 추출';
+      if (lang === 'zh') return '呼出实时日志过滤面板 (基于正则匹配实时抓取)';
+      if (lang === 'ja') return 'リアルタイムログ抽出パネルを呼び出し (正規表現一致)';
+      if (lang === 'ko') return '실시간 로그 필터 패널 호출 (정규식 일치 및 스트림 추출)';
       return 'Summon Live Buffer Filter pane with regex log streaming';
     case 'compose':
-      if (lang === 'zh') return '在底部 Compose 多行撰写面板中一键向所有终端广播指令';
-      if (lang === 'ja') return 'Compose パネルから全ターミナルへ複数行コマンドを一斉ブロードキャスト';
-      if (lang === 'ko') return 'Compose 멀티라인 패널에서 모든 터미널로 명령 일괄 브로드캐스트';
+      if (lang === 'zh') return '在底部 Compose 面板向所有活动终端广播多行指令';
+      if (lang === 'ja') return 'Compose パネルから全ターミナルへ複数行コマンドを一括送信';
+      if (lang === 'ko') return 'Compose 패널에서 모든 활성 터미널로 다중 라인 명령 일괄 전송';
       return 'Broadcast multi-line command to all terminals via Compose Pane';
     case 'search':
-      if (lang === 'zh') return '终端内快速全文检索并正则高亮匹配';
-      if (lang === 'ja') return 'ターミナル内を正規表現で全文検索 & 一致箇所をハイライト';
-      if (lang === 'ko') return '터미널 내 정규식 고속 검색 및 일치 항목 하이라이트';
+      if (lang === 'zh') return '终端内全文检索与正则高亮匹配';
+      if (lang === 'ja') return 'ターミナル内を正規表現で全文検索 & 一致箇所ハイライト';
+      if (lang === 'ko') return '터미널 내 정규식 검색 및 일치 항목 하이라이트';
       return 'Fast in-terminal regex search and match highlights';
     case 'fullscreen':
-      if (lang === 'zh') return '一键切换无边框极客全屏沉浸式工作模式';
-      if (lang === 'ja') return '枠線のない没入型フルスクリーンワークスペースへ切り替え';
-      if (lang === 'ko') return '테두리 없는 몰입형 풀스크린 작업 모드로 전환';
-      return 'Toggle borderless immersive geek fullscreen workspace';
+      if (lang === 'zh') return '切换无边框全屏工作模式';
+      if (lang === 'ja') return 'ボーダーレスフルスクリーンモードに切り替え';
+      if (lang === 'ko') return '보더리스 전체 화면 작업 모드로 전환';
+      return 'Toggle borderless fullscreen workspace';
     case 'newtab':
-      if (lang === 'zh') return '极速新建会话或打开本地 Shell 终端';
-      if (lang === 'ja') return '新規セッションの作成またはローカルシェルを即座に起動';
-      if (lang === 'ko') return '새 세션을 신속하게 생성하거나 로컬 셸 터미널 실행';
-      return 'Quickly open a new session or launch local Shell';
+      if (lang === 'zh') return '新建会话或打开本地 Shell 终端';
+      if (lang === 'ja') return '新規セッション作成またはローカルシェル起動';
+      if (lang === 'ko') return '새 세션 생성 또는 로컬 셸 터미널 실행';
+      return 'Open a new session or launch local Shell';
   }
 };
 

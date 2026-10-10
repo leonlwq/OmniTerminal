@@ -91,13 +91,13 @@ export default function InteractiveTerminal({ lang = 'en' }: Props) {
       ko: '12개 세션이 AES-256-GCM 파생 키로 보호 중',
     }[lang],
     sftpToggle: sftpOpen 
-      ? { en: 'Drawer Open', zh: '并排开', ja: 'ドロワー表示', ko: '패널 표시' }[lang]
+      ? { en: 'Drawer Open', zh: '展开', ja: 'ドロワー表示', ko: '패널 표시' }[lang]
       : { en: 'Collapsed', zh: '收起', ja: '格納', ko: '숨김' }[lang],
-    tryDemo: { en: 'Try Interactive Demos:', zh: '体验一键特性演示:', ja: '機能デモを体験:', ko: '기능 데모 체험:' }[lang],
-    toggleSftp: { en: 'Toggle Side SFTP', zh: '切换并排 SFTP 抽屉', ja: '並行 SFTP 切替', ko: '사이드 SFTP 전환' }[lang],
-    filterBtn: { en: 'Cmd+Shift+F Live Filter', zh: 'Cmd+Shift+F 实时日志过滤', ja: 'Cmd+Shift+F リアルタイム抽出', ko: 'Cmd+Shift+F 실시간 필터' }[lang],
-    syncBtn: { en: 'Sync Panes Scroll', zh: '多分屏同步滚动联动', ja: 'マルチペイン同期スクロール', ko: '다중 분할 동기 스크롤' }[lang],
-    sftpTitle: { en: 'SFTP File Manager', zh: 'SFTP 传输中心', ja: 'SFTP ファイル管理', ko: 'SFTP 파일 관리자' }[lang],
+    tryDemo: { en: 'Interactive Controls:', zh: '特性交互演示:', ja: '機能デモ:', ko: '기능 데모:' }[lang],
+    toggleSftp: { en: 'Toggle Side SFTP', zh: '切换侧边 SFTP 面板', ja: 'サイド SFTP 切替', ko: '사이드 SFTP 전환' }[lang],
+    filterBtn: { en: 'Cmd+Shift+F Live Filter', zh: 'Cmd+Shift+F 实时日志过滤', ja: 'Cmd+Shift+F リアルタイム抽出', ko: 'Cmd+Shift+F 실시간 로그 필터' }[lang],
+    syncBtn: { en: 'Sync Panes Scroll', zh: '多分屏视口同步滚动', ja: 'マルチペイン同期スクロール', ko: '다중 분할 동기 스크롤' }[lang],
+    sftpTitle: { en: 'SFTP File Manager', zh: 'SFTP 文件管理', ja: 'SFTP ファイル管理', ko: 'SFTP 파일 관리자' }[lang],
     connected: { en: 'CONNECTED', zh: '已连接', ja: '接続完了', ko: '연결됨' }[lang],
   };
 
