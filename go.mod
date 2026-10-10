@@ -1,6 +1,6 @@
 module omniterminal
 
-go 1.26.0
+go 1.27.1
 
 require (
 	github.com/creack/pty v1.1.24
@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/pkg/sftp v1.13.11
 	github.com/pquerna/otp v1.5.0
-	github.com/wailsapp/wails/v2 v2.13.0
+	github.com/wailsapp/wails/v2 v2.16.0
 	go.bug.st/serial v1.8.0
 	golang.org/x/crypto v0.58.0
 	golang.org/x/net v0.61.0
