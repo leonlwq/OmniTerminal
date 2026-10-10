@@ -28,7 +28,7 @@ jobs:
           - os: windows-latest
             platform: windows/arm64
             arch: windows-arm64
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             platform: linux/amd64
             arch: linux-amd64
 
@@ -47,13 +47,13 @@ jobs:
           node-version: 20
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev || sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
@@ -68,13 +68,11 @@ jobs:
         shell: bash
         run: |
           cd build/bin
-          for app in *.app; do
-            if [ -d "$app" ] && [ "$app" != "OmniTerminal.app" ]; then
-              rm -rf OmniTerminal.app
-              cp -R "$app" OmniTerminal.app
-              break
-            fi
-          done
+          APP_NAME=$(ls -d *.app 2>/dev/null | head -n 1)
+          if [ -n "$APP_NAME" ] && [ "$APP_NAME" != "OmniTerminal.app" ]; then
+            mv "$APP_NAME" __tmp_omni.app
+            mv __tmp_omni.app OmniTerminal.app
+          fi
           zip -r -q "../../OmniTerminal-${{ matrix.arch }}.zip" OmniTerminal.app
           hdiutil create -volname "OmniTerminal" -srcfolder "OmniTerminal.app" -ov -format UDZO "../../OmniTerminal-${{ matrix.arch }}.dmg"
 
@@ -83,8 +81,15 @@ jobs:
         shell: bash
         run: |
           cd build/bin
-          EXE_FILE=$(ls omniterminal*.exe | head -n 1)
-          cp "$EXE_FILE" OmniTerminal.exe
+          EXE_FILE=$(ls *.exe 2>/dev/null | head -n 1)
+          if [ -z "$EXE_FILE" ]; then
+            echo "Error: No .exe file found in build/bin"
+            exit 1
+          fi
+          if [ "$EXE_FILE" != "OmniTerminal.exe" ]; then
+            mv "$EXE_FILE" __tmp_omni.exe
+            mv __tmp_omni.exe OmniTerminal.exe
+          fi
           7z a -tzip "../../OmniTerminal-${{ matrix.arch }}.zip" OmniTerminal.exe
 
       - name: Package Assets (Linux)
@@ -92,8 +97,14 @@ jobs:
         shell: bash
         run: |
           cd build/bin
-          BIN_FILE=$(ls omniterminal* | head -n 1)
-          cp "$BIN_FILE" omniterminal
+          BIN_FILE=$(ls omniterminal* 2>/dev/null | head -n 1)
+          if [ -z "$BIN_FILE" ]; then
+            echo "Error: No binary file found in build/bin"
+            exit 1
+          fi
+          if [ "$BIN_FILE" != "omniterminal" ]; then
+            mv "$BIN_FILE" omniterminal
+          fi
           chmod +x omniterminal
           tar -czvf "../../OmniTerminal-${{ matrix.arch }}.tar.gz" omniterminal
 
