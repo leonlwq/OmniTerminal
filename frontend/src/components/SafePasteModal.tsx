@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { ShieldAlert, AlertTriangle, X, Gauge, Clock, Zap, Check } from 'lucide-react';
 import { models } from '../../wailsjs/go/models';
 
@@ -12,13 +13,6 @@ interface SafePasteModalProps {
   defaultLineDelay?: number;
 }
 
-const FLOW_PRESETS = [
-  { label: '即时发送 (0ms)', char: 0, line: 0, desc: '无延时瞬间全部投递' },
-  { label: '平滑流控 (5ms/100ms)', char: 5, line: 100, desc: '适合常规服务器脚本' },
-  { label: '设备安全 (15ms/300ms)', char: 15, line: 300, desc: '适合交换机/路由器/串口' },
-  { label: '慢速防吞 (30ms/800ms)', char: 30, line: 800, desc: '适合低缓冲 Bootloader' },
-];
-
 export const SafePasteModal: React.FC<SafePasteModalProps> = ({
   isOpen,
   onClose,
@@ -28,6 +22,14 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
   defaultCharDelay = 0,
   defaultLineDelay = 0,
 }) => {
+  const { t } = useI18n();
+
+  const flowPresets = [
+    { label: t('safePaste.modeInstant') || '即时发送 (0ms)', char: 0, line: 0, desc: t('safePaste.descInstant') || '无延时瞬间全部投递' },
+    { label: t('safePaste.modeSmooth') || '平滑流控 (5ms/100ms)', char: 5, line: 100, desc: t('safePaste.descSmooth') || '适合常规服务器脚本' },
+    { label: t('safePaste.modeDevice') || '设备安全 (15ms/300ms)', char: 15, line: 300, desc: t('safePaste.descDevice') || '适合交换机/路由器/串口' },
+    { label: t('safePaste.modeSlow') || '慢速防吞 (30ms/800ms)', char: 30, line: 800, desc: t('safePaste.descSlow') || '适合低缓冲 Bootloader' },
+  ];
   const [content, setContent] = useState(textToPaste);
   const [enablePacing, setEnablePacing] = useState(defaultCharDelay > 0 || defaultLineDelay > 0);
   const [charDelayMs, setCharDelayMs] = useState(defaultCharDelay);
@@ -102,7 +104,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold leading-tight text-[#e0e0e0]">
-                {isDangerous ? '高危命令安全粘贴拦截' : '多行文本安全粘贴与流控确认'}
+                {isDangerous ? t('safePaste.dangerTitle') : t('safePaste.normalTitle')}
               </h2>
               <span className="text-[11px] text-[#858585] font-normal">
                 {isDangerous ? 'Dangerous Command Interception' : 'Safe Multi-line Paste & Delay Pacing'}
@@ -121,7 +123,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
         {isDangerous && (
           <div className="px-5 py-2.5 bg-[#a1260d]/15 border-b border-[#a1260d]/40 text-xs text-[#f48771] flex flex-col space-y-1.5 shrink-0">
             <div className="font-semibold flex items-center space-x-1.5">
-              <span>⚠️ 安全警告：检测到待粘贴内容命中危险命令安全防护规则！</span>
+              <span>{t('safePaste.dangerWarning')}</span>
             </div>
             <ul className="list-disc list-inside space-y-1 pl-1 text-[11px]">
               {matchedRules.map((r, i) => (
@@ -136,10 +138,10 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
         {/* 内容编辑与预览区 */}
         <div className="p-5 flex flex-col space-y-3 bg-[#1e1e1e]">
           <div className="flex items-center justify-between text-xs text-[#858585]">
-            <span>您可以在发送前直接编辑下方缓冲区文本：</span>
+            <span>{t('safePaste.editHint')}</span>
             <div className="flex items-center space-x-3 font-mono text-[11px]">
-              <span>行数: <strong className="text-[#0078d4]">{lineCount}</strong></span>
-              <span>字符数: <strong className="text-[#0078d4]">{charCount}</strong></span>
+              <span>{t('safePaste.lines')} <strong className="text-[#0078d4]">{lineCount}</strong></span>
+              <span>{t('safePaste.chars')} <strong className="text-[#0078d4]">{charCount}</strong></span>
             </div>
           </div>
 
@@ -149,7 +151,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
             autoFocus
             rows={7}
             className="w-full bg-[#1e1e1e] text-[#cccccc] font-mono text-xs p-2.5 border border-[#3c3c3c] focus:border-[#0078d4] rounded outline-none resize-y leading-relaxed"
-            placeholder="待粘贴内容..."
+            placeholder={t('safePaste.placeholder')}
           />
 
           {/* SecureCRT 风格：防吞字延时流控配置区 */}
@@ -164,11 +166,11 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
                 />
                 <span className="flex items-center gap-1.5 text-[#e0e0e0]">
                   <Gauge className="w-3.5 h-3.5 text-[#0078d4]" />
-                  防丢包延时流控发送模式 (Inter-Character / Line Send Delay)
+                  {t('safePaste.flowControlTitle')}
                 </span>
               </label>
               <span className="text-[10px] text-[#858585]">
-                防止路由器/串口/交换机吞字丢命令
+                {t('safePaste.flowControlSub')}
               </span>
             </div>
 
@@ -176,8 +178,8 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
               <div className="space-y-2.5 pt-1 text-xs animate-in fade-in duration-100">
                 {/* 预设方案按钮 */}
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-[11px] text-[#858585] mr-1">快捷方案:</span>
-                  {FLOW_PRESETS.map((p) => {
+                  <span className="text-[11px] text-[#858585] mr-1">{t('safePaste.presets')}</span>
+                  {flowPresets.map((p) => {
                     const isSelected = charDelayMs === p.char && lineDelayMs === p.line;
                     return (
                       <button
@@ -205,7 +207,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
                   <div className="flex items-center justify-between bg-[#1e1e1e] px-2.5 py-1 rounded border border-[#3c3c3c]">
                     <span className="text-[11px] text-[#858585] flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[#0078d4]" />
-                      字符间延时 (Char Delay):
+                      {t('safePaste.charDelay')}
                     </span>
                     <div className="flex items-center space-x-1">
                       <input 
@@ -224,7 +226,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
                   <div className="flex items-center justify-between bg-[#1e1e1e] px-2.5 py-1 rounded border border-[#3c3c3c]">
                     <span className="text-[11px] text-[#858585] flex items-center gap-1">
                       <Zap className="w-3 h-3 text-[#cca700]" />
-                      行间延时 (Line Delay):
+                      {t('safePaste.lineDelay')}
                     </span>
                     <div className="flex items-center space-x-1">
                       <input 
@@ -248,7 +250,7 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
         {/* 底部按钮栏 */}
         <div className="px-5 py-3 bg-[#1f1f1f] border-t border-[#2b2b2b] flex items-center justify-between text-xs shrink-0">
           <div className="text-[11px] text-[#858585]">
-            按 <kbd className="px-1.5 py-0.5 bg-[#252526] border border-[#3c3c3c] rounded font-mono text-[10px] text-[#cccccc]">Esc</kbd> 取消
+            <kbd className="px-1.5 py-0.5 bg-[#252526] border border-[#3c3c3c] rounded font-mono text-[10px] text-[#cccccc]">Esc</kbd> {t('common.cancel') || '取消'}
           </div>
 
           <div className="flex items-center space-x-2">
@@ -256,15 +258,15 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
               onClick={onClose}
               className="px-3.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
             {lineCount > 1 && (
               <button
                 onClick={handleSingleLinePaste}
                 className="px-3.5 py-1 bg-[#252526] border border-[#3c3c3c] hover:bg-[#2a2d2e] text-[#cccccc] rounded font-medium transition-colors"
-                title="移除换行符合并为单行后再发送"
+                title={t('safePaste.mergeSingleLineTitle') || '移除换行符合并为单行后再发送'}
               >
-                合并单行粘贴
+                {t('safePaste.mergeSingleLine') || '合并单行粘贴'}
               </button>
             )}
             <button
@@ -276,10 +278,10 @@ export const SafePasteModal: React.FC<SafePasteModalProps> = ({
               }`}
             >
               {isDangerous 
-                ? '已知晓风险并强制粘贴' 
+                ? (t('safePaste.forcePaste') || '已知晓风险并强制粘贴') 
                 : enablePacing 
-                  ? '🐢 启动流控延时粘贴' 
-                  : '确认粘贴'}
+                  ? (t('safePaste.pacingPaste') || '🐢 启动流控延时粘贴') 
+                  : (t('safePaste.confirmPaste') || '确认粘贴')}
             </button>
           </div>
         </div>

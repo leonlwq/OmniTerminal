@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useMemo } from 'react';
 import {
   X,
@@ -27,6 +28,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
   rawText,
   command = '',
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'table' | 'json' | 'raw'>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -186,7 +188,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
         <div className="flex items-center justify-between px-4 py-2.5 bg-[#1f1f1f] border-b border-[#2b2b2b]">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
-              📊 终端输出语义化结构视图
+              {t('structOut.title') || '📊 终端输出语义化结构视图'}
             </span>
             {command && (
               <span className="px-2 py-0.5 rounded bg-[#252526] border border-[#3c3c3c] text-xs font-mono text-[#3794ff] max-w-xs truncate">
@@ -203,7 +205,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
                   }`}
                 >
                   <Table className="w-3.5 h-3.5" />
-                  表格 ({parsedTable.rows.length})
+                  {(t('structOut.tableTab') || '表格 ({count})').replace('{count}', String(parsedTable.rows.length))}
                 </button>
               )}
               {parsedJSON && (
@@ -214,7 +216,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
                   }`}
                 >
                   <FileCode className="w-3.5 h-3.5" />
-                  JSON 树
+                  {t('structOut.jsonTreeTab') || 'JSON 树'}
                 </button>
               )}
               <button
@@ -223,7 +225,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
                   activeTab === 'raw' ? 'bg-[#0078d4] text-white' : 'text-[#858585] hover:text-[#cccccc]'
                 }`}
               >
-                原始文本
+                {t('structOut.rawTextTab') || '原始文本'}
               </button>
             </div>
           </div>
@@ -233,24 +235,24 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
               <button
                 onClick={parsedTable ? exportCSV : exportJSON}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] border border-[#3c3c3c] text-xs text-[#cccccc] hover:text-white transition-colors"
-                title="导出数据"
+                title={t('structOut.exportTooltip') || '导出数据'}
               >
                 <Download className="w-3.5 h-3.5" />
-                导出 {parsedTable ? 'CSV' : 'JSON'}
+                {(t('structOut.exportAction') || '导出 {format}').replace('{format}', parsedTable ? 'CSV' : 'JSON')}
               </button>
             )}
             <button
               onClick={() => handleCopy(rawText)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] border border-[#3c3c3c] text-xs text-[#cccccc] hover:text-white transition-colors"
-              title="复制原始输出"
+              title={t('structOut.copyRawTooltip') || '复制原始输出'}
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? '已复制' : '复制'}
+              {copied ? (t('structOut.copied') || '已复制') : (t('structOut.copy') || '复制')}
             </button>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] transition-colors"
-              title={isExpanded ? '还原尺寸' : '最大化'}
+              title={isExpanded ? (t('structOut.restoreSize') || '还原尺寸') : (t('structOut.maximize') || '最大化')}
             >
               {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
@@ -270,7 +272,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
               <Search className="w-3.5 h-3.5 text-[#858585]" />
               <input
                 type="text"
-                placeholder="搜索表格内容..."
+                placeholder={t('structOut.searchPlaceholder') || '搜索表格内容...'}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="bg-transparent text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none w-full"
@@ -282,7 +284,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
               )}
             </div>
             <div className="text-[11px] text-[#858585] font-mono">
-              共 {sortedRows.length} 行 / {parsedTable.headers.length} 列
+              {(t('structOut.tableStats') || '共 {rows} 行 / {cols} 列').replace('{rows}', String(sortedRows.length)).replace('{cols}', String(parsedTable.headers.length))}
             </div>
           </div>
         )}
@@ -329,7 +331,7 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
                   {sortedRows.length === 0 && (
                     <tr>
                       <td colSpan={parsedTable.headers.length} className="text-center py-8 text-[#858585]">
-                        未匹配到符合过滤条件的数据
+                        {t('structOut.noMatches') || '未匹配到符合过滤条件的数据'}
                       </td>
                     </tr>
                   )}
@@ -355,12 +357,13 @@ export const StructuredOutputOverlay: React.FC<StructuredOutputOverlayProps> = (
   );
 };
 
-// 交互式可折叠 JSON 树形组件
+// 交互式可折叠 {t('structOut.jsonTreeTab') || 'JSON 树'}形组件
 const JSONTreeViewer: React.FC<{ data: any; label?: string; isLast?: boolean }> = ({
   data,
   label,
   isLast = true,
 }) => {
+  const { t } = useI18n();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (data === null) {
@@ -416,7 +419,7 @@ const JSONTreeViewer: React.FC<{ data: any; label?: string; isLast?: boolean }> 
         <span className="text-slate-400">{openBracket}</span>
         {isCollapsed && (
           <span className="text-[#858585] text-[10px] ml-1 bg-[#252526] px-1 rounded border border-[#2b2b2b]">
-            ... {isArray ? `${data.length} 项` : `${Object.keys(data).length} 键`} ...
+            ... {isArray ? (t('structOut.itemsCount') || '{count} 项').replace('{count}', String(data.length)) : (t('structOut.keysCount') || '{count} 键').replace('{count}', String(Object.keys(data).length))} ...
           </span>
         )}
         {isCollapsed && <span className="text-[#858585]">{closeBracket}</span>}

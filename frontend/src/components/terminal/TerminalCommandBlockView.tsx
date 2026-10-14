@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { CommandBlockOverlay, CommandBlock } from '../CommandBlockOverlay';
@@ -23,6 +24,7 @@ export const TerminalCommandBlockView: React.FC<TerminalCommandBlockViewProps> =
   onToggleBookmark,
   onExplainWithAI,
 }) => {
+  const { t } = useI18n();
   // 当处于命令块模式时，支持 Esc 键快速切回传统终端
   React.useEffect(() => {
     if (!isCommandBlockMode || !isActive) return;
@@ -44,17 +46,17 @@ export const TerminalCommandBlockView: React.FC<TerminalCommandBlockViewProps> =
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#2b2b2b] sticky top-0 bg-[#181818]/95 backdrop-blur-md z-10">
         <span className="text-xs font-semibold text-[#3794ff] flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#3794ff]" />
-          <span>Warp 风格结构化命令块模式 (Command Blocks)</span>
+          <span>{t('cmdBlock.title')}</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0078d4]/10 border border-[#0078d4]/20 text-[#3794ff] font-normal">
-            共 {commandBlocks.length} 个执行块
+            {t('cmdBlock.count').replace('{count}', String(commandBlocks.length))}
           </span>
         </span>
         <button
           onClick={onCloseMode}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#252526] hover:bg-[#2a2d2e] text-[#cccccc] hover:text-white text-xs border border-[#2b2b2b] transition-colors shadow-sm"
-          title="切回传统流式终端 (Esc 或 ⌘⇧B)"
+          title={t('cmdBlock.switchTooltip')}
         >
-          <span>切回传统终端流</span>
+          <span>{t('cmdBlock.switchBtn')}</span>
           <span className="text-[10px] font-mono text-[#858585]">Esc</span>
         </button>
       </div>

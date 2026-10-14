@@ -59,6 +59,7 @@ type CustomThemeConfig struct {
 // AppSettings 应用设置
 type AppSettings struct {
 	ThemeName          string              `json:"themeName"`
+	Language           string              `json:"language"` // 界面显示语言: "zh-CN" | "en-US" | "ja-JP" | "ko-KR"
 	CustomThemes       []CustomThemeConfig `json:"customThemes"` // 用户自定义主题库
 	FontFamily         string              `json:"fontFamily"`
 	NonAsciiFontFamily string              `json:"nonAsciiFontFamily"`

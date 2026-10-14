@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import {
   Search,
   Server,
@@ -79,6 +80,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
   onClose,
   openTabs
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'inspect' | 'history'>('inspect');
   const [viewMode, setViewMode] = useState<'matrix' | 'issues' | 'raw'>('matrix');
 
@@ -168,12 +170,12 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
 
   const handleRunInspection = async () => {
     if (selectedSessionIds.length === 0) {
-      alert('请至少选择一台需要巡检的目标主机');
+      alert(t('insp.alertSelectHost'));
       return;
     }
     const enabledChecks = checks.filter(c => c.enabled);
     if (enabledChecks.length === 0) {
-      alert('请至少勾选一个巡检检查项');
+      alert(t('insp.alertSelectCheck'));
       return;
     }
 
@@ -189,7 +191,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
         loadHistory();
       }
     } catch (err: any) {
-      alert('巡检执行失败: ' + (err?.message || String(err)));
+      alert(t('insp.alertFailed') + ' ' + (err?.message || String(err)));
     } finally {
       setIsRunning(false);
     }
@@ -206,20 +208,20 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
   const exportMarkdown = () => {
     if (!currentReport) return;
     let md = `# ${currentReport.title}\n\n`;
-    md += `> 生成时间: ${new Date(currentReport.createdAt * 1000).toLocaleString()} | 耗时: ${currentReport.durationMs}ms\n\n`;
-    md += `## 巡检结论综述\n\n${currentReport.summary}\n\n`;
+    md += `> ${t('inspection.genTime') || '生成时间: '}${new Date(currentReport.createdAt * 1000).toLocaleString()} | ${t('inspection.duration') || '耗时: '}${currentReport.durationMs}ms\n\n`;
+    md += `## ${t('inspection.conclusionSummary') || '巡检结论综述'}\n\n${currentReport.summary}\n\n`;
 
-    md += `## 主机巡检结果一览\n\n`;
-    md += `| 主机名称 | IP 地址 | 状态 | 异常指标数 | 执行耗时 |\n`;
+    md += `## ${t('inspection.resultsOverview') || '主机巡检结果一览'}\n\n`;
+    md += `| ${t('inspection.colHost') || '主机名称'} | ${t('inspection.colIp') || 'IP 地址'} | ${t('inspection.colStatus') || '状态'} | ${t('inspection.colIssues') || '异常指标数'} | ${t('inspection.colDuration') || '执行耗时'} |\n`;
     md += `| :--- | :--- | :---: | :---: | :---: |\n`;
     Object.values(currentReport.hostResults).forEach(h => {
       const statusIcon =
-        h.status === 'success' ? '🟢 健康' : h.status === 'warning' ? '🟡 告警' : '🔴 异常';
+        h.status === 'success' ? (t('inspection.statusHealthy') || '🟢 健康') : h.status === 'warning' ? (t('inspection.statusWarning') || '🟡 告警') : (t('inspection.statusError') || '🔴 异常');
       md += `| ${h.hostName} | ${h.hostIp} | ${statusIcon} | ${h.issueCount} | ${h.executionMs}ms |\n`;
     });
     md += `\n`;
 
-    md += `## 详细检查项与输出\n\n`;
+    md += `## ${t('inspection.detailsSection') || '详细检查项与输出'}\n\n`;
     Object.values(currentReport.hostResults).forEach(h => {
       md += `### 主机: ${h.hostName} (${h.hostIp})\n\n`;
       if (h.error) {
@@ -338,8 +340,8 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
               <Activity className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] tracking-wide">批量主机健康巡检与报告中心</h2>
-              <p className="text-xs text-[#858585]">多机并发并行巡检 · 系统/资源/磁盘/服务多维排查 · 智能隐患标记</p>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] tracking-wide">{t('insp.title')}</h2>
+              <p className="text-xs text-[#858585]">{t('insp.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -359,7 +361,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
-                <span>历史报告 ({historyReports.length})</span>
+                <span>{t('insp.historyReports')} ({historyReports.length})</span>
               </button>
             </div>
             <button
@@ -380,12 +382,12 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                 <div className="p-3.5 border-b border-[#2b2b2b] space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#e0e0e0] uppercase tracking-wider">
-                      1. 目标主机 ({selectedSessionIds.length})
+                      {t('insp.targetHosts')} ({selectedSessionIds.length})
                     </span>
                     <div className="flex space-x-1.5 text-[11px] text-[#0078d4]">
-                      <button onClick={handleSelectAllActive} className="hover:underline">活动Tab</button>
+                      <button onClick={handleSelectAllActive} className="hover:underline">{t('insp.activeTabs')}</button>
                       <span>·</span>
-                      <button onClick={handleSelectAllSaved} className="hover:underline">全选</button>
+                      <button onClick={handleSelectAllSaved} className="hover:underline">{t('insp.selectAll')}</button>
                     </div>
                   </div>
 
@@ -413,7 +415,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                             <span className="truncate font-medium">{session.name}</span>
                           </div>
                           {isConnected && (
-                            <span className="w-2 h-2 rounded-full bg-[#4ec9b0] shrink-0" title="活跃连接中" />
+                            <span className="w-2 h-2 rounded-full bg-[#4ec9b0] shrink-0" title={t('inspection.activeConnTitle') || '活跃连接中'} />
                           )}
                         </label>
                       );
@@ -425,7 +427,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-2 custom-scrollbar">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-semibold text-[#e0e0e0] uppercase tracking-wider">
-                      2. 巡检指标项 ({checks.filter(c => c.enabled).length}/{checks.length})
+                      {t('insp.checkItems')} ({checks.filter(c => c.enabled).length}/{checks.length})
                     </span>
                   </div>
                   {checks.map(chk => (
@@ -461,12 +463,12 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                     {isRunning ? (
                       <>
                         <RotateCcw className="w-3.5 h-3.5 animate-spin" />
-                        <span>正在并发巡检中...</span>
+                        <span>{t('insp.running')}</span>
                       </>
                     ) : (
                       <>
                         <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>开始并发巡检 ({selectedSessionIds.length} 台主机)</span>
+                        <span>{t('insp.startBtn')} ({selectedSessionIds.length})</span>
                       </>
                     )}
                   </button>
@@ -491,21 +493,21 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                             className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#0078d4] text-[#cccccc] rounded text-xs transition-colors"
                           >
                             <FileText className="w-3.5 h-3.5" />
-                            <span>导出 MD</span>
+                            <span>{t('insp.exportMd')}</span>
                           </button>
                           <button
                             onClick={exportHTML}
                             className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#0078d4] text-[#cccccc] rounded text-xs transition-colors"
                           >
                             <FileCode className="w-3.5 h-3.5" />
-                            <span>导出 HTML</span>
+                            <span>{t('insp.exportHtml')}</span>
                           </button>
                           <button
                             onClick={exportJSON}
                             className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#0078d4] text-[#cccccc] rounded text-xs transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>导出 JSON</span>
+                            <span>{t('insp.exportJson')}</span>
                           </button>
                         </div>
                       </div>
@@ -513,29 +515,29 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                       {/* 核心状态指标卡片 */}
                       <div className="grid grid-cols-5 gap-2.5 pt-1">
                         <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5">
-                          <span className="text-[11px] text-[#858585]">巡检主机数</span>
+                          <span className="text-[11px] text-[#858585]">{t('insp.totalHosts')}</span>
                           <div className="text-lg font-semibold text-[#e0e0e0] mt-0.5">{currentReport.hostCount}</div>
                         </div>
                         <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5">
-                          <span className="text-[11px] text-[#858585]">健康主机</span>
+                          <span className="text-[11px] text-[#858585]">{t('insp.healthyHosts')}</span>
                           <div className="text-lg font-semibold text-[#4ec9b0] mt-0.5">
                             {Object.values(currentReport.hostResults).filter(h => h.status === 'success').length}
                           </div>
                         </div>
                         <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5">
-                          <span className="text-[11px] text-[#858585]">告警主机</span>
+                          <span className="text-[11px] text-[#858585]">{t('insp.warningHosts')}</span>
                           <div className="text-lg font-semibold text-[#cca700] mt-0.5">
                             {Object.values(currentReport.hostResults).filter(h => h.status === 'warning').length}
                           </div>
                         </div>
                         <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5">
-                          <span className="text-[11px] text-[#858585]">异常/故障主机</span>
+                          <span className="text-[11px] text-[#858585]">{t('insp.errorHosts')}</span>
                           <div className="text-lg font-semibold text-[#f14c4c] mt-0.5">
                             {Object.values(currentReport.hostResults).filter(h => h.status === 'error' || h.status === 'failed').length}
                           </div>
                         </div>
                         <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5">
-                          <span className="text-[11px] text-[#858585]">总并发耗时</span>
+                          <span className="text-[11px] text-[#858585]">{t('insp.totalDuration')}</span>
                           <div className="text-lg font-semibold text-[#0078d4] mt-0.5">{currentReport.durationMs}ms</div>
                         </div>
                       </div>
@@ -560,7 +562,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                               : 'border-transparent text-[#858585] hover:text-[#cccccc]'
                           }`}
                         >
-                          <span>异常与隐患项 ({currentReport.issueCount})</span>
+                          <span>{t('insp.issuesView')} ({currentReport.issueCount})</span>
                         </button>
                       </div>
                     </div>
@@ -575,17 +577,17 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                             host.status === 'success' ? (
                               <span className="flex items-center space-x-1 text-[#4ec9b0] bg-[#4ec9b0]/10 border border-[#4ec9b0]/30 px-2 py-0.5 rounded text-[11px] font-medium">
                                 <CheckCircle className="w-3 h-3" />
-                                <span>健康</span>
+                                <span>{t('insp.healthyBadge')}</span>
                               </span>
                             ) : host.status === 'warning' ? (
                               <span className="flex items-center space-x-1 text-[#cca700] bg-[#cca700]/10 border border-[#cca700]/30 px-2 py-0.5 rounded text-[11px] font-medium">
                                 <AlertTriangle className="w-3 h-3" />
-                                <span>存在告警 ({host.issueCount})</span>
+                                <span>{t('insp.warningBadge')} ({host.issueCount})</span>
                               </span>
                             ) : (
                               <span className="flex items-center space-x-1 text-[#f14c4c] bg-[#f14c4c]/10 border border-[#f14c4c]/30 px-2 py-0.5 rounded text-[11px] font-medium">
                                 <XCircle className="w-3 h-3" />
-                                <span>异常故障</span>
+                                <span>{t('insp.errorBadge')}</span>
                               </span>
                             );
 
@@ -660,7 +662,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                         <div className="space-y-3">
                           {currentReport.issueCount === 0 ? (
                             <div className="text-center py-12 text-[#858585] text-xs">
-                              🎉 太棒了！所有主机各项指标全部正常，未发现任何高危或告警隐患。
+                              {t('insp.allPassed')}
                             </div>
                           ) : (
                             Object.values(currentReport.hostResults).map(host => {
@@ -678,7 +680,7 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                                       <span className="text-xs text-[#858585] font-mono">({host.hostIp})</span>
                                     </div>
                                     <span className="text-xs text-[#cca700] font-medium">
-                                      发现 {issueItems.length} 项异常
+                                      {(t('inspection.foundIssues') || '发现 {count} 项异常').replace('{count}', String(issueItems.length))}
                                     </span>
                                   </div>
                                   <div className="space-y-2">
@@ -705,9 +707,9 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                     <Activity className="w-10 h-10 text-[#858585] mb-2.5 stroke-[1.5]" />
-                    <h3 className="text-xs font-semibold text-[#e0e0e0] mb-1">尚未开始巡检</h3>
+                    <h3 className="text-xs font-semibold text-[#e0e0e0] mb-1">{t('insp.notStartedTitle')}</h3>
                     <p className="text-xs text-[#858585] max-w-sm mb-4">
-                      在左侧勾选需要检查的主机与指标模板，点击「开始并发巡检」即可生成多维健康诊断报告
+                      {t('insp.notStartedDesc')}
                     </p>
                   </div>
                 )}
@@ -716,9 +718,9 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
           ) : (
             /* 历史报告列表 */
             <div className="flex-1 overflow-y-auto p-5 space-y-3 custom-scrollbar">
-              <h3 className="text-xs font-semibold text-[#858585] uppercase tracking-wider">历史巡检报告记录</h3>
+              <h3 className="text-xs font-semibold text-[#858585] uppercase tracking-wider">{t('insp.historyTitle')}</h3>
               {historyReports.length === 0 ? (
-                <div className="text-center py-16 text-[#858585] text-xs">暂无任何历史巡检报告</div>
+                <div className="text-center py-16 text-[#858585] text-xs">{t('insp.noHistory')}</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {historyReports.map(rep => (
@@ -740,9 +742,9 @@ export const InspectionReportModal: React.FC<InspectionReportModalProps> = ({
                       <div className="flex items-center justify-between text-xs text-[#858585] pt-2 border-t border-[#2b2b2b]">
                         <span>{new Date(rep.createdAt * 1000).toLocaleString()}</span>
                         <div className="flex items-center space-x-2">
-                          <span>主机: {rep.hostCount}</span>
+                          <span>{(t('inspection.hostsCount') || '主机: {count}').replace('{count}', String(rep.hostCount))}</span>
                           <span className={rep.issueCount > 0 ? 'text-[#cca700]' : 'text-[#4ec9b0]'}>
-                            异常: {rep.issueCount}
+                            {(t('inspection.issuesCount') || '异常: {count}').replace('{count}', String(rep.issueCount))}
                           </span>
                         </div>
                       </div>

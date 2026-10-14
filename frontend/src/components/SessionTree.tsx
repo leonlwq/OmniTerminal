@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React from 'react';
 import {
   ChevronDown, ChevronRight, Folder, FolderOpen,
@@ -62,6 +63,7 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
   onContextMenuBlank,
   onNewFolder,
 }) => {
+  const { t } = useI18n();
   // 构造树形数据
   const buildTree = (configs: app.SessionConfig[]): TreeNode[] => {
     const nodeMap: { [id: string]: TreeNode } = {};
@@ -238,7 +240,7 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                   setIsModalOpen(true);
                 }}
                 className="p-0.5 hover:text-blue-400 rounded hover:bg-app-hover text-slate-400 transition-colors"
-                title="在该目录下新建子会话"
+                title={t('sessionTree.newSubSession')}
               >
                 <Plus className="h-3 w-3" />
               </button>
@@ -250,21 +252,21 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                   setIsModalOpen(true);
                 }}
                 className="p-0.5 hover:text-amber-400 rounded hover:bg-app-hover text-slate-400 transition-colors"
-                title="在该目录下新建子目录"
+                title={t('sessionTree.newSubFolder')}
               >
                 <FolderPlus className="h-3 w-3" />
               </button>
               <button
                 onClick={(e) => handleEditSession(config, e)}
                 className="p-0.5 hover:text-blue-400 rounded hover:bg-app-hover text-slate-400 transition-colors"
-                title="重命名目录 / 级联模板"
+                title={t('sessionTree.renameFolder')}
               >
                 <Edit className="h-3 w-3" />
               </button>
               <button
                 onClick={(e) => handleDeleteSession(config.id, e)}
                 className="p-0.5 hover:text-red-400 rounded hover:bg-app-hover text-slate-400 transition-colors"
-                title="删除目录"
+                title={t('sessionTree.deleteFolder')}
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -288,10 +290,10 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                   }}
                   className="py-1 text-slate-500 hover:text-slate-300 text-[10px] cursor-pointer flex items-center gap-1 group/empty transition-colors" 
                   style={{ paddingLeft: `${(depth + 1) * 16 + 24}px` }}
-                  title="右键或点击在此目录下新建会话/子目录"
+                  title={t('sessionTree.newUnderFolder')}
                 >
                   <Plus className="w-2.5 h-2.5 opacity-40 group-hover/empty:opacity-100 text-blue-400" />
-                  <span>空目录 (点击/右键新建)</span>
+                  <span>{t('sessionTree.emptyFolderHint')}</span>
                 </div>
               ) : (
                 children.map(child => renderTreeNode(child, depth + 1))
@@ -352,9 +354,9 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                 title={
                   reachability
                     ? (reachability.online
-                        ? `在线 (${reachability.latencyMs}ms) - 探测于 ${reachability.checkedAt}`
-                        : `主机离线/不可达: ${reachability.error || '连接超时'}`)
-                    : '连通性未探测 (点击顶栏 ⚡ 按钮探测)'
+                        ? t('sessionTree.onlineLatency').replace('{ms}', String(reachability.latencyMs)).replace('{time}', reachability.checkedAt)
+                        : t('sessionTree.offlineError').replace('{err}', reachability.error || t('common.timeout') || '连接超时'))
+                    : t('sessionTree.reachNotProbed')
                 }
               />
             ) : null}
@@ -379,7 +381,7 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                {config.isLocal ? '本地终端' : `${config.user || 'root'}@${config.host}:${config.port || 22}`}
+                {config.isLocal ? t('sessionTree.localTerm') : `${config.user || 'root'}@${config.host}:${config.port || 22}`}
               </p>
             </div>
           </div>
@@ -388,14 +390,14 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
             <button
               onClick={(e) => handleEditSession(config, e)}
               className="p-0.5 hover:text-blue-400 hover:bg-app-hover rounded"
-              title="修改配置"
+              title={t('sessionTree.editConfig')}
             >
               <Edit className="h-3 w-3" />
             </button>
             <button
               onClick={(e) => handleDeleteSession(config.id, e)}
               className="p-0.5 hover:text-red-400 hover:bg-app-hover rounded"
-              title="删除会话"
+              title={t('sessionTree.deleteSession')}
             >
               <Trash2 className="h-3 w-3" />
             </button>
@@ -417,8 +419,8 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
         onClick={onNewFolder}
       >
         <FolderPlus className="w-6 h-6 mx-auto mb-2 opacity-30" />
-        <span>暂无会话或目录</span>
-        <div className="text-[10px] text-slate-500 mt-1">右键或点击此处快速创建目录</div>
+        <span>{t('sessionTree.emptyTreeHint')}</span>
+        <div className="text-[10px] text-slate-500 mt-1">{t("sessionTree.emptyTreeSub")}</div>
       </div>
     );
   }

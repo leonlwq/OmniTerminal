@@ -25,6 +25,90 @@ interface MenuItem {
   isSeparator?: boolean;
 }
 
+const MENU_ITEM_I18N: Record<string, { en: string; ja: string; ko: string }> = {
+  '新建(N)...': { en: 'New(N)...', ja: '新規作成(N)...', ko: '새로 만들기(N)...' },
+  '新建本地 Shell(L)': { en: 'New Local Shell(L)', ja: '新規ローカルシェル(L)', ko: '새 로컬 셸(L)' },
+  '从 OpenSSH ~/.ssh/config 导入...': { en: 'Import from ~/.ssh/config...', ja: '~/.ssh/config からインポート...', ko: '~/.ssh/config에서 가져오기...' },
+  '导出为 OpenSSH ~/.ssh/config': { en: 'Export as ~/.ssh/config', ja: '~/.ssh/config にエクスポート', ko: '~/.ssh/config로 내보내기' },
+  '打开会话管理器(O)': { en: 'Session Manager(O)', ja: 'セッションマネージャー(O)', ko: '세션 관리자(O)' },
+  '关闭当前标签页(C)': { en: 'Close Current Tab(C)', ja: '現在のタブを閉じる(C)', ko: '현재 탭 닫기(C)' },
+  '另存为日志(A)...': { en: 'Save As Log(A)...', ja: 'ログとして保存(A)...', ko: '로그로 저장(A)...' },
+  '打印(P)...': { en: 'Print(P)...', ja: '印刷(P)...', ko: '인쇄(P)...' },
+  '退出(X)': { en: 'Quit(X)', ja: '終了(X)', ko: '종료(X)' },
+
+  '复制(C)': { en: 'Copy(C)', ja: 'コピー(C)', ko: '복사(C)' },
+  '粘贴(P)': { en: 'Paste(P)', ja: '貼り付け(P)', ko: '붙여넣기(P)' },
+  '全选(A)': { en: 'Select All(A)', ja: 'すべて選択(A)', ko: '모두 선택(A)' },
+  '查找(F)...': { en: 'Find(F)...', ja: '検索(F)...', ko: '찾기(F)...' },
+  '清空屏幕(L)': { en: 'Clear Screen(L)', ja: '画面をクリア(L)', ko: '화면 지우기(L)' },
+  '清空滚动缓冲区': { en: 'Clear Scrollback Buffer', ja: 'スクロールバッファをクリア', ko: '스크롤 버퍼 지우기' },
+
+  '工具栏(T)': { en: 'Toolbar(T)', ja: 'ツールバー(T)', ko: '도구 모음(T)' },
+  '地址栏(A)': { en: 'Address Bar(A)', ja: 'アドレスバー(A)', ko: '주소 표시줄(A)' },
+  '状态栏(S)': { en: 'Status Bar(S)', ja: 'ステータスバー(S)', ko: '상태 표시줄(S)' },
+  '会话管理器(M)': { en: 'Session Manager(M)', ja: 'セッションマネージャー(M)', ko: '세션 관리자(M)' },
+  '暗黑主题模式(Dark)': { en: 'Dark Theme Mode', ja: 'ダークテーマモード', ko: '다크 테마 모드' },
+  '明亮主题模式(Light)': { en: 'Light Theme Mode', ja: 'ライトテーマモード', ko: '라이트 테마 모드' },
+  '跟随系统外观(Auto)': { en: 'Follow System (Auto)', ja: 'システム設定に従う (Auto)', ko: '시스템 설정 따름 (Auto)' },
+  'Quake 下拉模式(Q)': { en: 'Quake Dropdown Mode(Q)', ja: 'Quake ドロップダウンモード(Q)', ko: 'Quake 드롭다운 모드(Q)' },
+  '全屏(F)': { en: 'Fullscreen(F)', ja: '全画面表示(F)', ko: '전체 화면(F)' },
+  '放大字体(=)': { en: 'Zoom In(=)', ja: 'フォント拡大(=)', ko: '글꼴 확대(=)' },
+  '缩小字体(-)': { en: 'Zoom Out(-)', ja: 'フォント縮小(-)', ko: '글꼴 축소(-)' },
+  '重置字体大小(0)': { en: 'Reset Font Size(0)', ja: 'フォントサイズ初期化(0)', ko: '글꼴 크기 초기화(0)' },
+
+  '命令调色板(P)...': { en: 'Command Palette(P)...', ja: 'コマンドパレット(P)...', ko: '명령 팔레트(P)...' },
+  '跨会话命令历史(H)...': { en: 'Cross-Session Command History(H)...', ja: 'セッション横断コマンド履歴(H)...', ko: '세션 간 명령 기록(H)...' },
+  '选项(O)...': { en: 'Options(O)...', ja: '設定オプション(O)...', ko: '옵션(O)...' },
+  'OmniAI 智能运维 Copilot(AI)...': { en: 'OmniAI Smart Copilot(AI)...', ja: 'OmniAI スマート運用 Copilot(AI)...', ko: 'OmniAI 스마트 운영 Copilot(AI)...' },
+  '端到端加密云同步与团队资产(Sync)...': { en: 'E2E Encrypted Cloud Sync(Sync)...', ja: 'E2E 暗号化クラウド同期(Sync)...', ko: '종단간 암호화 클라우드 동기화(Sync)...' },
+  'SOP 运维手册与交互式执行流(SOP)...': { en: 'SOP Runbook & Interactive Flow(SOP)...', ja: 'SOP 運用マニュアル＆実行フロー(SOP)...', ko: 'SOP 운영 매뉴얼 및 대화형 흐름(SOP)...' },
+  '密钥管理(K)...': { en: 'Key Manager(K)...', ja: '鍵管理(K)...', ko: '키 관리자(K)...' },
+  '认证配置管理(A)...': { en: 'Auth Profiles(A)...', ja: '認証プロファイル管理(A)...', ko: '인증 프로필 관리(A)...' },
+  'SSH 端口转发与隧道监控(U)...': { en: 'SSH Tunnels & Port Forwarding(U)...', ja: 'SSH トンネル＆ポート転送(U)...', ko: 'SSH 터널 및 포트 전달 모니터(U)...' },
+  '网络拓扑与隧道可视化(Topo)...': { en: 'Network Topology Visualization(Topo)...', ja: 'ネットワークトポロジー可視化(Topo)...', ko: '네트워크 토폴로지 시각화(Topo)...' },
+  '多主机命令对比执行(Diff)...': { en: 'Multi-Host Command Diff(Diff)...', ja: '複数ホストコマンド比較実行(Diff)...', ko: '다중 호스트 명령 비교 실행(Diff)...' },
+  'TOTP / MFA 令牌管理(TOTP)...': { en: 'TOTP / MFA Token Manager(TOTP)...', ja: 'TOTP / MFA トークン管理(TOTP)...', ko: 'TOTP / MFA 토큰 관리자(TOTP)...' },
+  '批量主机健康巡检(Insp)...': { en: 'Batch Host Health Inspection(Insp)...', ja: '一括ホスト健全性点検(Insp)...', ko: '일괄 호스트 상태 점검(Insp)...' },
+  '运行自动化脚本(S)...': { en: 'Run Automated Script(S)...', ja: '自動化スクリプト実行(S)...', ko: '자동화 스크립트 실행(S)...' },
+  '主机性能实时监控(Activity)...': { en: 'Host Performance Monitor(Activity)...', ja: 'ホストパフォーマンス監視(Activity)...', ko: '호스트 성능 실시간 모니터(Activity)...' },
+  '远程进程与服务管理(Ops)...': { en: 'Remote Processes & Services(Ops)...', ja: 'リモートプロセス＆サービス管理(Ops)...', ko: '원격 프로세스 및 서비스 관리(Ops)...' },
+  '远程实时日志追踪器(Tail)...': { en: 'Remote Realtime Log Tail(Tail)...', ja: 'リモートリアルタイムログ追跡(Tail)...', ko: '원격 실시간 로그 추적기(Tail)...' },
+  '一键断开全部连接(D)': { en: 'Disconnect All Connections(D)', ja: 'すべての接続を切断(D)', ko: '모든 연결 끊기(D)' },
+  '日志查看器(L)...': { en: 'Log Viewer(L)...', ja: 'ログビューア(L)...', ko: '로그 뷰어(L)...' },
+  '宏管理器(M)...': { en: 'Macro Manager(M)...', ja: 'マクロマネージャー(M)...', ko: '매크로 관리자(M)...' },
+  '触发器管理(R)...': { en: 'Trigger Manager(R)...', ja: 'トリガー管理(R)...', ko: '트리거 관리자(R)...' },
+  'SFTP 文件管理器(F)': { en: 'SFTP File Manager(F)', ja: 'SFTP ファイルマネージャー(F)', ko: 'SFTP 파일 관리자(F)' },
+  '多行撰写窗格(P)': { en: 'Compose Pane(P)', ja: '複数行入力ペイン(P)', ko: '다중 줄 입력창(P)' },
+  '立即锁定工作区(Lock)...': { en: 'Lock Workspace Now(Lock)...', ja: '今すぐワークスペースをロック(Lock)...', ko: '지금 워크스페이스 잠금(Lock)...' },
+
+  '新建选项卡(N)': { en: 'New Tab(N)', ja: '新規タブ(N)', ko: '새 탭(N)' },
+  '克隆当前选项卡(D)': { en: 'Clone Current Tab(D)', ja: '現在のタブを複製(D)', ko: '현재 탭 복제(D)' },
+  '拆离到独立窗口(D)': { en: 'Detach to Window(D)', ja: '別ウィンドウに分離(D)', ko: '독립 창으로 분리(D)' },
+  '关闭当前选项卡(C)': { en: 'Close Current Tab(C)', ja: '現在のタブを閉じる(C)', ko: '현재 탭 닫기(C)' },
+  '关闭其他选项卡': { en: 'Close Other Tabs', ja: '他のタブを閉じる', ko: '다른 탭 닫기' },
+  '关闭右侧全部': { en: 'Close All to the Right', ja: '右側のタブをすべて閉じる', ko: '오른쪽 탭 모두 닫기' },
+  '锁定/解锁当前选项卡(L)': { en: 'Lock/Unlock Tab(L)', ja: 'タブの固定/固定解除(L)', ko: '탭 잠금/잠금 해제(L)' },
+  '重命名选项卡(R)': { en: 'Rename Tab(R)', ja: 'タブの名前変更(R)', ko: '탭 이름 바꾸기(R)' },
+  '选项卡管理器(M)': { en: 'Tab Manager(M)', ja: 'タブマネージャー(M)', ko: '탭 관리자(M)' },
+  '上一个选项卡': { en: 'Previous Tab', ja: '前のタブ', ko: '이전 탭' },
+  '下一个选项卡': { en: 'Next Tab', ja: '次のタブ', ko: '다음 탭' },
+
+  '垂直分屏(V)': { en: 'Split Vertically(V)', ja: '垂直分割(V)', ko: '수직 분할(V)' },
+  '水平分屏(H)': { en: 'Split Horizontally(H)', ja: '水平分割(H)', ko: '수평 분할(H)' },
+  '四分屏 (2x2 田字格)': { en: '4-Way Split (2x2 Grid)', ja: '4画面分割 (2x2)', ko: '4분할 (2x2 그리드)' },
+  '三分屏 (1+2 品字形)': { en: '3-Way Split (1+2)', ja: '3画面分割 (1+2)', ko: '3분할 (1+2)' },
+  '关闭分屏': { en: 'Close Split', ja: '分割を閉じる', ko: '분할 닫기' },
+  '在所有选项卡中广播输入': { en: 'Broadcast Input to All Tabs', ja: '全タブに入力を配信', ko: '모든 탭에 입력 브로드캐스트' },
+  '最小化窗口(M)': { en: 'Minimize Window(M)', ja: 'ウィンドウを最小化(M)', ko: '창 최소화(M)' },
+  '最大化窗口(Z)': { en: 'Maximize Window(Z)', ja: 'ウィンドウを最大化(Z)', ko: '창 최대화(Z)' },
+
+  '在线文档(D)': { en: 'Documentation(D)', ja: 'ドキュメント(D)', ko: '문서(D)' },
+  '报告问题(R)': { en: 'Report Issue(R)', ja: '問題を報告(R)', ko: '문제 신고(R)' },
+  '快捷键参考(K)': { en: 'Shortcuts Reference(K)', ja: 'ショートカット一覧(K)', ko: '단축키 안내(K)' },
+  '关于 OmniTerminal(A)...': { en: 'About OmniTerminal(A)...', ja: 'OmniTerminal について(A)...', ko: 'OmniTerminal 정보(A)...' },
+  '检查更新(U)...': { en: 'Check for Updates(U)...', ja: '更新を確認(U)...', ko: '업데이트 확인(U)...' },
+};
+
 
 interface ToolbarProps {
   t: any;
@@ -257,8 +341,13 @@ export function Toolbar({
   const isMac = typeof navigator !== 'undefined' && (/Mac|Darwin/.test(navigator.platform || '') || /Macintosh/.test(navigator.userAgent || ''));
   
   const displayMenuLabel = useCallback((label: string) => {
-    return isMac ? label.replace(/\([A-Za-z0-9_]+\)/g, '') : label;
-  }, [isMac]);
+    let localized = label;
+    if (lang === 'en-US' && MENU_ITEM_I18N[label]?.en) localized = MENU_ITEM_I18N[label].en;
+    else if (lang === 'ja-JP' && MENU_ITEM_I18N[label]?.ja) localized = MENU_ITEM_I18N[label].ja;
+    else if (lang === 'ko-KR' && MENU_ITEM_I18N[label]?.ko) localized = MENU_ITEM_I18N[label].ko;
+
+    return isMac ? localized.replace(/\([A-Za-z0-9_]+\)/g, '') : localized;
+  }, [isMac, lang]);
 
   const formatMacShortcut = useCallback((shortcut?: string) => {
     if (!shortcut) return '';
@@ -579,7 +668,7 @@ export function Toolbar({
 
   // Complete menu definitions with separators and shortcut annotations
   const menus: { label: string; id: string; items: MenuItem[] }[] = [
-    { label: '文件(F)', id: 'file', items: [
+    { label: t('menu.file') || '文件(F)', id: 'file', items: [
       { label: '新建(N)...', shortcut: 'Ctrl+N' },
       { label: '新建本地 Shell(L)' },
       { label: '从 OpenSSH ~/.ssh/config 导入...', shortcut: 'Ctrl+I' },
@@ -594,7 +683,7 @@ export function Toolbar({
       { label: '', isSeparator: true },
       { label: '退出(X)', shortcut: 'Ctrl+Q' },
     ]},
-    { label: '编辑(E)', id: 'edit', items: [
+    { label: t('menu.editMenu') || '编辑(E)', id: 'edit', items: [
       { label: '复制(C)', shortcut: 'Ctrl+C' },
       { label: '粘贴(P)', shortcut: 'Ctrl+V' },
       { label: '全选(A)', shortcut: 'Ctrl+A' },
@@ -603,7 +692,7 @@ export function Toolbar({
       { label: '清空屏幕(L)' },
       { label: '清空滚动缓冲区' },
     ]},
-    { label: '查看(V)', id: 'view', items: [
+    { label: t('menu.view') || '查看(V)', id: 'view', items: [
       { label: '工具栏(T)' },
       { label: '地址栏(A)' },
       { label: '状态栏(S)' },
@@ -620,7 +709,7 @@ export function Toolbar({
       { label: '缩小字体(-)', shortcut: 'Ctrl+-' },
       { label: '重置字体大小(0)', shortcut: 'Ctrl+0' },
     ]},
-    { label: '工具(T)', id: 'tools', items: [
+    { label: t('menu.tools') || '工具(T)', id: 'tools', items: [
       { label: '命令调色板(P)...', shortcut: 'Ctrl+P' },
       { label: '跨会话命令历史(H)...', shortcut: 'Ctrl+Shift+H' },
       { label: '选项(O)...', shortcut: 'Alt+O' },
@@ -651,7 +740,7 @@ export function Toolbar({
       { label: '', isSeparator: true },
       { label: '立即锁定工作区(Lock)...' },
     ]},
-    { label: '选项卡(B)', id: 'tabs', items: [
+    { label: t('menu.tabs') || '选项卡(B)', id: 'tabs', items: [
       { label: '新建选项卡(N)', shortcut: 'Ctrl+T' },
       { label: '克隆当前选项卡(D)' },
       { label: '拆离到独立窗口(D)', shortcut: 'Ctrl+Shift+D' },
@@ -668,7 +757,7 @@ export function Toolbar({
       { label: '上一个选项卡', shortcut: 'Ctrl+Shift+Tab' },
       { label: '下一个选项卡', shortcut: 'Ctrl+Tab' },
     ]},
-    { label: '窗口(W)', id: 'window', items: [
+    { label: t('menu.window') || '窗口(W)', id: 'window', items: [
       { label: '垂直分屏(V)' },
       { label: '水平分屏(H)' },
       { label: '四分屏 (2x2 田字格)' },
@@ -680,7 +769,7 @@ export function Toolbar({
       { label: '最小化窗口(M)', shortcut: 'Cmd+M' },
       { label: '最大化窗口(Z)' },
     ]},
-    { label: '帮助(H)', id: 'help', items: [
+    { label: t('menu.help') || '帮助(H)', id: 'help', items: [
       { label: '在线文档(D)' },
       { label: '报告问题(R)' },
       { label: '', isSeparator: true },
@@ -787,7 +876,7 @@ export function Toolbar({
                           <Search className="absolute left-2.5 w-3.5 h-3.5 text-app-text-muted pointer-events-none" />
                           <input
                             type="text"
-                            placeholder="搜索操作或快捷键..."
+                            placeholder={t('toolbar.menuSearchPlaceholder')}
                             value={menuSearch}
                             onChange={(e) => setMenuSearch(e.target.value)}
                             onClick={(e) => e.stopPropagation()}
@@ -864,15 +953,15 @@ export function Toolbar({
                 setIsModalOpen(true);
               }}
               className="flex items-center space-x-1 px-3 py-1 bg-app-accent hover:bg-app-accent-hover text-white text-[12.5px] font-medium rounded-md transition-colors h-7"
-              title={isMac ? "新建会话 (⌘N)" : "新建会话 (Ctrl+N)"}
+              title={isMac ? (t('toolbar.newSessionShortcutMac') || "新建会话 (⌘N)") : (t('toolbar.newSessionShortcutWin') || "新建会话 (Ctrl+N)")}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>新建</span>
+              <span>{t('toolbar.new') || '新建'}</span>
             </button>
             <button
               onClick={handleLocalShell}
               className="p-1 hover:bg-app-hover text-app-text-muted hover:text-app-text transition-colors rounded-md h-7 w-7 flex items-center justify-center"
-              title="新建本地终端"
+              title={t('toolbar.newLocalShell') || "新建本地终端"}
             >
               <TerminalSquare className="h-4 w-4" />
             </button>
@@ -892,7 +981,7 @@ export function Toolbar({
             <input
               type="text"
               list="quickConnectHistoryList"
-              placeholder="快速直连：ssh://user@host:port (Enter)"
+              placeholder={t('toolbar.quickConnectPlaceholder') || "快速直连：ssh://user@host:port (Enter)"}
               value={quickConnectInput}
               onChange={(e) => setQuickConnectInput(e.target.value)}
               autoCapitalize="none"
@@ -933,7 +1022,7 @@ export function Toolbar({
                 className={`px-1.5 py-0.5 rounded text-[9px] font-mono ${
                   dtrState ? 'bg-green-500/20 text-green-400 border border-green-500/40' : 'text-app-text-muted'
                 }`}
-                title="切换 DTR"
+                title={t('toolbar.toggleDTR') || "切换 DTR"}
               >
                 DTR
               </button>
@@ -942,14 +1031,14 @@ export function Toolbar({
                 className={`px-1.5 py-0.5 rounded text-[9px] font-mono ${
                   rtsState ? 'bg-green-500/20 text-green-400 border border-green-500/40' : 'text-app-text-muted'
                 }`}
-                title="切换 RTS"
+                title={t('toolbar.toggleRTS') || "切换 RTS"}
               >
                 RTS
               </button>
               <button
                 onClick={triggerBreak}
                 className="px-1.5 py-0.5 bg-yellow-600/30 hover:bg-yellow-600/50 text-yellow-300 rounded text-[9px]"
-                title="发送 Break 脉冲"
+                title={t('toolbar.sendBreak') || "发送 Break 脉冲"}
               >
                 ⚡Break
               </button>
@@ -963,7 +1052,7 @@ export function Toolbar({
               className={`p-1.5 rounded transition-colors ${
                 splitMode === 'vertical' ? 'bg-app-accent text-white shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
               }`}
-              title="垂直左右分屏"
+              title={t('toolbar.splitVertical') || "垂直左右分屏"}
             >
               <SplitSquareHorizontal className="h-3.5 w-3.5" />
             </button>
@@ -972,7 +1061,7 @@ export function Toolbar({
               className={`p-1.5 rounded transition-colors ${
                 splitMode === 'grid2x2' ? 'bg-app-accent text-white shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
               }`}
-              title="四分屏 (2x2 田字格)"
+              title={t('toolbar.splitGrid') || "四分屏 (2x2 田字格)"}
             >
               <Grid2X2 className="h-3.5 w-3.5" />
             </button>
@@ -992,7 +1081,7 @@ export function Toolbar({
                 ? 'bg-purple-600 text-white border-purple-400 shadow-sm'
                 : 'bg-app-surface hover:bg-app-hover border-app-border text-app-text shadow-sm'
             }`}
-            title="唤起 OmniAI 智能运维对话侧边栏 (Cmd+L / Ctrl+L)"
+            title={t('toolbar.aiCopilot') || "唤起 OmniAI 智能运维对话侧边栏 (Cmd+L / Ctrl+L)"}
           >
             <Sparkles className="h-3 w-3 text-purple-400" />
             <span>OmniAI</span>
@@ -1006,7 +1095,7 @@ export function Toolbar({
               className={`p-1.5 rounded-md transition-colors flex items-center space-x-1 ${
                 popover === 'toolbox' ? 'bg-app-accent text-white shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
               }`}
-              title="实用工具箱 (运维、监控、宏录制与视图)"
+              title={t('toolbar.toolbox') || "实用工具箱 (运维、监控、宏录制与视图)"}
             >
               <Wrench className="h-3.5 w-3.5" />
               <ChevronDown className="h-2 w-2 opacity-60" />
@@ -1018,7 +1107,7 @@ export function Toolbar({
                 className="absolute top-full right-0 mt-2 bg-app-surface/95 border border-app-border/80 shadow-2xl rounded-2xl p-2.5 z-50 w-72 backdrop-blur-xl ring-1 ring-white/[0.08] animate-in fade-in zoom-in-95 duration-100"
               >
                 <div className="text-[10px] font-semibold text-app-text-muted px-2 py-1 uppercase tracking-wider">
-                  监控与运维
+                  {t('toolbar.toolboxMonitorOps') || '监控与运维'}
                 </div>
                 <div className="grid grid-cols-2 gap-1 mb-2">
                   <button
@@ -1029,7 +1118,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     <Search className="h-3.5 w-3.5 text-blue-400" />
-                    <span>全局查找</span>
+                    <span>{t('toolbar.toolboxGlobalSearch')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1040,7 +1129,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-40"
                   >
                     <Activity className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>性能监控</span>
+                    <span>{t('toolbar.toolboxPerformance')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1051,7 +1140,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-40"
                   >
                     <Server className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>进程/服务</span>
+                    <span>{t('toolbar.toolboxOps')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1061,13 +1150,13 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     <Share2 className="h-3.5 w-3.5 text-purple-400" />
-                    <span>隧道拓扑</span>
+                    <span>{t('toolbar.toolboxTopology')}</span>
                   </button>
                 </div>
 
                 <div className="h-px bg-app-border my-1" />
                 <div className="text-[10px] font-semibold text-app-text-muted px-2 py-1 uppercase tracking-wider">
-                  批量与安全工具
+                  {t('toolbar.toolboxBatchSecurity') || '批量与安全工具'}
                 </div>
                 <div className="grid grid-cols-2 gap-1 mb-2">
                   <button
@@ -1078,7 +1167,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     <Columns className="h-3.5 w-3.5 text-amber-400" />
-                    <span>输出差异对比</span>
+                    <span>{t('toolbar.toolboxDiff')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1088,7 +1177,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     <KeyRound className="h-3.5 w-3.5 text-yellow-400" />
-                    <span>TOTP 令牌</span>
+                    <span>{t('toolbar.toolboxTotp')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1098,7 +1187,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     <ShieldCheck className="h-3.5 w-3.5 text-green-400" />
-                    <span>主机巡检</span>
+                    <span>{t('toolbar.toolboxInspection')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1117,7 +1206,7 @@ export function Toolbar({
                     className="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-[11px] text-app-text hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-40"
                   >
                     <Camera className="h-3.5 w-3.5 text-indigo-400" />
-                    <span>截取快照</span>
+                    <span>{t('toolbar.toolboxSnapshot')}</span>
                   </button>
                 </div>
 
@@ -1134,7 +1223,7 @@ export function Toolbar({
                     }`}
                   >
                     {isRecordingMacro ? <Square className="h-3 w-3" /> : <Circle className="h-3 w-3 text-red-500" />}
-                    <span>{isRecordingMacro ? '停止录制宏' : '录制宏'}</span>
+                    <span>{isRecordingMacro ? t('toolbar.toolboxStopMacro') : t('toolbar.toolboxRecordMacro')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1143,7 +1232,7 @@ export function Toolbar({
                     className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-[11px] text-app-text hover:bg-app-hover transition-colors"
                   >
                     <SlidersHorizontal className="h-3 w-3 text-blue-400" />
-                    <span>透明度</span>
+                    <span>{t('toolbar.toolboxOpacity')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1152,7 +1241,7 @@ export function Toolbar({
                     className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-[11px] text-app-text hover:bg-app-hover transition-colors"
                   >
                     <Languages className="h-3 w-3 text-cyan-400" />
-                    <span>语言</span>
+                    <span>{t('toolbar.toolboxLanguage')}</span>
                   </button>
                 </div>
               </div>
@@ -1166,7 +1255,7 @@ export function Toolbar({
               className={`p-1.5 rounded-full transition-colors ${
                 popover === 'theme' ? 'bg-app-accent/20 text-app-accent shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
               }`}
-              title="切换界面外观主题 (Dark / Light / System)"
+              title={t('toolbar.themeToggleTooltip') || "切换界面外观主题 (Dark / Light / System)"}
             >
               {((settings as any).appThemeMode === 'light' || (!(settings as any).appThemeMode && settings.themeName?.includes('Light'))) ? (
                 <Sun className="h-3.5 w-3.5 text-amber-500" />
@@ -1197,7 +1286,7 @@ export function Toolbar({
                   }`}
                 >
                   <Moon className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>暗黑模式 (Dark)</span>
+                  <span>{t('toolbar.themeDark')}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1215,7 +1304,7 @@ export function Toolbar({
                   }`}
                 >
                   <Sun className="h-3.5 w-3.5 text-amber-500" />
-                  <span>明亮模式 (Light)</span>
+                  <span>{t('toolbar.themeLight')}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1232,7 +1321,7 @@ export function Toolbar({
                   }`}
                 >
                   <Laptop className="h-3.5 w-3.5 text-blue-400" />
-                  <span>跟随系统 (Auto)</span>
+                  <span>{t('toolbar.themeAuto')}</span>
                 </button>
               </div>
             )}
@@ -1242,7 +1331,7 @@ export function Toolbar({
           <button
             onClick={() => onLockWorkspace?.()}
             className="p-1.5 text-app-text-muted hover:text-amber-500 hover:bg-app-hover rounded-full transition-colors"
-            title="立即锁定工作区 (Lock)"
+            title={t('toolbar.lockWorkspace') || "立即锁定工作区 (Lock)"}
           >
             <Lock className="h-3.5 w-3.5" />
           </button>
@@ -1251,7 +1340,7 @@ export function Toolbar({
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-1.5 text-app-text-muted hover:text-app-text hover:bg-app-hover rounded-full transition-colors"
-            title={isMac ? "偏好设置 (⌘,)" : "偏好设置 (Alt+O / Ctrl+,)"}
+            title={isMac ? ((t('toolbar.preferences') || "偏好设置") + " (⌘,)") : ((t('toolbar.preferences') || "偏好设置") + " (Alt+O / Ctrl+,)")}
           >
             <Settings className="h-3.5 w-3.5" />
           </button>
@@ -1263,50 +1352,31 @@ export function Toolbar({
             ref={popoverRef}
             className="absolute top-full right-16 mt-2 bg-app-surface/95 border border-app-border/80 shadow-2xl rounded-2xl p-1.5 z-50 flex flex-col space-y-0.5 w-32 backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/[0.08] animate-in fade-in zoom-in-95 duration-100"
           >
-            <button
-              onClick={() => {
-                setLang('zh-CN');
-                setPopover(null);
-              }}
-              className={`text-left px-2.5 py-1.5 text-[11px] rounded-xl transition-colors ${
-                lang === 'zh-CN' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-app-text hover:bg-app-hover'
-              }`}
-            >
-              简体中文
-            </button>
-            <button
-              onClick={() => {
-                setLang('en-US');
-                setPopover(null);
-              }}
-              className={`text-left px-2.5 py-1.5 text-[11px] rounded-xl transition-colors ${
-                lang === 'en-US' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-app-text hover:bg-app-hover'
-              }`}
-            >
-              English
-            </button>
-            <button
-              onClick={() => {
-                setLang('ja-JP');
-                setPopover(null);
-              }}
-              className={`text-left px-2.5 py-1.5 text-[11px] rounded-xl transition-colors ${
-                lang === 'ja-JP' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-app-text hover:bg-app-hover'
-              }`}
-            >
-              日本語
-            </button>
-            <button
-              onClick={() => {
-                setLang('ko-KR');
-                setPopover(null);
-              }}
-              className={`text-left px-2.5 py-1.5 text-[11px] rounded-xl transition-colors ${
-                lang === 'ko-KR' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-app-text hover:bg-app-hover'
-              }`}
-            >
-              한국어
-            </button>
+            {[
+              { code: 'zh-CN', label: '简体中文' },
+              { code: 'en-US', label: 'English' },
+              { code: 'ja-JP', label: '日本語' },
+              { code: 'ko-KR', label: '한국어' }
+            ].map(item => (
+              <button
+                key={item.code}
+                onClick={() => {
+                  setLang(item.code);
+                  setPopover(null);
+                  const updated = new models.models.AppSettings({
+                    ...settings,
+                    language: item.code
+                  } as any);
+                  setSettings(updated);
+                  SaveSettings(updated).catch(() => {});
+                }}
+                className={`text-left px-2.5 py-1.5 text-[11px] rounded-xl transition-colors ${
+                  lang === item.code ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-app-text hover:bg-app-hover'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         )}
 
@@ -1319,14 +1389,14 @@ export function Toolbar({
             <div className="flex items-center justify-between border-b border-app-border pb-2">
               <span className="text-[11px] font-semibold text-app-text flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
-                透明度与渲染
+                {t('toolbar.transparencyAndRender') || '透明度与渲染'}
               </span>
             </div>
 
             {/* 终端背景不透明度 */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10px]">
-                <span className="text-app-text-muted">终端背景不透明度</span>
+                <span className="text-app-text-muted">{t('toolbar.termBgOpacity')}</span>
                 <span className="text-blue-400 font-semibold">{Math.round((settings.terminalOpacity ?? 1.0) * 100)}%</span>
               </div>
               <input
@@ -1350,7 +1420,7 @@ export function Toolbar({
             {/* 窗口全局不透明度 */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10px]">
-                <span className="text-app-text-muted">窗口全局不透明度</span>
+                <span className="text-app-text-muted">{t('toolbar.windowOpacity')}</span>
                 <span className="text-blue-400 font-semibold">{Math.round((settings.windowOpacity ?? 1.0) * 100)}%</span>
               </div>
               <input
@@ -1386,7 +1456,7 @@ export function Toolbar({
                 }}
                 className="rounded-md border-white/20 bg-app-input text-blue-600 focus:ring-0 w-3.5 h-3.5"
               />
-              <span className="text-[11px] text-app-text">毛玻璃磨砂效果 (Blur)</span>
+              <span className="text-[11px] text-app-text">{t('toolbar.acrylicBlur')}</span>
             </label>
           </div>
         )}

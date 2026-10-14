@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Check, Search, Trash2, Sparkles, Moon, Sun, Palette } from 'lucide-react';
 import { THEMES } from '../../constants/terminalThemes';
 import { models } from '../../../wailsjs/go/models';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface ThemePreviewGalleryProps {
   activeThemeName: string;
@@ -23,6 +24,7 @@ export function ThemePreviewGallery({
   customThemes = [],
   onDeleteCustomTheme,
 }: ThemePreviewGalleryProps) {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dark' | 'light' | 'custom'>('all');
 
@@ -83,7 +85,7 @@ export function ThemePreviewGallery({
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#858585]" />
           <input
             type="text"
-            placeholder="搜索终端配色主题..."
+            placeholder={t('settings.appearance.searchTheme') || "搜索终端配色主题..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none transition-all placeholder:text-[#858585]"
@@ -101,7 +103,7 @@ export function ThemePreviewGallery({
                 : 'text-[#858585] hover:text-[#cccccc]'
             }`}
           >
-            全部 ({allThemeMetas.length})
+            {t('settings.appearance.all') || '全部'} ({allThemeMetas.length})
           </button>
           <button
             type="button"
@@ -112,7 +114,7 @@ export function ThemePreviewGallery({
                 : 'text-[#858585] hover:text-[#cccccc]'
             }`}
           >
-            <Moon className="w-3 h-3" /> 暗黑
+            <Moon className="w-3 h-3" /> {t('settings.appearance.dark') || '暗黑'}
           </button>
           <button
             type="button"
@@ -123,7 +125,7 @@ export function ThemePreviewGallery({
                 : 'text-[#858585] hover:text-[#cccccc]'
             }`}
           >
-            <Sun className="w-3 h-3" /> 浅色
+            <Sun className="w-3 h-3" /> {t('settings.appearance.light') || '浅色'}
           </button>
           {customThemes.length > 0 && (
             <button
@@ -135,7 +137,7 @@ export function ThemePreviewGallery({
                   : 'text-[#858585] hover:text-[#cccccc]'
               }`}
             >
-              <Palette className="w-3 h-3" /> 自定义 ({customThemes.length})
+              <Palette className="w-3 h-3" /> {t('settings.appearance.customPalette') || '自定义'} ({customThemes.length})
             </button>
           )}
         </div>
@@ -178,7 +180,7 @@ export function ThemePreviewGallery({
                   </span>
                   {isCustom && (
                     <span className="shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                      用户
+                      {t('gallery.customBadge') || '用户'}
                     </span>
                   )}
                 </div>
@@ -196,7 +198,7 @@ export function ThemePreviewGallery({
                         onDeleteCustomTheme(name);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-[#858585] hover:text-rose-300 transition-all"
-                      title="删除此自定义主题"
+                      title={t('gallery.deleteTooltip') || '删除此自定义主题'}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -261,7 +263,7 @@ export function ThemePreviewGallery({
 
       {filteredThemes.length === 0 && (
         <div className="py-8 text-center text-xs text-[#858585] bg-[#252526] rounded-md border border-[#2b2b2b]">
-          未找到与 "{searchTerm}" 匹配的配色主题
+          {t('gallery.noMatches') || '未找到匹配的配色主题'} "{searchTerm}"
         </div>
       )}
     </div>

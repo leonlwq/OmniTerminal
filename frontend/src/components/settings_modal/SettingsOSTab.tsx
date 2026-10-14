@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { models } from '../../../wailsjs/go/models';
 import { SaveSettings, GetSystemProxyInfo } from '../../../wailsjs/go/app/App';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SettingsOSTabProps {
   settings: models.AppSettings;
@@ -23,6 +24,7 @@ export function SettingsOSTab({
   settings,
   setSettings,
 }: SettingsOSTabProps) {
+  const { t } = useI18n();
   const [proxyInfo, setProxyInfo] = useState<{
     enabled: boolean;
     proxyType: string;
@@ -66,10 +68,10 @@ export function SettingsOSTab({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
           <Power className="w-3.5 h-3.5 text-[#0078d4]" />
-          系统自启与电源管理 (Startup & Power)
+          {t('settings.os.startupPower') || '系统自启与电源管理 (Startup & Power)'}
         </h4>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          定制开机自动启动策略与防止系统睡眠机制，保障大文件传输、隧道转发及远程任务不被系统休眠意外掐断。
+          {t('settings.os.startupPowerDesc') || '定制开机自动启动策略与防止系统睡眠机制，保障大文件传输、隧道转发及远程任务不被系统休眠意外掐断。'}
         </p>
 
         <div className="space-y-2.5 pt-1">
@@ -82,8 +84,8 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">开机时自启动 (Auto-start at Boot)</span>
-              <p className="text-[10px] text-[#858585]">系统开机登录时自动在后台启动 OmniTerminal 工作台</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.autoStart') || '开机时自启动 (Auto-start at Boot)'}</span>
+              <p className="text-[10px] text-[#858585]">{t('settings.os.autoStartDesc') || '系统开机登录时自动在后台启动 OmniTerminal 工作台'}</p>
             </div>
           </label>
 
@@ -96,8 +98,8 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">阻止系统休眠 (Prevent System Sleep)</span>
-              <p className="text-[10px] text-[#858585]">开启后将阻止系统自动休眠；关闭则允许系统按操作系统电源设置休眠</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.preventSleep') || '阻止系统休眠 (Prevent System Sleep)'}</span>
+              <p className="text-[10px] text-[#858585]">{t('settings.os.preventSleepDesc') || '开启后将阻止系统自动休眠；关闭则允许系统按操作系统电源设置休眠'}</p>
             </div>
           </label>
         </div>
@@ -108,7 +110,7 @@ export function SettingsOSTab({
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
             <Globe className="w-3.5 h-3.5 text-[#0078d4]" />
-            网络穿透与系统代理 (Network & System Proxy)
+            {t('settings.os.proxyTitle') || '网络穿透与系统代理 (Network & System Proxy)'}
           </h4>
           <button
             onClick={fetchProxyInfo}
@@ -116,11 +118,11 @@ export function SettingsOSTab({
             className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-[#cccccc] hover:text-white bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] rounded transition-colors"
           >
             <RefreshCw className={`w-3 h-3 ${isDetectingProxy ? 'animate-spin text-[#0078d4]' : ''}`} />
-            重新探测
+            {t('settings.os.redetect') || '重新探测'}
           </button>
         </div>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          自动探测并继承操作系统全局配置的 HTTP / SOCKS 代理，用于 SSH/SFTP 会话穿透及外部网络通信。
+          {t('settings.os.proxyDesc') || '自动探测并继承操作系统全局配置的 HTTP / SOCKS 代理，用于 SSH/SFTP 会话穿透及外部网络通信。'}
         </p>
 
         <div className="space-y-2.5 pt-1">
@@ -132,8 +134,8 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">使用系统代理 (Inherit System Proxy)</span>
-              <p className="text-[10px] text-[#858585]">未设置独立代理的会话将自动穿透系统代理进行连接</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.useSystemProxy') || '使用系统代理 (Inherit System Proxy)'}</span>
+              <p className="text-[10px] text-[#858585]">{t('settings.os.useSystemProxyDesc') || '未设置独立代理的会话将自动穿透系统代理进行连接'}</p>
             </div>
           </label>
 
@@ -149,17 +151,17 @@ export function SettingsOSTab({
                       <span className="text-[10px] text-[#858585] font-sans">({proxyInfo.source})</span>
                     </span>
                   ) : (
-                    <span>未检测到系统活跃代理 (当前为直连模式)</span>
+                    <span>{t('settings.os.proxyNotDetected') || '未检测到系统活跃代理 (当前为直连模式)'}</span>
                   )}
                 </div>
                 <p className="text-[10px] text-[#858585]">
-                  {proxyInfo?.enabled ? '已准备就绪，开启上方开关后即时生效' : '系统未配置全局 HTTP/SOCKS 代理'}
+                  {proxyInfo?.enabled ? (t('settings.os.proxyReady') || '已准备就绪，开启上方开关后即时生效') : (t('settings.os.proxyNotConfigured') || '系统未配置全局 HTTP/SOCKS 代理')}
                 </p>
               </div>
             </div>
             {proxyInfo?.enabled && (
               <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
-                已就绪
+                {t('settings.os.statusReady') || '已就绪'}
               </span>
             )}
           </div>
@@ -170,10 +172,10 @@ export function SettingsOSTab({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
           <ShieldCheck className="w-3.5 h-3.5 text-[#0078d4]" />
-          窗口关闭行为与系统托盘 (Window Close & Tray)
+          {t('settings.os.windowCloseTray') || '窗口关闭行为与系统托盘 (Window Close & Tray)'}
         </h4>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          定制点击应用主窗口右上角关闭按钮 (×) 时的系统处理策略，避免误关闭导致正在执行的远程编译或数据传输意外中断。
+          {t('settings.os.windowCloseDesc') || '定制点击应用主窗口右上角关闭按钮 (×) 时的系统处理策略，避免误关闭导致正在执行的远程编译或数据传输意外中断。'}
         </p>
 
         <div className="space-y-3 pt-1">
@@ -192,14 +194,14 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">禁用系统托盘 (Disable System Tray)</span>
-              <p className="text-[10px] text-[#858585]">禁用系统托盘，点击关闭按钮将会直接退出应用</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.disableTray') || '禁用系统托盘 (Disable System Tray)'}</span>
+              <p className="text-[10px] text-[#858585]">{t('settings.os.disableTrayDesc') || '禁用系统托盘，点击关闭按钮将会直接退出应用'}</p>
             </div>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#858585]">关闭按钮默认操作</label>
+              <label className="text-[11px] font-medium text-[#858585]">{t('settings.os.closeAction') || '关闭按钮默认操作'}</label>
               <select
                 disabled={isDisableTray}
                 value={isDisableTray ? 'quit' : ((settings as any).closeAction || 'tray')}
@@ -208,8 +210,8 @@ export function SettingsOSTab({
                   isDisableTray ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#505050] focus:border-[#0078d4]'
                 }`}
               >
-                <option value="tray">最小化到后台 / 系统托盘 (保持长连接)</option>
-                <option value="quit">直接退出程序 (终止全部连接)</option>
+                <option value="tray">{t('settings.os.closeActionTray') || '最小化到后台 / 系统托盘 (保持长连接)'}</option>
+                <option value="quit">{t('settings.os.closeActionQuit') || '直接退出程序 (终止全部连接)'}</option>
               </select>
             </div>
 
@@ -222,8 +224,8 @@ export function SettingsOSTab({
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
                 />
                 <div className="space-y-0.5">
-                  <span className="text-xs text-[#cccccc] font-medium">关闭时不再询问</span>
-                  <p className="text-[10px] text-[#858585]">直接执行设定操作，关闭此项可恢复确认弹窗</p>
+                  <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.closeDoNotAsk') || '关闭时不再询问'}</span>
+                  <p className="text-[10px] text-[#858585]">Direct action without confirmation modal</p>
                 </div>
               </label>
             </div>
@@ -235,10 +237,10 @@ export function SettingsOSTab({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-          标签页防误触二次确认 (Tab Closing Protection)
+          {t('settings.os.tabProtection') || '标签页防误触二次确认 (Tab Closing Protection)'}
         </h4>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          针对活跃连接会话的防误触安全屏障，防止快捷键或鼠标误关正在运行前台进程的生产服务器。
+          {t('settings.os.tabProtectionDesc') || '针对活跃连接会话的防误触安全屏障，防止快捷键或鼠标误关正在运行前台进程的生产服务器。'}
         </p>
 
         <div className="space-y-2 pt-1">
@@ -250,8 +252,8 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">关闭终端连接标签二次确认 (推荐开启)</span>
-              <p className="text-[10px] text-[#858585]">当会话处于连接中时，关闭该标签页前弹出安全确认弹窗</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.confirmCloseConnected') || '关闭终端连接标签二次确认 (推荐开启)'}</span>
+              <p className="text-[10px] text-[#858585]">Show confirmation before closing an active connected tab</p>
             </div>
           </label>
 
@@ -263,8 +265,8 @@ export function SettingsOSTab({
               className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
             />
             <div className="space-y-0.5">
-              <span className="text-xs text-[#cccccc] font-medium">关闭任何顶部 Tab 标签二次确认</span>
-              <p className="text-[10px] text-[#858585]">无论会话是否连接，关闭任何标签页均触发二次确认</p>
+              <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.confirmCloseAny') || '关闭任何顶部 Tab 标签二次确认'}</span>
+              <p className="text-[10px] text-[#858585]">Always confirm before closing any tab</p>
             </div>
           </label>
         </div>
@@ -274,10 +276,10 @@ export function SettingsOSTab({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
           <Maximize2 className="w-3.5 h-3.5 text-[#0078d4]" />
-          窗口状态与位置记忆 (Window Geometry & State)
+          {t('settings.os.windowGeometry') || '窗口状态与位置记忆 (Window Geometry & State)'}
         </h4>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          自动保存主窗口退出时的屏幕坐标、分辨率尺寸及最大化状态，跨会话无缝还原您的专属桌面排布。
+          Automatically save and restore window dimensions and coordinates
         </p>
 
         <label className="flex items-center space-x-2.5 p-2.5 rounded bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] cursor-pointer transition-colors">
@@ -288,8 +290,8 @@ export function SettingsOSTab({
             className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
           />
           <div className="space-y-0.5">
-            <span className="text-xs text-[#cccccc] font-medium">记录窗口打开位置与尺寸 (Remember Window Position)</span>
-            <p className="text-[10px] text-[#858585]">再次打开软件时，启动位置为上一次退出时的大小与屏幕坐标</p>
+            <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.rememberWindow') || '记录窗口打开位置与尺寸 (Remember Window Position)'}</span>
+            <p className="text-[10px] text-[#858585]">{t('settings.os.rememberWindowDesc') || '再次打开软件时，启动位置为上一次退出时的大小与屏幕坐标'}</p>
           </div>
         </label>
       </div>
@@ -298,10 +300,10 @@ export function SettingsOSTab({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#cccccc] flex items-center gap-2">
           <Terminal className="w-3.5 h-3.5 text-[#0078d4]" />
-          全局下拉终端 / Quake 模式 (Quake Dropdown Terminal)
+          {t('settings.os.quakeTitle') || '全局下拉终端 / Quake 模式 (Quake Dropdown Terminal)'}
         </h4>
         <p className="text-[11px] text-[#858585] leading-relaxed">
-          在任意系统应用中按下全局唤醒热键，OmniTerminal 将以 Quake 风格紧贴屏幕顶部滑出居中展示，再次按下或失焦时自动隐藏。
+          {t('settings.os.quakeDesc') || '在任意系统应用中按下全局唤醒热键，OmniTerminal 将以 Quake 风格紧贴屏幕顶部滑出居中展示，再次按下或失焦时自动隐藏。'}
         </p>
         <label className="flex items-center space-x-2.5 p-2.5 rounded bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] cursor-pointer transition-colors">
           <input 
@@ -310,19 +312,19 @@ export function SettingsOSTab({
             onChange={(e) => updateSettings({ enableQuakeMode: e.target.checked })}
             className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-4 h-4"
           />
-          <span className="text-xs text-[#cccccc] font-medium">启用全局下拉 Quake 模式</span>
+          <span className="text-xs text-[#cccccc] font-medium">{t('settings.os.enableQuake') || '启用全局下拉 Quake 模式'}</span>
         </label>
 
         {Boolean((settings as any).enableQuakeMode) && (
           <div className="space-y-3 pt-2 pl-3 border-l-2 border-[#0078d4]">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#858585]">唤醒快捷键 (Hotkey)</label>
+              <label className="text-[11px] font-medium text-[#858585]">{t('settings.os.quakeHotkey') || '唤醒快捷键 (Hotkey)'}</label>
               <select
                 value={(settings as any).quakeHotkey || 'Ctrl+`'}
                 onChange={(e) => updateSettings({ quakeHotkey: e.target.value })}
                 className="w-48 px-3 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
               >
-                <option value="Ctrl+`">Ctrl + ` (推荐)</option>
+                <option value="Ctrl+`">{t('settings.os.quakeHotkeyRecommend') || 'Ctrl + ` (推荐)'}</option>
                 <option value="F12">F12</option>
                 <option value="Alt+`">Alt + `</option>
                 <option value="F10">F10</option>
@@ -331,7 +333,7 @@ export function SettingsOSTab({
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-[#858585]">
-                <span>下拉窗口高度占比: {(settings as any).quakeHeightPercent || 50}%</span>
+                <span>{t('settings.os.quakeHeightPercent') || '下拉窗口高度占比: '}{(settings as any).quakeHeightPercent || 50}%</span>
               </div>
               <input 
                 type="range" 

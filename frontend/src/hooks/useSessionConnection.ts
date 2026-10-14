@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { WriteSSH } from '../../wailsjs/go/app/App';
 import { app } from '../../wailsjs/go/models';
 import { resolveEffectiveSessionConfig } from './useSessionManager';
+import { useI18n } from '../i18n/I18nContext';
 
 interface UseSessionConnectionOptions {
   sessions: app.SessionConfig[];
@@ -26,6 +27,7 @@ export function useSessionConnection({
   isBroadcast,
   setQuickCmd,
 }: UseSessionConnectionOptions) {
+  const { t } = useI18n();
   // 文件夹批量连接确认弹窗
   const [folderToConnect, setFolderToConnect] = useState<app.SessionConfig[] | null>(null);
 
@@ -74,7 +76,7 @@ export function useSessionConnection({
 
     const targetSessions = collectSessions(folderId);
     if (targetSessions.length === 0) {
-      alert("该目录下没有任何可连接的 SSH 会话");
+      alert(t('session.noConnectableInFolder'));
       return;
     }
 

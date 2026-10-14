@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, CornerDownLeft, Play, Copy, Check, X,
@@ -42,6 +43,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
   onOpenSettings,
   onOpenFullCopilotModal,
 }) => {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'command' | 'diagnose'>(initialMode);
   const [prompt, setPrompt] = useState('');
   const [errorText, setErrorText] = useState(initialErrorText);
@@ -140,7 +142,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
         setResult(res);
       } else {
         if (!diagError.trim()) {
-          setErrorMessage('暂无可分析的终端报错信息');
+          setErrorMessage(t('terminalCopilot.noError'));
           setLoading(false);
           return;
         }
@@ -149,7 +151,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
       }
     } catch (err: any) {
       console.error('AI Copilot request error:', err);
-      const msg = err?.message || String(err) || 'AI 服务请求异常';
+      const msg = err?.message || String(err) || t('terminalCopilot.serviceError');
       setErrorMessage(msg);
     } finally {
       setLoading(false);
@@ -179,21 +181,21 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
         return (
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-950/80 text-red-400 border border-red-700/50">
             <ShieldAlert className="w-3 h-3" />
-            高危系统变更
+            {t('terminalCopilot.dangerChange')}
           </span>
         );
       case 'caution':
         return (
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-950/80 text-amber-300 border border-amber-700/50">
             <AlertTriangle className="w-3 h-3" />
-            包含修改操作
+            {t('terminalCopilot.hasMutation')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-700/50">
             <ShieldCheck className="w-3 h-3" />
-            安全只读/查询
+            {t('terminalCopilot.safeQuery')}
           </span>
         );
     }
@@ -211,10 +213,10 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
             <Sparkles className="w-3 h-3" />
           </div>
           <span className="text-xs font-semibold text-white tracking-wide">
-            OmniAI 行内终端副驾
+            {t('terminalCopilot.title')}
           </span>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2d2d2d] border border-[#3c3c3c] text-[#858585] font-mono">
-            {activeSessionName || '终端会话'} · {osType}
+            {activeSessionName || t('terminal.tabDefaultName') || '终端会话'} · {osType}
           </span>
         </div>
 
@@ -234,7 +236,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                   : 'text-[#858585] hover:text-[#cccccc]'
               }`}
             >
-              命令生成
+              {t('terminalCopilot.genTab')}
             </button>
             <button
               onClick={() => {
@@ -248,7 +250,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                   : 'text-[#858585] hover:text-[#cccccc]'
               }`}
             >
-              报错修复
+              {t('terminalCopilot.fixTab')}
             </button>
           </div>
 
@@ -259,7 +261,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                 onOpenFullCopilotModal();
               }}
               className="p-1 hover:bg-[#333333] text-[#858585] hover:text-[#cccccc] rounded transition-colors"
-              title="切换至全屏 AI 对话助手"
+              title={t('terminalCopilot.openChat')}
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
@@ -268,7 +270,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
           <button
             onClick={onClose}
             className="p-1 hover:bg-[#333333] text-[#858585] hover:text-white rounded transition-colors"
-            title="关闭 (Esc)"
+            title={t('common.close') + ' (Esc)'}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -280,7 +282,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
         <div className="px-3.5 py-2 bg-amber-950/40 border-b border-amber-700/40 text-amber-200 text-xs flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[11px]">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>尚未配置 AI API Key，支持 DeepSeek、OpenAI 或本地 Ollama 离线模型。</span>
+            <span>{t('terminalCopilot.noKeyNotice')}</span>
           </div>
           {onOpenSettings && (
             <button
@@ -291,7 +293,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
               className="px-2 py-0.5 bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/50 rounded text-[10px] text-amber-100 flex items-center gap-1 transition-colors"
             >
               <Settings className="w-3 h-3" />
-              前往配置
+              {t('terminalCopilot.goToConfig')}
             </button>
           )}
         </div>
@@ -313,7 +315,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="用自然语言描述所需命令 (如: 统计 nginx 日志中访问量最高的前10个IP、查找并杀死3000端口)..."
+                placeholder={t('terminalCopilot.genPlaceholder')}
                 disabled={loading}
                 className="w-full pl-8 pr-14 py-2 bg-[#181818] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded-md text-xs text-white placeholder:text-[#6e6e6e] outline-none transition-all shadow-inner"
               />
@@ -331,12 +333,12 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
               {loading ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>生成中...</span>
+                  <span>{t('terminalCopilot.generating')}</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>生成</span>
+                  <span>{t('terminalCopilot.generate')}</span>
                 </>
               )}
             </button>
@@ -345,13 +347,13 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
           <div className="space-y-2">
             <div className="space-y-1">
               <label className="text-[11px] text-[#858585] flex items-center justify-between">
-                <span>捕获到的终端失败命令 / 报错片段:</span>
+                <span>{t('terminalCopilot.errorSnippet')}</span>
                 <span className="text-[10px] text-purple-400 font-mono">{lastCommand || 'shell error'}</span>
               </label>
               <textarea
                 value={errorText}
                 onChange={(e) => setErrorText(e.target.value)}
-                placeholder="粘贴报错输出或退出码信息..."
+                placeholder={t('terminalCopilot.errorPlaceholder')}
                 rows={3}
                 disabled={loading}
                 className="w-full px-2.5 py-1.5 bg-[#181818] border border-[#3c3c3c] focus:border-purple-500 rounded text-xs font-mono text-red-300 placeholder:text-[#6e6e6e] outline-none transition-all resize-none"
@@ -367,12 +369,12 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                 {loading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>分析中...</span>
+                    <span>{t('terminalCopilot.analyzing')}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>智能分析并生成修复命令</span>
+                    <span>{t('terminalCopilot.analyzeAndFix')}</span>
                   </>
                 )}
               </button>
@@ -397,7 +399,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-white flex items-center gap-1">
                     <Terminal className="w-3 h-3 text-[#0078d4]" />
-                    建议 Shell 指令:
+                    {t('terminalCopilot.suggestedCmd')}
                   </span>
                   {renderRiskBadge(result.riskLevel)}
                 </div>
@@ -406,10 +408,10 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                   <button
                     onClick={() => handleCopy(result.command)}
                     className="p-1 hover:bg-[#2d2d2d] text-[#858585] hover:text-white rounded transition-colors flex items-center gap-1 text-[10px]"
-                    title="复制到剪贴板"
+                    title={t('common.copy')}
                   >
                     {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? '已复制' : '复制'}</span>
+                    <span>{copied ? t('terminalCopilot.copied') : t('terminalCopilot.copy')}</span>
                   </button>
                 </div>
               </div>
@@ -429,11 +431,11 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
             {/* 快速采纳操作按钮组 */}
             <div className="flex items-center justify-between pt-2 border-t border-[#252526]">
               <div className="flex items-center gap-2 text-[10px] text-[#6e6e6e] font-mono">
-                <span>[Tab] 填充输入</span>
+                <span>{t('terminalCopilot.hintTab')}</span>
                 <span>•</span>
-                <span>[Ctrl+Enter] 直接运行</span>
+                <span>{t('terminalCopilot.hintRun')}</span>
                 <span>•</span>
-                <span>[Esc] 取消</span>
+                <span>{t('terminalCopilot.hintEsc')}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -443,7 +445,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                   className="px-2.5 py-1 bg-[#2d2d2d] hover:bg-[#383838] border border-[#3c3c3c] rounded text-xs text-[#cccccc] hover:text-white font-medium flex items-center gap-1 transition-colors"
                 >
                   <CornerDownLeft className="w-3 h-3 text-sky-400" />
-                  <span>填充到终端 [Tab]</span>
+                  <span>{t('terminalCopilot.tabFill')}</span>
                 </button>
                 <button
                   type="button"
@@ -451,7 +453,7 @@ export const InlineAICopilotPopover: React.FC<InlineAICopilotPopoverProps> = ({
                   className="px-2.5 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm"
                 >
                   <Play className="w-3 h-3 fill-white" />
-                  <span>直接执行 [↵]</span>
+                  <span>{t('terminalCopilot.enterRun')}</span>
                 </button>
               </div>
             </div>

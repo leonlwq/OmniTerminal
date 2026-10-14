@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, X, Radio } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface SharedTerminalViewerModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export const SharedTerminalViewerModal: React.FC<SharedTerminalViewerModalProps>
   onClose,
   url
 }) => {
+  const { t } = useI18n();
   if (!isOpen || !url) return null;
 
   return (
@@ -24,7 +26,7 @@ export const SharedTerminalViewerModal: React.FC<SharedTerminalViewerModalProps>
               <Radio className="w-3.5 h-3.5 animate-pulse" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#e0e0e0]">共享终端观察窗口</h3>
+              <h3 className="text-sm font-semibold text-[#e0e0e0]">{t('shareSession.viewerTitle')}</h3>
               <p className="text-xs text-[#858585] font-mono truncate max-w-lg">{url}</p>
             </div>
           </div>
@@ -36,7 +38,7 @@ export const SharedTerminalViewerModal: React.FC<SharedTerminalViewerModalProps>
               className="flex items-center space-x-1 px-3 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span>外部浏览器打开</span>
+              <span>{t('shareSession.openExternal')}</span>
             </a>
             <button
               onClick={onClose}

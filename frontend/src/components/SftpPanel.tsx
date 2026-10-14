@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { 
   Folder, File, ArrowLeft, ArrowRight, RefreshCw, Upload, Download, 
   Trash2, Edit3, Loader2, FolderPlus, Key, Eye, X, Star, ChevronDown, Check,
@@ -75,6 +76,7 @@ const SftpListPanel: React.FC<SftpListPanelProps> = ({
   title, path, setPath, files, loading, loadDir, selected, setSelected, handleDbClick, isRemote, bookmarks, toggleBookmark, formatSize, toggleSelect, onContextMenu,
   isGitRepo, gitStatusMap
 }) => {
+  const { t } = useI18n();
   const parentRef = useRef<HTMLDivElement>(null);
   
   const sortedFiles = React.useMemo(() => {
@@ -117,7 +119,7 @@ const SftpListPanel: React.FC<SftpListPanelProps> = ({
           }}
           disabled={isPathRoot(path)}
           className="p-1 text-app-text-muted hover:bg-app-hover disabled:opacity-30 rounded"
-          title="返回上一级目录"
+          title={t('sftp.upOneLevel')}
         ><ArrowLeft className="w-3.5 h-3.5" /></button>
         <input 
           type="text" 
@@ -163,7 +165,7 @@ const SftpListPanel: React.FC<SftpListPanelProps> = ({
                           ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                           : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
                       }`}
-                      title={`Git: ${gitStatusMap[f.name].status}${gitStatusMap[f.name].staged ? ' (已暂存)' : ''}`}
+                      title={`Git: ${gitStatusMap[f.name].status}${gitStatusMap[f.name].staged ? (t('sftp.gitStaged') || ' (已暂存)') : ''}`}
                     >
                       {gitStatusMap[f.name].status === 'modified' ? 'M' : gitStatusMap[f.name].status === 'added' ? 'A' : gitStatusMap[f.name].status === 'deleted' ? 'D' : '?'}
                     </span>
@@ -190,6 +192,7 @@ interface SftpPanelProps {
 }
 
 export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdToTerminal, currentTerminalDir }) => {
+  const { t } = useI18n();
   const [remotePath, setRemotePath] = useState<string>('.');
   const [localPath, setLocalPath] = useState<string>('/');
   
@@ -329,7 +332,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
 
     const dropHandler = (x: number, y: number, paths: string[]) => {
       if (paths && paths.length > 0) {
-        setBusyAction(`正在批量上传 ${paths.length} 个项目...`);
+        setBusyAction(t('sftp.busyBatchUpload').replace('{count}', String(paths.length)));
         SftpUploadPaths(sessionId, paths, remotePath).then(() => {
           setTimeout(() => {
             setBusyAction(null);
@@ -337,7 +340,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           }, 1000);
         }).catch(err => {
           setBusyAction(null);
-          alert("拖拽上传失败: " + err);
+          alert(t('sftp.errorDragUpload') + err);
         });
       }
     };
@@ -361,18 +364,18 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
       cleanupSync();
       window.removeEventListener('click', handleGlobalClick);
     };
-  }, [sessionId, remotePath]);
+  }, [sessionId, remotePath, t]);
 
   const handleOpenExternalEditor = (file: app.SftpFileInfo) => {
     const full = remotePath.endsWith('/') ? remotePath + file.name : remotePath + '/' + file.name;
-    setBusyAction(`正在使用外部编辑器打开 ${file.name}...`);
+    setBusyAction(t('sftp.busyOpenExternal').replace('{name}', file.name));
     OpenRemoteFileWithEditor(sessionId, full, '')
       .then(() => {
         setBusyAction(null);
       })
       .catch((err: any) => {
         setBusyAction(null);
-        alert("调用外部编辑器失败: " + err);
+        alert(t('sftp.errorExternalEditor') + err);
       });
   };
 
@@ -439,7 +442,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           });
         }
       })
-      .catch(err => alert("无法读取远程目录: " + err))
+      .catch(err => alert(t('sftp.errorReadRemoteDir') + err))
       .finally(() => setRemoteLoading(false));
   };
 
@@ -447,7 +450,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
     setLocalLoading(true);
     LocalListDir(path)
       .then(files => setLocalFiles(files || []))
-      .catch(err => alert("无法读取本地目录: " + err))
+      .catch(err => alert(t('sftp.errorReadLocalDir') + err))
       .finally(() => setLocalLoading(false));
   };
 
@@ -465,23 +468,23 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
   const handleUpload = () => {
     if (selectedLocal.size === 0) return;
     const paths = Array.from(selectedLocal).map(name => joinFilePath(localPath, name));
-    setBusyAction(`正在上传 ${paths.length} 个项目...`);
+    setBusyAction(t('sftp.busyUpload').replace('{count}', String(paths.length)));
     SftpUploadPaths(sessionId, paths, remotePath)
       .then(() => {
         setTimeout(() => { setBusyAction(null); loadRemoteDir(remotePath); }, 1000);
       })
-      .catch(err => { setBusyAction(null); alert("上传失败: " + err); });
+      .catch(err => { setBusyAction(null); alert(t('sftp.errorUpload') + err); });
   };
 
   const handleDownload = () => {
     if (selectedRemote.size === 0) return;
     const paths = Array.from(selectedRemote).map(name => remotePath + (remotePath.endsWith('/') ? '' : '/') + name);
-    setBusyAction(`正在下载 ${paths.length} 个项目...`);
+    setBusyAction(t('sftp.busyDownload').replace('{count}', String(paths.length)));
     SftpDownloadPaths(sessionId, paths, localPath)
       .then(() => {
         setTimeout(() => { setBusyAction(null); loadLocalDir(localPath); }, 1000);
       })
-      .catch(err => { setBusyAction(null); alert("下载失败: " + err); });
+      .catch(err => { setBusyAction(null); alert(t('sftp.errorDownload') + err); });
   };
 
   const handleRemoteDbClick = (file: app.SftpFileInfo) => {
@@ -501,7 +504,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
       setLocalPath(full);
       loadLocalDir(full);
     } else {
-      setBusyAction("读取本地文件...");
+      setBusyAction(t('sftp.busyReadingLocal'));
       LocalReadFile(full).then(content => {
         setBusyAction(null);
         setEditingFile({ name: file.name, path: full, content });
@@ -514,7 +517,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
 
   const saveLocalEdit = () => {
     if (!editingFile) return;
-    setBusyAction("保存本地文件...");
+    setBusyAction(t('sftp.busySavingLocal'));
     LocalWriteFile(editingFile.path, editingFile.content).then(() => {
       setBusyAction(null);
       setEditingFile(null);
@@ -543,7 +546,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
   // 压缩打包执行
   const handleExecuteCompress = async () => {
     if (!compressTargetName.trim() || compressItems.length === 0) return;
-    setBusyAction(`正在压缩 ${compressItems.length} 个项目为 ${compressTargetName}...`);
+    setBusyAction(t('sftp.busyCompressing').replace('{count}', String(compressItems.length)).replace('{name}', compressTargetName));
     try {
       if ((window as any).go?.app?.App?.SftpCompress) {
         await (window as any).go.app.App.SftpCompress(sessionId, compressItems, compressTargetName.trim(), compressFormat);
@@ -551,7 +554,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
         setCompressModalOpen(false);
       }
     } catch (err: any) {
-      alert("压缩打包失败: " + (err?.message || err));
+      alert(t('sftp.errorCompress') + (err?.message || err));
     } finally {
       setBusyAction(null);
     }
@@ -559,14 +562,14 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
 
   // 在线解压执行
   const handleExecuteExtract = async (archivePath: string, destDir?: string) => {
-    setBusyAction(`正在解压 ${archivePath}...`);
+    setBusyAction(t('sftp.busyExtracting').replace('{path}', archivePath));
     try {
       if ((window as any).go?.app?.App?.SftpExtract) {
         await (window as any).go.app.App.SftpExtract(sessionId, archivePath, destDir || remotePath);
         loadRemoteDir(remotePath);
       }
     } catch (err: any) {
-      alert("在线解压失败: " + (err?.message || err));
+      alert(t('sftp.errorExtract') + (err?.message || err));
     } finally {
       setBusyAction(null);
     }
@@ -585,7 +588,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
         setVerifyResult(res);
       }
     } catch (err: any) {
-      alert("哈希校验计算失败: " + (err?.message || err));
+      alert(t('sftp.errorChecksum') + (err?.message || err));
     } finally {
       setIsVerifying(false);
     }
@@ -602,7 +605,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
     <div className="w-[600px] bg-app-bg border-l border-app-border flex flex-col h-full text-xs text-app-text shadow-md relative">
       <div className="p-1 border-b border-app-border flex items-center justify-between shrink-0 bg-app-surface">
         <div className="flex items-center space-x-2">
-          <span className="font-bold text-blue-400">SFTP 双面板传输 (拖拽支持)</span>
+          <span className="font-bold text-blue-400">{t('sftp.dualPaneTitle')}</span>
           <button
             onClick={() => setDirectoryFollow(!directoryFollow)}
             className={`px-1.5 py-0.5 border text-[10px] flex items-center space-x-1 transition-colors ${
@@ -610,18 +613,18 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 ? 'bg-blue-600/30 text-blue-300 border-blue-500/60'
                 : 'bg-[#2d2d30] text-slate-400 border-[#3e3e42] hover:text-slate-200'
             }`}
-            title="终端工作目录自动追踪与跟随 (OSC 7 / cd)"
+            title={t('sftp.dirFollowTooltip')}
           >
             <Compass className={`w-3 h-3 ${directoryFollow ? 'text-blue-400' : ''}`} />
-            <span>目录跟随 {directoryFollow ? 'ON' : 'OFF'}</span>
+            <span>{t('sftp.dirFollow')} {directoryFollow ? 'ON' : 'OFF'}</span>
           </button>
           <button
             onClick={() => setIsDiffModalOpen(true)}
             className="px-1.5 py-0.5 bg-[#2d2d30] hover:bg-blue-600 border border-[#3e3e42] text-slate-200 text-[10px] flex items-center space-x-1 transition-colors"
-            title="双向目录差异对比与同步"
+            title={t('sftp.dirDiffTooltip')}
           >
             <Columns className="w-3 h-3" />
-            <span>目录比对 (Diff)</span>
+            <span>{t('sftp.dirDiff')}</span>
           </button>
         </div>
         <button onClick={onClose} className="text-app-text-muted hover:text-white"><X className="w-4 h-4" /></button>
@@ -630,7 +633,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
       <div className="flex-1 flex min-h-0 relative">
         {/* Local Panel */}
         <SftpListPanel
-          title="本地 (Local)"
+          title={t('sftp.localPanel')}
           path={localPath}
           setPath={setLocalPath}
           files={localFiles}
@@ -649,17 +652,17 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
         
         {/* Center Action Buttons */}
         <div className="w-12 bg-app-surface flex flex-col items-center justify-center gap-2 shrink-0 z-10 border-x border-app-border shadow-inner">
-          <button onClick={handleUpload} disabled={selectedLocal.size===0} className="p-2 bg-blue-600/20 hover:bg-blue-600 rounded-none text-blue-400 hover:text-white transition-colors disabled:opacity-30" title="上传到远端">
+          <button onClick={handleUpload} disabled={selectedLocal.size===0} className="p-2 bg-blue-600/20 hover:bg-blue-600 rounded-none text-blue-400 hover:text-white transition-colors disabled:opacity-30" title={t('sftp.uploadToRemote') || '上传到远端'}>
             <ArrowRight className="h-5 w-5" />
           </button>
-          <button onClick={handleDownload} disabled={selectedRemote.size===0} className="p-2 bg-green-600/20 hover:bg-green-600 rounded-none text-green-400 hover:text-white transition-colors disabled:opacity-30" title="下载到本地">
+          <button onClick={handleDownload} disabled={selectedRemote.size===0} className="p-2 bg-green-600/20 hover:bg-green-600 rounded-none text-green-400 hover:text-white transition-colors disabled:opacity-30" title={t('sftp.downloadToLocal') || '下载到本地'}>
             <ArrowLeft className="h-5 w-5" />
           </button>
         </div>
 
         {/* Remote Panel */}
         <SftpListPanel
-          title="远程 (Remote)"
+          title={t('sftp.remotePanel')}
           path={remotePath}
           setPath={setRemotePath}
           files={remoteFiles}
@@ -684,7 +687,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
         <div className="absolute top-10 right-3 z-50 bg-[#1e1e1e] border border-green-600 text-green-400 px-3 py-1.5 shadow-2xl flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-green-400" />
           <div className="text-[11px]">
-            <span className="font-bold">{syncNotice.fileName}</span> 已自动静默回传同步 ({syncNotice.time})
+            <span className="font-bold">{syncNotice.fileName}</span> {(t('sftp.autoSyncNotice') || '{fileName} 已自动静默回传同步 ({time})').replace('{fileName}', '').replace('{time}', syncNotice.time)}
           </div>
         </div>
       )}
@@ -706,7 +709,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#3794ff]"
             >
               <TermIcon className="w-3.5 h-3.5" />
-              <span>在活动终端打开 (cd Here)</span>
+              <span>{t('sftp.cdHere')}</span>
             </button>
           )}
 
@@ -721,7 +724,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#3794ff] font-medium"
               >
                 <Code className="w-3.5 h-3.5" />
-                <span>内置 Monaco 编辑器 (Edit)</span>
+                <span>{t('sftp.monacoEdit')}</span>
               </button>
 
               {isGitRepo && (
@@ -730,7 +733,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                     const relPath = contextMenu.file.name;
                     const wailsApp = (window as any).go?.app?.App;
                     if (wailsApp?.SftpGitDiff) {
-                      setBusyAction("正在计算 Git Diff...");
+                      setBusyAction(t('sftp.calcGitDiff') || "正在计算 Git Diff...");
                       try {
                         const diffRes = await wailsApp.SftpGitDiff(sessionId, remotePath, relPath);
                         if (diffRes) {
@@ -742,7 +745,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                           });
                         }
                       } catch (err: any) {
-                        alert("获取 Git Diff 失败: " + err);
+                        alert(t('sftp.errorGitDiff') + err);
                       } finally {
                         setBusyAction(null);
                       }
@@ -752,7 +755,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                   className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-emerald-400 font-medium"
                 >
                   <SplitSquareVertical className="w-3.5 h-3.5" />
-                  <span>查看 Git Diff 对比</span>
+                  <span>{t('sftp.gitDiff')}</span>
                 </button>
               )}
 
@@ -765,7 +768,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>快速预览 (Preview)</span>
+                <span>{t('sftp.preview')}</span>
               </button>
               <button
                 onClick={() => {
@@ -775,7 +778,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
               >
                 <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-                <span>外部编辑器打开 (External)</span>
+                <span>{t('sftp.externalEdit')}</span>
               </button>
             </>
           )}
@@ -789,13 +792,13 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 if (contextMenu.file.isDir) {
                   if (wailsApp?.SftpDownloadDirectory) {
                     wailsApp.SftpDownloadDirectory(sessionId, fullRemote).catch((err: any) => {
-                      alert("下载目录失败: " + (err?.message || err));
+                      alert(t('sftp.errorDownloadDir') + (err?.message || err));
                     });
                   }
                 } else {
                   if (wailsApp?.SftpDownloadFile) {
                     wailsApp.SftpDownloadFile(sessionId, fullRemote).catch((err: any) => {
-                      alert("下载文件失败: " + (err?.message || err));
+                      alert(t('sftp.errorDownloadFile') + (err?.message || err));
                     });
                   }
                 }
@@ -804,7 +807,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#3794ff] font-medium"
             >
               <Download className="w-3.5 h-3.5 text-[#3794ff]" />
-              <span>下载到指定路径... (Download)</span>
+              <span>{t('sftp.downloadCustom')}</span>
             </button>
           )}
 
@@ -813,7 +816,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
             <button
               onClick={() => {
                 const fullRemote = remotePath.endsWith('/') ? remotePath + contextMenu.file.name : remotePath + '/' + contextMenu.file.name;
-                setBusyAction(`正在传输 ${contextMenu.file.name} 到本地面板 [${localPath}]...`);
+                setBusyAction(t('sftp.busyTransferToLocal').replace('{name}', contextMenu.file.name).replace('{path}', localPath));
                 SftpDownloadPaths(sessionId, [fullRemote], localPath)
                   .then(() => {
                     setTimeout(() => {
@@ -823,14 +826,14 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                   })
                   .catch((err: any) => {
                     setBusyAction(null);
-                    alert("传输失败: " + (err?.message || err));
+                    alert(t('sftp.errorTransfer') + (err?.message || err));
                   });
                 setContextMenu(null);
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
-              <span>快速传输到左侧面板 (To Panel)</span>
+              <span>{t('sftp.downloadToPanel')}</span>
             </button>
           )}
 
@@ -839,7 +842,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
             <button
               onClick={() => {
                 const fullLocal = joinFilePath(localPath, contextMenu.file.name);
-                setBusyAction(`正在上传 ${contextMenu.file.name} 到远端...`);
+                setBusyAction(t('sftp.busyUploadToRemote').replace('{name}', contextMenu.file.name));
                 SftpUploadPaths(sessionId, [fullLocal], remotePath)
                   .then(() => {
                     setTimeout(() => {
@@ -849,14 +852,14 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                   })
                   .catch((err: any) => {
                     setBusyAction(null);
-                    alert("上传失败: " + (err?.message || err));
+                    alert(t('sftp.errorUpload') + (err?.message || err));
                   });
                 setContextMenu(null);
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-emerald-400"
             >
               <Upload className="w-3.5 h-3.5 text-emerald-400" />
-              <span>上传到远程 (Upload)</span>
+              <span>{t('sftp.uploadToRemote')}</span>
             </button>
           )}
 
@@ -874,7 +877,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
             >
               <Archive className="w-3.5 h-3.5 text-amber-400" />
-              <span>🗜️ 压缩打包为... (Compress)</span>
+              <span>{t('sftp.compress')}</span>
             </button>
           )}
 
@@ -889,7 +892,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-emerald-300"
             >
               <Archive className="w-3.5 h-3.5 text-emerald-400" />
-              <span>📦 解压到当前目录 (Extract)</span>
+              <span>{t('sftp.extract')}</span>
             </button>
           )}
 
@@ -905,7 +908,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-              <span>🔍 校验文件哈希 (Verify Checksum)</span>
+              <span>{t('sftp.verifyChecksum')}</span>
             </button>
           )}
 
@@ -917,7 +920,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
             className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
           >
             <Info className="w-3.5 h-3.5 text-[#3794ff]" />
-            <span>查看属性 (Properties)</span>
+            <span>{t('sftp.properties')}</span>
           </button>
         </div>
       )}
@@ -937,11 +940,11 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-96 text-[#cccccc] space-y-4">
             <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
               <Archive className="w-4 h-4 text-[#0078d4]" />
-              远程压缩打包 (Remote Compress)
+              {t('sftp.compressTitle')}
             </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[#858585] block mb-1">压缩文件名:</label>
+                <label className="text-[#858585] block mb-1">{t('sftp.compressFileName')}</label>
                 <input
                   type="text"
                   value={compressTargetName}
@@ -950,7 +953,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                 />
               </div>
               <div>
-                <label className="text-[#858585] block mb-1">压缩格式:</label>
+                <label className="text-[#858585] block mb-1">{t('sftp.compressFormat')}</label>
                 <select
                   value={compressFormat}
                   onChange={e => {
@@ -960,17 +963,17 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                   }}
                   className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] outline-none"
                 >
-                  <option value="tar.gz">.tar.gz (Gzip - 推荐通用)</option>
-                  <option value="zip">.zip (标准 Zip)</option>
-                  <option value="tar.bz2">.tar.bz2 (Bzip2 高压缩)</option>
-                  <option value="tar.xz">.tar.xz (XZ 极高压缩)</option>
-                  <option value="7z">.7z (7-Zip 归档)</option>
+                  <option value="tar.gz">{t('sftp.optTarGz') || '.tar.gz (Gzip - 推荐通用)'}</option>
+                  <option value="zip">{t('sftp.optZip') || '.zip (标准 Zip)'}</option>
+                  <option value="tar.bz2">{t('sftp.optTarBz2') || '.tar.bz2 (Bzip2 高压缩)'}</option>
+                  <option value="tar.xz">{t('sftp.optTarXz') || '.tar.xz (XZ 极高压缩)'}</option>
+                  <option value="7z">{t('sftp.opt7z') || '.7z (7-Zip 归档)'}</option>
                 </select>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-[#2b2b2b]">
-              <button onClick={() => setCompressModalOpen(false)} className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium">取消</button>
-              <button onClick={handleExecuteCompress} className="px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded shadow-sm">开始压缩</button>
+              <button onClick={() => setCompressModalOpen(false)} className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium">{t('common.cancel')}</button>
+              <button onClick={handleExecuteCompress} className="px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded shadow-sm">{t('sftp.startCompress') || '开始压缩'}</button>
             </div>
           </div>
         </div>
@@ -982,23 +985,23 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-[440px] text-[#cccccc] space-y-4">
             <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#0078d4]" />
-              文件哈希完整性校验 (Checksum Verification)
+              {t('sftp.checksumTitle')}
             </h3>
             <div className="space-y-3 text-xs">
               <div className="p-2.5 bg-[#1e1e1e] rounded border border-[#3c3c3c]">
-                <div className="text-[#858585]">文件名称: <span className="text-[#cccccc] font-medium">{verifyFile.name}</span></div>
-                <div className="text-[#858585]">文件大小: <span className="font-mono text-[#cccccc]">{formatSize(verifyFile.size)}</span></div>
+                <div className="text-[#858585]">{t('sftp.fileNameLabel') || '文件名称: '}<span className="text-[#cccccc] font-medium">{verifyFile.name}</span></div>
+                <div className="text-[#858585]">{t('sftp.fileSizeLabel') || '文件大小: '}<span className="font-mono text-[#cccccc]">{formatSize(verifyFile.size)}</span></div>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-[#858585] shrink-0">哈希算法:</label>
+                <label className="text-[#858585] shrink-0">{t('sftp.checksumAlgo')}</label>
                 <select
                   value={verifyAlgo}
                   onChange={e => setVerifyAlgo(e.target.value as any)}
                   className="flex-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] font-mono outline-none"
                 >
-                  <option value="sha256">SHA-256 (推荐安全标准)</option>
-                  <option value="md5">MD5 (传统校验)</option>
+                  <option value="sha256">{t('sftp.sha256Recommended') || 'SHA-256 (推荐安全标准)'}</option>
+                  <option value="md5">{t('sftp.md5Legacy') || 'MD5 (传统校验)'}</option>
                   <option value="sha1">SHA-1</option>
                 </select>
                 <button
@@ -1006,28 +1009,28 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                   disabled={isVerifying}
                   className="px-3 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded disabled:opacity-50"
                 >
-                  {isVerifying ? '计算中...' : '开始计算'}
+                  {isVerifying ? t('sftp.checksumCalculating') : t('sftp.checksumStart')}
                 </button>
               </div>
 
               {verifyResult && (
                 <div className="space-y-2 p-3 bg-[#1e1e1e] rounded border border-[#3c3c3c] font-mono text-[11px]">
                   <div>
-                    <div className="text-[#858585] text-[10px]">远端文件哈希 ({verifyResult.algorithm}):</div>
+                    <div className="text-[#858585] text-[10px]">{(t('sftp.remoteHashLabel') || '远端文件哈希 ({algo}):').replace('{algo}', verifyResult.algorithm)}</div>
                     <div className="text-[#3794ff] break-all select-all">{verifyResult.remoteHash || '无输出'}</div>
                   </div>
                   {verifyResult.localHash && (
                     <div>
-                      <div className="text-[#858585] text-[10px]">本地同名文件哈希:</div>
+                      <div className="text-[#858585] text-[10px]">{t('sftp.localHashLabel') || '本地同名文件哈希:'}</div>
                       <div className="text-amber-300 break-all select-all">{verifyResult.localHash}</div>
                       <div className="mt-2">
                         {verifyResult.match ? (
                           <span className="px-2 py-0.5 bg-emerald-950/80 border border-emerald-700 text-emerald-400 rounded text-xs font-semibold">
-                            ✓ 哈希完全一致 (文件无损坏)
+                            {t('sftp.checksumMatch')}
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 bg-rose-950/80 border border-rose-700 text-rose-400 rounded text-xs font-semibold">
-                            ✗ 哈希不匹配 (文件存在差异)
+                            {t('sftp.checksumMismatch')}
                           </span>
                         )}
                       </div>
@@ -1037,7 +1040,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               )}
             </div>
             <div className="flex justify-end pt-2 border-t border-[#2b2b2b]">
-              <button onClick={() => setVerifyModalOpen(false)} className="px-3.5 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium">关闭</button>
+              <button onClick={() => setVerifyModalOpen(false)} className="px-3.5 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium">{t('common.close')}</button>
             </div>
           </div>
         </div>
@@ -1048,7 +1051,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-[#252526] w-full h-full max-w-3xl max-h-[80vh] border border-[#2b2b2b] shadow-2xl rounded-md flex flex-col overflow-hidden text-[#cccccc]">
             <div className="px-4 py-2.5 border-b border-[#2b2b2b] flex justify-between items-center bg-[#1f1f1f]">
-              <span className="font-semibold text-xs text-[#cccccc]">编辑本地文件: {editingFile.name}</span>
+              <span className="font-semibold text-xs text-[#cccccc]">{t('sftp.editLocalFile') || '编辑本地文件: '}{editingFile.name}</span>
               <button onClick={() => setEditingFile(null)} className="text-[#858585] hover:text-white p-1 rounded hover:bg-white/10 transition-colors"><X className="w-4 h-4"/></button>
             </div>
             <textarea 
@@ -1058,8 +1061,8 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
               spellCheck={false}
             />
             <div className="px-4 py-2.5 border-t border-[#2b2b2b] flex justify-end gap-2.5 bg-[#1f1f1f]">
-              <button onClick={() => setEditingFile(null)} className="px-3 py-1.5 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors">取消</button>
-              <button onClick={saveLocalEdit} className="px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium rounded shadow-sm transition-colors">保存到本地</button>
+              <button onClick={() => setEditingFile(null)} className="px-3 py-1.5 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors">{t('common.cancel')}</button>
+              <button onClick={saveLocalEdit} className="px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium rounded shadow-sm transition-colors">{t('sftp.saveToLocal') || '保存到本地'}</button>
             </div>
           </div>
         </div>
@@ -1073,14 +1076,14 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
             <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-84 text-[#cccccc] space-y-4">
               <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2.5 flex items-center gap-2">
                 <Eye className="w-4 h-4 text-[#0078d4]" />
-                文件属性 (Properties)
+                {t('sftp.propTitle')}
               </h3>
               <div className="space-y-2 text-xs bg-[#1e1e1e] border border-[#3c3c3c] p-3 rounded">
-                <p><span className="text-[#858585] w-16 inline-block">名称:</span> <span className="text-[#cccccc] font-medium break-all">{propFile.name}</span></p>
-                <p><span className="text-[#858585] w-16 inline-block">类型:</span> {propFile.isDir ? '文件夹 (Directory)' : '文件'}</p>
+                <p><span className="text-[#858585] w-16 inline-block">{t('sftp.propName')}</span> <span className="text-[#cccccc] font-medium break-all">{propFile.name}</span></p>
+                <p><span className="text-[#858585] w-16 inline-block">{t('sftp.propType')}</span> {propFile.isDir ? (t('sftp.typeDir') || '文件夹 (Directory)') : (t('sftp.typeFile') || '文件')}</p>
                 {propFile.isDir ? (
                   <div className="flex items-start justify-between">
-                    <span className="text-[#858585] w-16 inline-block flex-shrink-0">大小:</span>
+                    <span className="text-[#858585] w-16 inline-block flex-shrink-0">{t('sftp.propSize')}</span>
                     <div className="flex-1 text-right">
                       {folderSizeMap[propFilePath]?.loading ? (
                         <div className="flex items-center justify-end gap-1.5 text-[#0078d4]">
@@ -1088,34 +1091,34 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
                           <span>
                             {formatSize(folderSizeMap[propFilePath]?.totalSize || 0)}
                             {' · '}
-                            {folderSizeMap[propFilePath]?.fileCount || 0} 文件
+                            {(t('sftp.filesCount') || '{count} 文件').replace('{count}', String(folderSizeMap[propFilePath]?.fileCount || 0))}
                           </span>
                           <button
                             onClick={() => handleCancelCalcSize(propFilePath)}
                             className="text-[10px] text-[#858585] hover:text-rose-300 ml-1 underline"
                           >
-                            取消
+                            {t('common.cancel')}
                           </button>
                         </div>
                       ) : folderSizeMap[propFilePath]?.done ? (
                         <span className="text-emerald-400 font-medium">
                           {formatSize(folderSizeMap[propFilePath].totalSize)}
                           <span className="text-[#858585] font-normal text-[11px] ml-1">
-                            ({folderSizeMap[propFilePath].fileCount} 文件, {folderSizeMap[propFilePath].dirCount} 目录)
+                            ({(t('sftp.filesCount') || '{count} 文件').replace('{count}', String(folderSizeMap[propFilePath].fileCount))}, {(t('sftp.dirsCount') || '{count} 目录').replace('{count}', String(folderSizeMap[propFilePath].dirCount))})
                           </span>
                         </span>
                       ) : (
-                        <span className="text-[#858585]">准备统计中...</span>
+                        <span className="text-[#858585]">{t('sftp.readyStats') || '准备统计中...'}</span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <p><span className="text-[#858585] w-16 inline-block">大小:</span> {formatSize(propFile.size)} ({propFile.size} Bytes)</p>
+                  <p><span className="text-[#858585] w-16 inline-block">{t('sftp.propSize')}</span> {formatSize(propFile.size)} ({propFile.size} Bytes)</p>
                 )}
-                <p><span className="text-[#858585] w-16 inline-block">权限:</span> <span className="font-mono text-amber-400">{propFile.mode}</span></p>
-                <p><span className="text-[#858585] w-16 inline-block">修改时间:</span> <span className="font-mono text-[11px] text-[#858585]">{propFile.modTime}</span></p>
+                <p><span className="text-[#858585] w-16 inline-block">{t('sftp.propPerm')}</span> <span className="font-mono text-amber-400">{propFile.mode}</span></p>
+                <p><span className="text-[#858585] w-16 inline-block">{t('sftp.propMtime')}</span> <span className="font-mono text-[11px] text-[#858585]">{propFile.modTime}</span></p>
               </div>
-              <button onClick={() => setPropFile(null)} className="w-full py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium text-xs transition-colors">关闭</button>
+              <button onClick={() => setPropFile(null)} className="w-full py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium text-xs transition-colors">{t('common.close')}</button>
             </div>
           </div>
         );

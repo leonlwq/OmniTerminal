@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { app } from '../../wailsjs/go/models';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
+import { useI18n } from '../i18n/I18nContext';
 
 export const parseQuickConnect = (input: string) => {
   let raw = input.trim();
@@ -45,6 +46,7 @@ interface UseQuickConnectOptions {
 }
 
 export function useQuickConnect({ setOpenTabs, setActiveTabId }: UseQuickConnectOptions) {
+  const { t } = useI18n();
   const [quickConnectInput, setQuickConnectInput] = useState('');
   const [quickConnectHistory, setQuickConnectHistory] = useState<string[]>([]);
 
@@ -59,7 +61,7 @@ export function useQuickConnect({ setOpenTabs, setActiveTabId }: UseQuickConnect
     const tempId = 'local_' + Date.now();
     const tempSession = new app.SessionConfig({
       id: tempId,
-      name: `💻 本地 Shell`,
+      name: `💻 ${t('quickConnect.localShell') || '本地 Shell'}`,
       isFolder: false,
       parentId: '',
       host: 'Local',
@@ -94,7 +96,7 @@ export function useQuickConnect({ setOpenTabs, setActiveTabId }: UseQuickConnect
 
     const { user, password, host, port } = parseQuickConnect(quickConnectInput);
     if (!host) {
-      alert("无法解析的主机地址，请检查输入格式");
+      alert(t('quickConnect.invalidHost'));
       return;
     }
 

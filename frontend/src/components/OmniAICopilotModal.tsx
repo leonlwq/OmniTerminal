@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, Terminal, AlertTriangle, ShieldCheck, ShieldAlert,
@@ -31,6 +32,7 @@ interface MarkdownViewerProps {
 }
 
 function MarkdownViewer({ content }: MarkdownViewerProps) {
+  const { t } = useI18n();
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   if (!content) return null;
@@ -58,7 +60,7 @@ function MarkdownViewer({ content }: MarkdownViewerProps) {
                   className="flex items-center gap-1 hover:text-white transition-colors px-1.5 py-0.5 rounded bg-white/5"
                 >
                   {copiedIdx === index ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedIdx === index ? '已复制' : '复制代码'}</span>
+                  <span>{copiedIdx === index ? t('terminalCopilot.copied') : t('terminalCopilot.copy')}</span>
                 </button>
               </div>
               <pre className="p-3 font-mono text-xs text-emerald-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
@@ -118,6 +120,7 @@ export function OmniAICopilotModal({
   onSaveAIConfig,
   onSwitchToChatDrawer,
 }: OmniAICopilotModalProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'command' | 'diagnose' | 'script' | 'explain'>(initialMode);
   const [prompt, setPrompt] = useState('');
   const [errorText, setErrorText] = useState(initialErrorText);
@@ -170,22 +173,22 @@ export function OmniAICopilotModal({
       const effectiveCfg = tempConfig;
 
       if (mode === 'command') {
-        if (!prompt.trim()) throw new Error("请输入需求描述");
+        if (!prompt.trim()) throw new Error(t("copilot.requirePrompt"));
         const res = await appRpc.AIGenerateCommand(effectiveCfg, prompt.trim(), terminalContextDir || '', 'Linux / Unix');
         setResponse(res);
         setQuickLabel(prompt.trim().slice(0, 20));
       } else if (mode === 'diagnose') {
-        if (!errorText.trim()) throw new Error("请输入或粘贴错误信息");
+        if (!errorText.trim()) throw new Error(t("copilot.requireError"));
         const res = await appRpc.AIDiagnoseError(effectiveCfg, errorText.trim(), lastCommand.trim(), 'Linux / Unix');
         setResponse(res);
       } else if (mode === 'explain') {
-        if (!errorText.trim()) throw new Error("请输入或载入待分析的终端输出/日志");
+        if (!errorText.trim()) throw new Error(t("copilot.requireLog"));
         const res = await (appRpc.AIExplainOutput 
           ? appRpc.AIExplainOutput(effectiveCfg, errorText.trim(), 'Linux / Unix')
-          : appRpc.AIDiagnoseError(effectiveCfg, errorText.trim(), '终端输出/日志分析与解释', 'Linux / Unix'));
+          : appRpc.AIDiagnoseError(effectiveCfg, errorText.trim(), t('copilot.logDiagnosisTitle'), 'Linux / Unix'));
         setResponse(res);
       } else if (mode === 'script') {
-        if (!prompt.trim()) throw new Error("请输入自动化脚本需求");
+        if (!prompt.trim()) throw new Error(t("copilot.requireScript"));
         const scriptRes = await appRpc.AIGenerateScript(effectiveCfg, prompt.trim(), scriptType);
         setGeneratedScript(scriptRes);
       }
@@ -228,13 +231,13 @@ export function OmniAICopilotModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-[#e0e0e0]">OmniAI 智能运维 Copilot</span>
+                <span className="font-semibold text-sm text-[#e0e0e0]">{t('copilot.title')}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2d2d2d] border border-[#3c3c3c] text-[#0078d4] font-mono">
                   {tempConfig.provider || 'openai'}: {tempConfig.model || 'gpt-4o-mini'}
                 </span>
               </div>
               <p className="text-[11px] text-[#858585]">
-                目标终端: <span className="text-[#0078d4] font-mono">{activeSessionName || '无活动终端'}</span>
+                {t('copilot.targetTerminal')} <span className="text-[#0078d4] font-mono">{activeSessionName || t('copilot.noActiveTerminal')}</span>
                 {terminalContextDir && <span className="ml-2 text-[#858585] font-mono">({terminalContextDir})</span>}
               </p>
             </div>
@@ -249,9 +252,9 @@ export function OmniAICopilotModal({
                   onSwitchToChatDrawer();
                 }}
                 className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] text-[11px] font-medium flex items-center gap-1 transition-all"
-                title="切换到右侧沉浸式 AI 对话面板 (Cmd+L)"
+                title={t('copilot.chatDrawerTooltip')}
               >
-                <span>侧边栏对话</span>
+                <span>{t('copilot.drawerBtn')}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             )}
@@ -268,7 +271,7 @@ export function OmniAICopilotModal({
                   ? 'bg-[#04395e] text-white'
                   : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#333333]'
               }`}
-              title="配置 AI 大模型参数"
+              title={t('copilot.configTooltip')}
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -292,7 +295,7 @@ export function OmniAICopilotModal({
             }`}
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span>自然语言转命令</span>
+            <span>{t('copilot.tabNlToCmd')}</span>
           </button>
           <button
             onClick={() => { setMode('diagnose'); setResponse(null); }}
@@ -303,7 +306,7 @@ export function OmniAICopilotModal({
             }`}
           >
             <Bug className="w-3.5 h-3.5" />
-            <span>终端报错智能诊断</span>
+            <span>{t('copilot.tabDiagnose')}</span>
           </button>
           <button
             onClick={() => { setMode('explain'); setResponse(null); }}
@@ -314,7 +317,7 @@ export function OmniAICopilotModal({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>输出/日志 AI 摘要解释</span>
+            <span>{t('copilot.tabExplain')}</span>
           </button>
           <button
             onClick={() => { setMode('script'); setResponse(null); }}
@@ -325,7 +328,7 @@ export function OmniAICopilotModal({
             }`}
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span>运维自动化脚本工坊</span>
+            <span>{t('copilot.tabScriptStudio')}</span>
           </button>
         </div>
 
@@ -338,9 +341,9 @@ export function OmniAICopilotModal({
               <div className="font-semibold text-[#e0e0e0] flex items-center justify-between border-b border-[#2b2b2b] pb-2">
                 <span className="flex items-center gap-1.5">
                   <Settings className="w-3.5 h-3.5 text-[#0078d4]" />
-                  大模型接入设置 (LLM Provider Config)
+                  {t('copilot.providerConfigTitle')}
                 </span>
-                <span className="text-[10px] text-[#858585]">支持 OpenAI / DeepSeek / Ollama / Gemini / 自定义</span>
+                <span className="text-[10px] text-[#858585]">{t("copilot.providerSupportHint")}</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -359,11 +362,11 @@ export function OmniAICopilotModal({
                     }}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-2.5 py-1 text-[#cccccc]"
                   >
-                    <option value="deepseek">DeepSeek (超高性价比推荐)</option>
+                    <option value="deepseek">{t("copilot.deepseekOption")}</option>
                     <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
                     <option value="gemini">Google Gemini</option>
-                    <option value="ollama">Ollama (本地私有化大模型)</option>
-                    <option value="custom">Custom (自定义兼容端点)</option>
+                    <option value="ollama">{t("copilot.ollamaOption")}</option>
+                    <option value="custom">{t("copilot.customOption")}</option>
                   </select>
                 </div>
                 <div>
@@ -419,15 +422,15 @@ export function OmniAICopilotModal({
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-[#cccccc] block mb-1 font-medium flex items-center justify-between">
-                  <span>用自然语言描述您的运维操作需求:</span>
-                  <span className="text-[11px] text-[#858585]">支持快捷键 Cmd+Enter 发送</span>
+                  <span>{t('copilot.nlPromptLabel')}</span>
+                  <span className="text-[11px] text-[#858585]">{t('copilot.cmdEnterHint')}</span>
                 </label>
                 <textarea
                   ref={inputRef}
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="例如: 查找 /var/log 下大于 50MB 且修改时间超过 7 天的文件并压缩打包为 old_logs.tar.gz"
+                  placeholder={t("copilot.genPlaceholder")}
                   rows={3}
                   className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded p-2.5 text-xs text-[#cccccc] placeholder-[#858585] outline-none transition-colors resize-none leading-relaxed"
                 />
@@ -435,13 +438,13 @@ export function OmniAICopilotModal({
 
               {/* Quick Presets */}
               <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className="text-[#858585] text-[10px]">快捷示例:</span>
+                <span className="text-[#858585] text-[10px]">{t("copilot.quickExamples")}</span>
                 {[
-                  '检查当前占用端口前5的进程',
-                  '按内存占用排序查出最大的前10个进程',
-                  '排查最近被误删的开放文件 (lsof +L1)',
-                  '生成自签名 SSL 证书 (10年有效期)',
-                  '查看 Nginx 访问日志中访问频次最高的 IP',
+                  t('copilot.ex1'),
+                  t('copilot.ex2'),
+                  t('copilot.ex3'),
+                  t('copilot.ex4'),
+                  t('copilot.ex5'),
                 ].map((item, idx) => (
                   <button
                     key={idx}
@@ -460,27 +463,27 @@ export function OmniAICopilotModal({
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-[#cccccc] block mb-1 font-medium">
-                  报错信息与终端输出:
+                  {t('copilot.errorLabel')}
                 </label>
                 <textarea
                   ref={inputRef}
                   value={errorText}
                   onChange={e => setErrorText(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="粘贴报错信息 (如: Permission denied, No space left on device, Port already in use 等)"
+                  placeholder={t("copilot.errorPlaceholder")}
                   rows={4}
                   className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded p-2.5 text-xs text-[#f48771] font-mono placeholder-[#858585] outline-none transition-colors resize-none leading-relaxed"
                 />
               </div>
               <div>
                 <label className="text-xs text-[#858585] block mb-1">
-                  导致报错的命令 (可选):
+                  {t('copilot.causeCmdLabel')}
                 </label>
                 <input
                   type="text"
                   value={lastCommand}
                   onChange={e => setLastCommand(e.target.value)}
-                  placeholder="例如: docker run -p 80:80 nginx"
+                  placeholder={t("copilot.explainPlaceholder")}
                   className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-3 py-1.5 text-xs text-[#cccccc] font-mono outline-none"
                 />
               </div>
@@ -492,17 +495,17 @@ export function OmniAICopilotModal({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs text-[#cccccc] font-medium">
-                  自动化巡检 / 部署脚本需求:
+                  {t('copilot.scriptReqLabel')}
                 </label>
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-[#858585]">脚本语言:</span>
+                  <span className="text-[#858585]">{t('copilot.scriptLangLabel')}</span>
                   <select
                     value={scriptType}
                     onChange={e => setScriptType(e.target.value as any)}
                     className="bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2 py-0.5 text-[#cccccc]"
                   >
-                    <option value="bash">Bash (Linux 工业级脚本)</option>
-                    <option value="python">Python 3 (自动化运维)</option>
+                    <option value="bash">{t("copilot.bashScript")}</option>
+                    <option value="python">{t("copilot.pythonScript")}</option>
                     <option value="sh">POSIX Shell</option>
                   </select>
                 </div>
@@ -512,7 +515,7 @@ export function OmniAICopilotModal({
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="例如: 编写一个定期检测磁盘剩余空间，超过 85% 时自动归档压缩历史日志并发送告警的健壮脚本"
+                placeholder={t("copilot.scriptPlaceholder")}
                 rows={3}
                 className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded p-2.5 text-xs text-[#cccccc] placeholder-[#858585] outline-none transition-colors resize-none leading-relaxed"
               />
@@ -524,7 +527,7 @@ export function OmniAICopilotModal({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs text-[#cccccc] font-medium flex items-center gap-2">
-                  <span>待分析的终端输出或日志内容:</span>
+                  <span>{t('copilot.logAnalyzeLabel')}</span>
                 </label>
                 {getTerminalBufferLines && (
                   <button
@@ -539,7 +542,7 @@ export function OmniAICopilotModal({
                     className="flex items-center gap-1 px-2.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-[11px] font-medium transition-colors"
                   >
                     <CornerDownLeft className="w-3 h-3" />
-                    <span>载入当前终端最后 100 行</span>
+                    <span>{t('copilot.loadBufferBtn')}</span>
                   </button>
                 )}
               </div>
@@ -548,7 +551,7 @@ export function OmniAICopilotModal({
                 value={errorText}
                 onChange={e => setErrorText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="粘贴待解释分析的终端输出、命令运行结果、系统日志或配置文件内容..."
+                placeholder={t("copilot.logAnalyzePlaceholder")}
                 rows={5}
                 className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded p-2.5 text-xs text-[#cca700] font-mono placeholder-[#858585] outline-none transition-colors resize-none leading-relaxed"
               />
@@ -569,19 +572,19 @@ export function OmniAICopilotModal({
               {loading ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>AI 思考分析中...</span>
+                  <span>{t('copilot.thinking')}</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>
                     {mode === 'diagnose'
-                      ? '开始智能诊断'
+                      ? t('copilot.genDiagnoseBtn')
                       : mode === 'explain'
-                      ? '开始 AI 摘要与解释'
+                      ? t('copilot.genExplainBtn')
                       : mode === 'script'
-                      ? '生成自动化脚本'
-                      : '生成 Shell 命令'}{' '}
+                      ? t('copilot.genScriptBtn')
+                      : t('copilot.genNlBtn')}{' '}
                     (Cmd+Enter)
                   </span>
                 </>
@@ -594,9 +597,9 @@ export function OmniAICopilotModal({
             <div className="p-3 bg-[#a1260d]/15 border border-[#a1260d]/40 rounded text-xs text-[#f48771] flex items-start gap-2 animate-in fade-in">
               <AlertTriangle className="w-4 h-4 text-[#f48771] shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold">生成失败:</span> {errorMessage}
+                <span className="font-semibold">{t("copilot.genFailed")}</span> {errorMessage}
                 <div className="mt-1 text-[11px] text-[#f48771]/80">
-                  提示: 请点击右上角设置齿轮 ⚙️ 检查您的 API Key、Base URL 与大模型配置。
+                  {t('copilot.configCheckHint')}
                 </div>
               </div>
             </div>
@@ -614,24 +617,24 @@ export function OmniAICopilotModal({
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-1.5">
                       <Terminal className="w-3.5 h-3.5 text-[#89d185]" />
-                      推荐执行命令:
+                      {t('copilot.recommendedCmd')}
                     </span>
                     {riskStr === 'danger' && (
                       <span className="px-2 py-0.5 bg-[#a1260d]/20 border border-[#a1260d]/40 text-[#f48771] rounded text-[10px] font-bold flex items-center gap-1">
                         <ShieldAlert className="w-3 h-3 text-[#f48771]" />
-                        高危操作提醒
+                        {t('copilot.dangerAlert')}
                       </span>
                     )}
                     {riskStr === 'caution' && (
                       <span className="px-2 py-0.5 bg-[#cca700]/20 border border-[#cca700]/40 text-[#cca700] rounded text-[10px] font-bold flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3 text-[#cca700]" />
-                        需谨慎执行
+                        {t('copilot.cautionAlert')}
                       </span>
                     )}
                     {riskStr === 'safe' && (
                       <span className="px-2 py-0.5 bg-[#388a34]/20 border border-[#388a34]/40 text-[#89d185] rounded text-[10px] font-bold flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-[#89d185]" />
-                        安全指令
+                        {t('copilot.safeAlert')}
                       </span>
                     )}
                   </div>
@@ -642,7 +645,7 @@ export function OmniAICopilotModal({
                       className="px-2.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-[11px] flex items-center gap-1 transition-colors"
                     >
                       {copied ? <Check className="w-3 h-3 text-[#89d185]" /> : <Copy className="w-3 h-3" />}
-                      <span>{copied ? '已复制' : '复制'}</span>
+                      <span>{copied ? t('copilot.copiedBtn') : t('copilot.copyBtn')}</span>
                     </button>
                     <button
                       onClick={() => {
@@ -650,10 +653,10 @@ export function OmniAICopilotModal({
                         onClose();
                       }}
                       className="px-3 py-1 bg-[#252526] hover:bg-[#2a2d2e] border border-[#3c3c3c] text-[#cccccc] rounded text-[11px] font-medium flex items-center gap-1 transition-colors"
-                      title="填入终端输入行，暂不自动回车执行"
+                      title={t("copilot.fillInputTooltip")}
                     >
                       <ArrowDownToLine className="w-3 h-3 text-[#0078d4]" />
-                      <span>填入终端</span>
+                      <span>{t('copilot.insertTerminal')}</span>
                     </button>
                     <button
                       onClick={() => {
@@ -661,10 +664,10 @@ export function OmniAICopilotModal({
                         onClose();
                       }}
                       className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-all"
-                      title="直接发送到活动终端执行"
+                      title={t("copilot.runDirectTooltip")}
                     >
                       <Play className="w-3 h-3 fill-current" />
-                      <span>立即运行</span>
+                      <span>{t('copilot.runTerminal')}</span>
                     </button>
                   </div>
                 </div>
@@ -679,7 +682,7 @@ export function OmniAICopilotModal({
                   <div className="p-3 bg-[#252526] border border-[#2b2b2b] rounded text-xs text-[#cccccc] space-y-1.5">
                     <div className="font-semibold text-[11px] flex items-center gap-1 text-[#0078d4]">
                       <Zap className="w-3 h-3 text-[#0078d4]" />
-                      意图与参数解析:
+                      {t('copilot.intentAnalysis')}
                     </div>
                     <MarkdownViewer content={explanationStr} />
                   </div>
@@ -694,7 +697,7 @@ export function OmniAICopilotModal({
                           type="text"
                           value={quickLabel}
                           onChange={e => setQuickLabel(e.target.value)}
-                          placeholder="快捷命令名称..."
+                          placeholder={t("copilot.saveCmdPlaceholder")}
                           className="bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2.5 py-1 text-[#cccccc] text-xs flex-1 outline-none"
                         />
                         <button
@@ -722,7 +725,7 @@ export function OmniAICopilotModal({
                         className="text-[11px] text-[#0078d4] hover:underline flex items-center gap-1 transition-colors"
                       >
                         <BookmarkPlus className="w-3.5 h-3.5" />
-                        <span>{savedSuccess ? '✓ 已保存到快捷命令' : '+ 保存为常用快捷命令'}</span>
+                        <span>{savedSuccess ? t('copilot.savedCmd') : t('copilot.saveCmd')}</span>
                       </button>
                     )}
                   </div>
@@ -737,7 +740,7 @@ export function OmniAICopilotModal({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-1.5">
                   <FileCode className="w-4 h-4 text-[#0078d4]" />
-                  生成的自动化脚本 ({scriptType}):
+                  {t('copilot.generatedScript').replace('{type}', scriptType)}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -745,7 +748,7 @@ export function OmniAICopilotModal({
                     className="px-2.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-[11px] flex items-center gap-1 transition-colors"
                   >
                     {copied ? <Check className="w-3 h-3 text-[#89d185]" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? '已复制' : '复制代码'}</span>
+                    <span>{copied ? t('copilot.copiedBtn') : t('copilot.copyBtn')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -755,7 +758,7 @@ export function OmniAICopilotModal({
                     className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-[11px] font-semibold flex items-center gap-1 transition-all"
                   >
                     <ArrowDownToLine className="w-3 h-3" />
-                    <span>送入终端</span>
+                    <span>{t('copilot.sendToTerminal')}</span>
                   </button>
                 </div>
               </div>
@@ -771,9 +774,9 @@ export function OmniAICopilotModal({
         {/* Footer */}
         <div className="px-5 py-2.5 bg-[#1f1f1f] border-t border-[#2b2b2b] flex items-center justify-between text-[11px] text-[#858585] shrink-0">
           <div className="flex items-center gap-2">
-            <span>按 <kbd className="px-1.5 py-0.5 bg-[#252526] border border-[#3c3c3c] rounded text-[10px] text-[#cccccc] font-mono">Esc</kbd> 退出</span>
+            <span>{t('copilot.exitHint')}</span>
             <span>·</span>
-            <span>按 <kbd className="px-1.5 py-0.5 bg-[#252526] border border-[#3c3c3c] rounded text-[10px] text-[#cccccc] font-mono">Cmd+K</kbd> 随时唤起</span>
+            <span>{t('copilot.wakeHint')}</span>
           </div>
           <div className="text-[#858585]">
             Powered by <span className="text-[#0078d4] font-semibold">OmniAI Engine</span>

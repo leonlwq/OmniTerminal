@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React from 'react';
 
 interface TerminalSearchBarProps {
@@ -37,6 +38,7 @@ export function TerminalSearchBar({
   handleSearchNext,
   closeSearch,
 }: TerminalSearchBarProps) {
+  const { t } = useI18n();
   if (!isSearchOpen) return null;
 
   return (
@@ -45,7 +47,7 @@ export function TerminalSearchBar({
         <input 
           ref={searchInputRef as any}
           type="text"
-          placeholder="搜索终端内容 (Enter / Shift+Enter)..."
+          placeholder={t('termSearch.placeholder')}
           value={searchText}
           onChange={(e) => {
             setSearchText(e.target.value);
@@ -55,7 +57,7 @@ export function TerminalSearchBar({
                 caseSensitive: searchCaseSensitive,
                 wholeWord: searchWholeWord 
               });
-              setSearchResultCount(found ? '匹配中' : '无结果');
+              setSearchResultCount(found ? t('termSearch.matching') : t('termSearch.noResult'));
             } else {
               setSearchResultCount('');
               searchAddonRef.current?.clearDecorations();
@@ -90,7 +92,7 @@ export function TerminalSearchBar({
           className={`px-1.5 py-0.5 text-[10px] font-mono rounded font-semibold transition-colors ${
             searchCaseSensitive ? 'bg-[#0078d4] text-white' : 'text-[#858585] hover:text-[#cccccc]'
           }`}
-          title="区分大小写 (Case Sensitive)"
+          title={t('termSearch.caseSensitive')}
         >
           Aa
         </button>
@@ -106,7 +108,7 @@ export function TerminalSearchBar({
           className={`px-1.5 py-0.5 text-[10px] font-mono rounded font-semibold transition-colors ${
             searchWholeWord ? 'bg-[#0078d4] text-white' : 'text-[#858585] hover:text-[#cccccc]'
           }`}
-          title="全字匹配 (Whole Word)"
+          title={t('termSearch.wholeWord')}
         >
           \b
         </button>
@@ -122,35 +124,35 @@ export function TerminalSearchBar({
           className={`px-1.5 py-0.5 text-[10px] font-mono rounded font-semibold transition-colors ${
             searchIsRegex ? 'bg-[#0078d4] text-white' : 'text-[#858585] hover:text-[#cccccc]'
           }`}
-          title="正则表达式 (Regular Expression)"
+          title={t('termSearch.regex')}
         >
           .*
         </button>
       </div>
 
       {searchResultCount && (
-        <span className={`text-[11px] font-medium shrink-0 px-1.5 py-0.5 rounded ${searchResultCount === '无结果' ? 'text-[#f48771] bg-[#5a1d1d]/40 border border-[#be1100]/40' : 'text-[#89d185] bg-[#1e3a1e]/40 border border-[#3fb950]/30'}`}>
+        <span className={`text-[11px] font-medium shrink-0 px-1.5 py-0.5 rounded ${searchResultCount === t('termSearch.noResult') ? 'text-[#f48771] bg-[#5a1d1d]/40 border border-[#be1100]/40' : 'text-[#89d185] bg-[#1e3a1e]/40 border border-[#3fb950]/30'}`}>
           {searchResultCount}
         </span>
       )}
       <button 
         onClick={handleSearchPrev}
         className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-        title="上一个 (Shift+Enter)"
+        title={t('termSearch.prev')}
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/></svg>
       </button>
       <button 
         onClick={handleSearchNext}
         className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-        title="下一个 (Enter)"
+        title={t('termSearch.next')}
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
       </button>
       <button 
         onClick={closeSearch}
         className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-        title="关闭搜索 (Esc)"
+        title={t('termSearch.close')}
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
       </button>

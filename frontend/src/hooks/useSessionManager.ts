@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { app, models } from '../../wailsjs/go/models';
 import { GetSessions, SaveSession, DeleteSession } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 // 级联继承解析函数：当会话未显式指定属性时，递归向上查找父级目录的默认继承配置
 export function resolveEffectiveSessionConfig(session: app.SessionConfig, allSessions: app.SessionConfig[]): app.SessionConfig {
@@ -53,6 +54,7 @@ export function resolveEffectiveSessionConfig(session: app.SessionConfig, allSes
 }
 
 export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) => void) {
+  const { t } = useI18n();
   const [sessions, setSessions] = useState<app.SessionConfig[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
@@ -83,13 +85,13 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
     const cloned = new app.SessionConfig({
       ...session,
       id: newId,
-      name: `${session.name} - 副本`
+      name: `${session.name} - ${t('session.cloneSuffix') || '副本'}`
     });
 
     SaveSession(cloned)
       .then(() => loadSessions())
-      .catch((err) => alert("克隆会话失败: " + (err.message || err)));
-  }, [loadSessions]);
+      .catch((err) => alert(t('session.cloneFailed') + (err.message || err)));
+  }, [loadSessions, t]);
 
   const handleSessionDrop = useCallback((targetId: string) => {
     if (!draggedSessionId || draggedSessionId === targetId) return;
@@ -102,7 +104,7 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
       let tempParentId = targetConfig.parentId;
       while (tempParentId) {
         if (tempParentId === draggedConfig.id) {
-          alert("错误：不能将父目录拖拽到其自身的子目录下！");
+          alert(t('session.cannotDropParentToChild'));
           return;
         }
         const parent = sessions.find((s: any) => s.id === tempParentId);
@@ -124,10 +126,10 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
 
     SaveSession(updated)
       .then(() => loadSessions())
-      .catch((err) => alert("移动会话配置失败: " + (err.message || err)));
+      .catch((err) => alert(t('session.moveFailed') + (err.message || err)));
 
     setDraggedSessionId(null);
-  }, [draggedSessionId, sessions, loadSessions]);
+  }, [draggedSessionId, sessions, loadSessions, t]);
 
   const resetSessionFormData = useCallback((parentId = '') => {
     setFormData({
@@ -174,7 +176,7 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
   const handleSaveSession = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      alert("请填写名称");
+      alert(t('session.pleaseInputName'));
       return;
     }
     const isSerial = formData.protocol === 'serial';
@@ -182,7 +184,7 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
     const isRawTcp = formData.protocol === 'raw_tcp';
 
     if (!formData.isFolder && !isSerial && !isLocal && !isRawTcp && (!formData.host || !formData.user)) {
-      alert("请填写主机与用户名");
+      alert(t('session.pleaseInputHostUser'));
       return;
     }
 
@@ -227,8 +229,8 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
         loadSessions();
         setIsModalOpen(false);
       })
-      .catch(err => alert("保存失败: " + err));
-  }, [formData, loadSessions]);
+      .catch(err => alert(t('session.saveFailed') + err));
+  }, [formData, loadSessions, t]);
 
   const handleEditSession = useCallback((session: app.SessionConfig, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -262,11 +264,11 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
     if (e) e.stopPropagation();
     const hasChildren = sessions.some((s: any) => s.parentId === id);
     if (hasChildren) {
-      alert("该文件夹内还存有其他会话，请先清空或删除子会话");
+      alert(t('session.folderHasChildren'));
       return;
     }
     setDeleteConfirmId(id);
-  }, [sessions]);
+  }, [sessions, t]);
 
   const confirmDeleteSession = useCallback(() => {
     if (!deleteConfirmId) return;
@@ -276,10 +278,10 @@ export function useSessionManager(onLoadSessions?: (res: app.SessionConfig[]) =>
         setDeleteConfirmId(null);
       })
       .catch(err => {
-        alert("删除失败: " + err);
+        alert(t('session.deleteFailed') + err);
         setDeleteConfirmId(null);
       });
-  }, [deleteConfirmId, loadSessions]);
+  }, [deleteConfirmId, loadSessions, t]);
 
   return {
     sessions,

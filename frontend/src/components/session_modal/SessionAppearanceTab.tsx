@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
 import { Palette } from 'lucide-react';
 import { models } from '../../../wailsjs/go/models';
 
@@ -13,90 +14,91 @@ export function SessionAppearanceTab({
   setFormData,
   customThemes = [],
 }: SessionAppearanceTabProps) {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-lg p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-2 border-b border-[#2b2b2b] pb-2.5">
           <Palette className="w-3.5 h-3.5 text-[#0078d4]" />
-          独立主题与视觉覆盖
+          {t("sessionAppearance.title")}
         </h4>
 
         <div className="grid grid-cols-2 gap-3.5">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#858585]">覆盖主题配色</label>
+            <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.overrideTheme')}</label>
             <select
               value={formData.overrideTheme || ''}
               onChange={(e) => setFormData({ ...formData, overrideTheme: e.target.value })}
               className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
             >
-              <option value="">[ 继承全局配色主题 ]</option>
+              <option value="">{t('sessionModal.inheritTheme')}</option>
               {customThemes && customThemes.length > 0 && (
-                <optgroup label="🎨 自定义配色方案 (Custom Themes)">
+                <optgroup label={t("sessionAppearance.customThemes")}>
                   {customThemes.map((t: any) => (
                     <option key={t.name} value={t.name}>{t.name}</option>
                   ))}
                 </optgroup>
               )}
-              <optgroup label="🌙 暗黑极客主题 (Dark Themes)">
-                <option value="VS Code Dark Modern">VS Code Dark Modern (官方默认)</option>
-                <option value="Classic Dark">Classic Dark (极客暗黑)</option>
-                <option value="Tokyo Night">Tokyo Night (东京暗夜)</option>
-                <option value="Tokyo Night Storm">Tokyo Night Storm (东京风暴)</option>
-                <option value="Catppuccin Mocha">Catppuccin Mocha (摩卡柔和)</option>
-                <option value="Catppuccin Macchiato">Catppuccin Macchiato (玛奇朵温润)</option>
-                <option value="Catppuccin Frappé">Catppuccin Frappé (法冰暮霭)</option>
-                <option value="Rosé Pine">Rosé Pine (玫瑰松针)</option>
-                <option value="Rosé Pine Moon">Rosé Pine Moon (松针月夜)</option>
-                <option value="Kanagawa Wave">Kanagawa Wave (神奈川浪)</option>
-                <option value="Kanagawa Dragon">Kanagawa Dragon (神奈墨龙)</option>
-                <option value="Vesper">Vesper (极夜微光)</option>
-                <option value="Night Owl">Night Owl (暗夜猫头鹰)</option>
-                <option value="Everforest Dark">Everforest Dark (常青暮林)</option>
-                <option value="Poimandres">Poimandres (极客未来)</option>
-                <option value="Oxocarbon">Oxocarbon (碳素高科)</option>
-                <option value="Horizon Dark">Horizon Dark (地平线霓虹)</option>
-                <option value="Palenight">Palenight (苍白之夜)</option>
-                <option value="Snazzy">Snazzy (时髦炫彩)</option>
-                <option value="Shades of Purple">Shades of Purple (极客暗紫)</option>
-                <option value="Nord">Nord (北欧极光)</option>
-                <option value="One Dark Pro">One Dark Pro (经典 Atom)</option>
-                <option value="Dracula">Dracula (德拉库拉)</option>
-                <option value="Monokai">Monokai (复古原野)</option>
-                <option value="GitHub Dark">GitHub Dark (官方暗黑)</option>
-                <option value="Cyberpunk 2077">Cyberpunk 2077 (赛博霓虹)</option>
-                <option value="Ayu Dark">Ayu Dark (深邃冷调)</option>
-                <option value="Gruvbox Dark">Gruvbox Dark (复古暖调)</option>
-                <option value="Synthwave '84">Synthwave '84 (复古发光)</option>
-                <option value="Moonlight">Moonlight (月光暗夜)</option>
-                <option value="Solarized Dark">Solarized Dark (经典护眼)</option>
+              <optgroup label={t("sessionAppearance.darkThemes")}>
+                <option value="VS Code Dark Modern">VS Code Dark Modern</option>
+                <option value="Classic Dark">Classic Dark</option>
+                <option value="Tokyo Night">Tokyo Night</option>
+                <option value="Tokyo Night Storm">Tokyo Night Storm</option>
+                <option value="Catppuccin Mocha">Catppuccin Mocha</option>
+                <option value="Catppuccin Macchiato">Catppuccin Macchiato</option>
+                <option value="Catppuccin Frappé">Catppuccin Frappé</option>
+                <option value="Rosé Pine">Rosé Pine</option>
+                <option value="Rosé Pine Moon">Rosé Pine Moon</option>
+                <option value="Kanagawa Wave">Kanagawa Wave</option>
+                <option value="Kanagawa Dragon">Kanagawa Dragon</option>
+                <option value="Vesper">Vesper</option>
+                <option value="Night Owl">Night Owl</option>
+                <option value="Everforest Dark">Everforest Dark</option>
+                <option value="Poimandres">Poimandres</option>
+                <option value="Oxocarbon">Oxocarbon</option>
+                <option value="Horizon Dark">Horizon Dark</option>
+                <option value="Palenight">Palenight</option>
+                <option value="Snazzy">Snazzy</option>
+                <option value="Shades of Purple">Shades of Purple</option>
+                <option value="Nord">Nord</option>
+                <option value="One Dark Pro">One Dark Pro</option>
+                <option value="Dracula">Dracula</option>
+                <option value="Monokai">Monokai</option>
+                <option value="GitHub Dark">GitHub Dark</option>
+                <option value="Cyberpunk 2077">Cyberpunk 2077</option>
+                <option value="Ayu Dark">Ayu Dark</option>
+                <option value="Gruvbox Dark">Gruvbox Dark</option>
+                <option value="Synthwave '84">Synthwave '84</option>
+                <option value="Moonlight">Moonlight</option>
+                <option value="Solarized Dark">Solarized Dark</option>
               </optgroup>
-              <optgroup label="☀️ 浅色清爽主题 (Light Themes)">
-                <option value="GitHub Light">GitHub Light (官方明亮)</option>
-                <option value="Catppuccin Latte">Catppuccin Latte (拿铁浅色)</option>
+              <optgroup label={t("sessionAppearance.groupLight")}>
+                <option value="GitHub Light">{t("sessionAppearance.themeGitHubLight")}</option>
+                <option value="Catppuccin Latte">{t("sessionAppearance.themeCatppuccin")}</option>
               </optgroup>
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#858585]">代码连字特性 (Font Ligatures)</label>
+            <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.fontLigatures')}</label>
             <select
               value={formData.overrideEnableLigatures ?? 0}
               onChange={(e) => setFormData({ ...formData, overrideEnableLigatures: Number(e.target.value) })}
               className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
             >
-              <option value={0}>[ 继承全局配置 ]</option>
-              <option value={1}>强制启用连字 (!=, ===, =&gt;)</option>
-              <option value={2}>强制禁用连字</option>
+              <option value={0}>{t('sessionModal.inheritGlobal')}</option>
+              <option value={1}>{t('sessionModal.enableLigatures')}</option>
+              <option value={2}>{t('sessionModal.disableLigatures')}</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#858585]">覆盖终端字号 (PX)</label>
+            <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.overrideFontSize')}</label>
             <input
               type="number"
               min="0"
               max="30"
-              placeholder="0 代表继承全局配置"
+              placeholder={t("sessionAppearance.inheritGlobal")}
               value={formData.overrideFontSize || 0}
               onChange={(e) => setFormData({ ...formData, overrideFontSize: Number(e.target.value) })}
               className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
@@ -108,9 +110,9 @@ export function SessionAppearanceTab({
         <div className="grid grid-cols-2 gap-3.5 pt-1">
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-[11px]">
-              <span className="text-[#858585]">独立行高 (Line Height)</span>
+              <span className="text-[#858585]">{t('sessionModal.overrideLineHeight')}</span>
               <span className="text-[#0078d4] font-semibold">
-                {(formData.overrideLineHeight ?? 0) > 0 ? `${formData.overrideLineHeight}x` : '[ 继承全局 ]'}
+                {(formData.overrideLineHeight ?? 0) > 0 ? `${formData.overrideLineHeight}x` : t('sessionAppearance.inheritBadge')}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -129,7 +131,7 @@ export function SessionAppearanceTab({
                   onClick={() => setFormData({ ...formData, overrideLineHeight: 0 })}
                   className="text-[10px] px-2 py-0.5 bg-[#3c3c3c] hover:bg-[#484848] rounded text-[#cccccc]"
                 >
-                  重置
+                  {t('common.reset')}
                 </button>
               )}
             </div>
@@ -137,9 +139,9 @@ export function SessionAppearanceTab({
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-[11px]">
-              <span className="text-[#858585]">独立内边距 (Padding)</span>
+              <span className="text-[#858585]">{t('sessionModal.overridePadding')}</span>
               <span className="text-[#0078d4] font-semibold">
-                {(formData.overrideTerminalPadding ?? 0) > 0 ? `${formData.overrideTerminalPadding}px` : '[ 继承全局 ]'}
+                {(formData.overrideTerminalPadding ?? 0) > 0 ? `${formData.overrideTerminalPadding}px` : t('sessionAppearance.inheritBadge')}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -158,7 +160,7 @@ export function SessionAppearanceTab({
                   onClick={() => setFormData({ ...formData, overrideTerminalPadding: 0 })}
                   className="text-[10px] px-2 py-0.5 bg-[#3c3c3c] hover:bg-[#484848] rounded text-[#cccccc]"
                 >
-                  重置
+                  {t('common.reset')}
                 </button>
               )}
             </div>
@@ -167,11 +169,11 @@ export function SessionAppearanceTab({
 
         <div className="space-y-1.5 pt-1">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-[#858585]">覆盖终端背景不透明度</span>
+            <span className="text-[#858585]">{t('sessionModal.overrideOpacity')}</span>
             <span className="text-[#0078d4] font-semibold">
               {(formData.overrideTerminalOpacity ?? 0) > 0
                 ? `${Math.round((formData.overrideTerminalOpacity ?? 0) * 100)}%`
-                : '[ 继承全局配置 ]'}
+                : t('sessionAppearance.inheritConfig')}
             </span>
           </div>
           <div className="flex items-center space-x-3 py-1">
@@ -190,24 +192,24 @@ export function SessionAppearanceTab({
                 onClick={() => setFormData({ ...formData, overrideTerminalOpacity: 0 })}
                 className="text-[11px] px-2.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] rounded text-[#cccccc] transition-colors"
               >
-                重置
+                {t('common.reset')}
               </button>
             )}
           </div>
         </div>
 
         <div className="space-y-1.5 pt-1">
-          <label className="text-[11px] font-medium text-[#858585]">会话独立背景图</label>
+          <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.bgImage')}</label>
           <div className="flex items-center space-x-2">
             <input
               type="text"
-              placeholder="图片 URL (https://... 或 data:image/...)"
+              placeholder={t("sessionAppearance.bgUrlPlaceholder")}
               value={formData.backgroundImage || ''}
               onChange={(e) => setFormData({ ...formData, backgroundImage: e.target.value })}
               className="flex-1 px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
             />
             <label className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] rounded text-[#cccccc] text-xs cursor-pointer transition-colors whitespace-nowrap">
-              <span>选择本地图片</span>
+              <span>{t('sessionModal.selectLocalImage')}</span>
               <input 
                 type="file" 
                 accept="image/*" 
@@ -232,7 +234,7 @@ export function SessionAppearanceTab({
                 onClick={() => setFormData({ ...formData, backgroundImage: '' })}
                 className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] rounded text-[#cccccc] text-xs"
               >
-                清除
+                {t('common.clear')}
               </button>
             )}
           </div>
@@ -242,7 +244,7 @@ export function SessionAppearanceTab({
           <div className="grid grid-cols-2 gap-3.5 pt-2 border-t border-[#2b2b2b]">
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-[#858585]">背景图不透明度</span>
+                <span className="text-[#858585]">{t('sessionModal.bgOpacity')}</span>
                 <span className="text-[#0078d4] font-semibold">{Math.round((formData.backgroundOpacity ?? 0.5) * 100)}%</span>
               </div>
               <input
@@ -258,7 +260,7 @@ export function SessionAppearanceTab({
 
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-[#858585]">背景模糊滤镜 (Blur)</span>
+                <span className="text-[#858585]">{t('sessionModal.bgBlur')}</span>
                 <span className="text-[#0078d4] font-semibold">{formData.backgroundBlur ?? 0}px</span>
               </div>
               <input
@@ -273,15 +275,15 @@ export function SessionAppearanceTab({
             </div>
 
             <div className="col-span-2 space-y-1.5">
-              <label className="text-[11px] font-medium text-[#858585]">背景适配模式 (Fit Mode)</label>
+              <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.bgFit')}</label>
               <select
                 value={formData.backgroundFit || 'cover'}
                 onChange={(e) => setFormData({ ...formData, backgroundFit: e.target.value })}
                 className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
               >
-                <option value="cover">Cover (等比缩放并完全填充视口 - 推荐)</option>
-                <option value="contain">Contain (完整显示图片全部内容)</option>
-                <option value="tile">Tile (无缩放平铺重复模式)</option>
+                <option value="cover">{t("sessionAppearance.bgCover")}</option>
+                <option value="contain">{t("sessionAppearance.bgContain")}</option>
+                <option value="tile">{t("sessionAppearance.bgTile")}</option>
               </select>
             </div>
           </div>

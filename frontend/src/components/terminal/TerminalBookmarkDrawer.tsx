@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React from 'react';
 import { Bookmark, X, Trash2 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export const TerminalBookmarkDrawer: React.FC<TerminalBookmarkDrawerProps> = ({
   onJumpTo,
   onDelete,
 }) => {
+  const { t } = useI18n();
   return (
     <>
       {/* 🚩 书签提示 Toast */}
@@ -45,10 +47,10 @@ export const TerminalBookmarkDrawer: React.FC<TerminalBookmarkDrawerProps> = ({
           <button
             onClick={onOpen}
             className="flex items-center gap-1 px-2 py-1 rounded bg-[#252526] hover:bg-[#2a2d2e] border border-amber-500/40 text-[11px] text-amber-300 shadow-lg transition-colors"
-            title="查看所有书签 (Ctrl+Shift+K)"
+            title={t('bookmark.titleTooltip')}
           >
             <Bookmark className="w-3 h-3 text-amber-400" fill="currentColor" />
-            <span>{bookmarks.length} 书签</span>
+            <span>{t('bookmark.badge').replace('{count}', String(bookmarks.length))}</span>
           </button>
         </div>
       )}
@@ -59,7 +61,7 @@ export const TerminalBookmarkDrawer: React.FC<TerminalBookmarkDrawerProps> = ({
           <div className="flex items-center justify-between px-4 py-2.5 bg-[#1f1f1f] border-b border-[#2b2b2b]">
             <div className="flex items-center gap-2">
               <Bookmark className="w-4 h-4 text-amber-400" fill="currentColor" />
-              <span className="text-xs font-semibold text-[#cccccc]">终端书签列表 ({bookmarks.length})</span>
+              <span className="text-xs font-semibold text-[#cccccc]">{t("bookmark.listTitle").replace("{count}", String(bookmarks.length))}</span>
             </div>
             <button
               onClick={onClose}
@@ -78,7 +80,7 @@ export const TerminalBookmarkDrawer: React.FC<TerminalBookmarkDrawerProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-mono font-bold text-amber-400">
-                    第 {bm.line + 1} 行
+                    {t('bookmark.line').replace('{num}', String(bm.line + 1))}
                   </span>
                   <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100">
                     <span className="text-[10px] text-[#858585]">
@@ -90,14 +92,14 @@ export const TerminalBookmarkDrawer: React.FC<TerminalBookmarkDrawerProps> = ({
                         onDelete(bm.id);
                       }}
                       className="p-0.5 rounded text-[#858585] hover:text-[#f48771]"
-                      title="删除此书签"
+                      title={t('bookmark.delete')}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
                 <p className="text-xs font-mono text-[#cccccc] truncate select-all">
-                  {bm.previewText || '<空白行>'}
+                  {bm.previewText || t('bookmark.emptyLine')}
                 </p>
               </div>
             ))}

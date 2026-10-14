@@ -4,6 +4,7 @@ import {
   Activity, Globe, Maximize2, Link2, Check, ChevronUp, ChevronDown, Link, Sparkles
 } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface StatusBarProps {
   activeTabId: string | null;
@@ -28,23 +29,6 @@ interface StatusBarProps {
   onToggleCommandBlockMode?: () => void;
 }
 
-const ENCODINGS = [
-  { label: 'UTF-8 (Unicode 标准)', value: 'utf-8' },
-  { label: 'GBK (简体中文)', value: 'gbk' },
-  { label: 'GB2312 (国标简中)', value: 'gb2312' },
-  { label: 'Big5 (繁体中文)', value: 'big5' },
-  { label: 'EUC-KR (韩文)', value: 'euc-kr' },
-  { label: 'Shift-JIS (日文)', value: 'shift-jis' },
-  { label: 'ISO-8859-1 (西欧语言)', value: 'iso-8859-1' },
-];
-
-const PRESET_DIMENSIONS = [
-  { label: '80 × 24 (标准 VT100)', cols: 80, rows: 24 },
-  { label: '120 × 36 (中等宽屏)', cols: 120, rows: 36 },
-  { label: '160 × 48 (大屏工作区)', cols: 160, rows: 48 },
-  { label: '200 × 60 (超宽全景)', cols: 200, rows: 60 },
-];
-
 export function StatusBar({
   activeTabId,
   activeTab,
@@ -67,6 +51,24 @@ export function StatusBar({
   isCommandBlockMode = false,
   onToggleCommandBlockMode,
 }: StatusBarProps) {
+  const { t } = useI18n();
+
+  const ENCODINGS = [
+    { label: t('statusbar.enc.utf8'), value: 'utf-8' },
+    { label: t('statusbar.enc.gbk'), value: 'gbk' },
+    { label: t('statusbar.enc.gb2312'), value: 'gb2312' },
+    { label: t('statusbar.enc.big5'), value: 'big5' },
+    { label: t('statusbar.enc.euckr'), value: 'euc-kr' },
+    { label: t('statusbar.enc.shiftjis'), value: 'shift-jis' },
+    { label: t('statusbar.enc.iso'), value: 'iso-8859-1' },
+  ];
+
+  const PRESET_DIMENSIONS = [
+    { label: t('statusbar.size.vt100'), cols: 80, rows: 24 },
+    { label: t('statusbar.size.wide'), cols: 120, rows: 36 },
+    { label: t('statusbar.size.large'), cols: 160, rows: 48 },
+    { label: t('statusbar.size.ultra'), cols: 200, rows: 60 },
+  ];
   const [activePopover, setActivePopover] = useState<'encoding' | 'dimensions' | 'traffic' | 'pool' | null>(null);
   const [customCols, setCustomCols] = useState(80);
   const [customRows, setCustomRows] = useState(24);
@@ -158,7 +160,7 @@ export function StatusBar({
         <div className="flex items-center space-x-2.5">
           <span className="flex items-center space-x-1.5 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <span className="text-app-text">就绪</span>
+            <span className="text-app-text">{t('statusbar.ready') || '就绪'}</span>
           </span>
 
           {activeTabId && (
@@ -177,7 +179,7 @@ export function StatusBar({
                   setActivePopover(activePopover === 'encoding' ? null : 'encoding');
                 }}
                 className="flex items-center space-x-1 px-2 py-0.5 rounded-md hover:bg-app-hover text-app-text transition-all uppercase font-mono text-[10px] border border-transparent hover:border-app-border active:scale-95"
-                title="点击切换字符编码"
+                title={t('statusbar.encodingTip')}
               >
                 <Globe className="w-3 h-3 text-cyan-400" />
                 <span>{encoding || 'UTF-8'}</span>
@@ -190,7 +192,7 @@ export function StatusBar({
                   className="absolute bottom-7 left-0 bg-app-surface/95 backdrop-blur-xl border border-app-border shadow-[0_12px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.85)] ring-1 ring-black/5 dark:ring-white/10 rounded-2xl p-1.5 w-52 text-app-text z-50 animate-in fade-in slide-in-from-bottom-2 duration-150"
                 >
                   <div className="px-2.5 py-1.5 text-[10px] font-semibold text-app-text-muted border-b border-app-border flex items-center justify-between">
-                    <span>切换终端编码 (Encoding)</span>
+                    <span>{t('statusbar.encodingTitle')}</span>
                     <span className="text-cyan-400 font-mono">{encoding.toUpperCase()}</span>
                   </div>
                 <div className="py-1 max-h-48 overflow-y-auto space-y-0.5">
@@ -229,7 +231,7 @@ export function StatusBar({
                 setActivePopover(activePopover === 'traffic' ? null : 'traffic');
               }}
               className="flex items-center space-x-2 px-2 py-0.5 rounded-md hover:bg-app-hover font-mono text-[10px] border border-transparent hover:border-app-border transition-all active:scale-95"
-              title="点击查看网络流量诊断"
+              title={t('statusbar.netDiagTip')}
             >
               <Activity className="w-3 h-3 text-emerald-400" />
               <span className="text-emerald-400/90">↓ {(currentSpeed.rx / 1024).toFixed(1)} KB/s</span>
@@ -244,21 +246,21 @@ export function StatusBar({
                 <div className="flex items-center justify-between border-b border-app-border pb-1.5">
                   <span className="font-semibold text-xs text-app-text flex items-center gap-1.5">
                     <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                    网络连接诊断
+                    {t('statusbar.netDiag')}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono">LIVE</span>
                 </div>
                 <div className="space-y-1.5 text-[11px] font-mono">
                   <div className="flex justify-between">
-                    <span className="text-app-text-muted">实时下载速率:</span>
+                    <span className="text-app-text-muted">{t('statusbar.downloadSpeed')}</span>
                     <span className="text-emerald-400 font-bold">{(currentSpeed.rx / 1024).toFixed(2)} KB/s</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-app-text-muted">实时上传速率:</span>
+                    <span className="text-app-text-muted">{t('statusbar.uploadSpeed')}</span>
                     <span className="text-blue-400 font-bold">{(currentSpeed.tx / 1024).toFixed(2)} KB/s</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-app-text-muted">连接链路协议:</span>
+                    <span className="text-app-text-muted">{t('statusbar.linkProto')}</span>
                     <span className="text-app-text uppercase">{protocol}</span>
                   </div>
                 </div>
@@ -279,7 +281,7 @@ export function StatusBar({
                 setActivePopover(activePopover === 'dimensions' ? null : 'dimensions');
               }}
               className="flex items-center space-x-1 px-2 py-0.5 rounded-md hover:bg-app-hover font-mono text-[10px] text-app-text border border-transparent hover:border-app-border transition-all active:scale-95"
-              title="点击调整终端尺寸 (Columns × Rows)"
+              title={t('statusbar.resizeTip')}
             >
               <Maximize2 className="w-3 h-3 text-purple-400" />
               <span>{currentDim.cols} × {currentDim.rows}</span>
@@ -293,15 +295,15 @@ export function StatusBar({
                 <div className="flex items-center justify-between border-b border-app-border pb-1.5">
                   <span className="font-semibold text-xs text-app-text flex items-center gap-1.5">
                     <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
-                    调整终端分辨率
+                    {t('statusbar.adjustRes')}
                   </span>
                   <span className="text-[10px] text-app-text-muted font-mono">
-                    当前: {currentDim.cols}×{currentDim.rows}
+                    {t('statusbar.currentSize')} {currentDim.cols}×{currentDim.rows}
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] text-app-text-muted">快速预设尺寸:</span>
+                  <span className="text-[10px] text-app-text-muted">{t('statusbar.presetSize')}</span>
                   <div className="grid grid-cols-2 gap-1.5">
                     {PRESET_DIMENSIONS.map((dim) => (
                       <button
@@ -319,14 +321,14 @@ export function StatusBar({
                 </div>
 
                 <div className="space-y-1.5 pt-1 border-t border-app-border">
-                  <span className="text-[10px] text-app-text-muted">自定义行列数:</span>
+                  <span className="text-[10px] text-app-text-muted">{t('statusbar.customSize')}</span>
                   <div className="flex items-center space-x-2">
                     <input 
                       type="number"
                       value={customCols}
                       onChange={(e) => setCustomCols(Number(e.target.value))}
                       className="w-16 px-2 py-1 bg-app-input border border-app-border rounded-lg font-mono text-xs text-app-text outline-none focus:border-purple-500"
-                      placeholder="列数"
+                      placeholder={t('statusbar.cols')}
                     />
                     <span className="text-app-text-muted">×</span>
                     <input 
@@ -334,7 +336,7 @@ export function StatusBar({
                       value={customRows}
                       onChange={(e) => setCustomRows(Number(e.target.value))}
                       className="w-16 px-2 py-1 bg-app-input border border-app-border rounded-lg font-mono text-xs text-app-text outline-none focus:border-purple-500"
-                      placeholder="行数"
+                      placeholder={t('statusbar.rows')}
                     />
                     <button
                       onClick={() => {
@@ -343,7 +345,7 @@ export function StatusBar({
                       }}
                       className="flex-1 px-2.5 py-1 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white rounded-lg font-medium text-xs transition-all active:scale-95"
                     >
-                      应用
+                      {t('common.apply')}
                     </button>
                   </div>
                 </div>
@@ -365,11 +367,11 @@ export function StatusBar({
                   ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30'
                   : 'hover:bg-app-hover text-emerald-500 bg-emerald-500/10 border border-emerald-500/20'
               }`}
-              title="SSH 连接复用与智能连接池"
+              title={t('statusbar.poolTip')}
             >
               <Link className="w-3 h-3 text-emerald-400" />
               <span>
-                🔗 复用 {poolStats.reduce((acc, s) => acc + (s.refCount || 0), 0)}/{poolStats.length}
+                {t('statusbar.reuseCount').replace('{count}', String(poolStats.reduce((acc, s) => acc + (s.refCount || 0), 0))).replace('{total}', String(poolStats.length))}
               </span>
             </button>
 
@@ -378,10 +380,10 @@ export function StatusBar({
                 <div className="flex items-center justify-between border-b border-app-border pb-2 mb-2 font-semibold text-app-text">
                   <span className="flex items-center gap-1.5">
                     <Link className="w-3.5 h-3.5 text-emerald-400" />
-                    SSH 连接复用池 (Multiplexing)
+                    {t('statusbar.poolTitle')}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono">
-                    {poolStats.reduce((acc, s) => acc + (s.refCount || 0), 0)} 会话 / {poolStats.length} TCP
+                    {t('statusbar.sessTcpCount').replace('{sess}', String(poolStats.reduce((acc, s) => acc + (s.refCount || 0), 0))).replace('{tcp}', String(poolStats.length))}
                   </span>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -398,16 +400,16 @@ export function StatusBar({
                               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                           }`}
                         >
-                          {stat.refCount > 0 ? `${stat.refCount} 个会话复用` : `闲置 (${stat.idleSeconds}s)`}
+                          {stat.refCount > 0 ? t('statusbar.sessionReuse').replace('{count}', String(stat.refCount)) : t('statusbar.idleSecs').replace('{sec}', String(stat.idleSeconds))}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-app-text-muted pt-0.5">
-                        <span>建连: {stat.activeSince}</span>
+                        <span>{t('statusbar.activeSince').replace('{time}', stat.activeSince)}</span>
                         <button
                           onClick={() => handleClosePoolConn(stat.key)}
                           className="text-rose-400 hover:text-rose-300 hover:underline"
                         >
-                          断开连接
+                          {t('common.disconnect')}
                         </button>
                       </div>
                     </div>
@@ -428,10 +430,10 @@ export function StatusBar({
               ? 'bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30 shadow-sm' 
               : 'hover:bg-app-hover text-app-text-muted hover:text-app-text'
           }`}
-          title="多终端分屏同步滚动"
+          title={t('statusbar.syncScrollTooltip') || "多终端分屏同步滚动"}
         >
           <Link2 className={`w-3 h-3 ${isSyncScroll ? 'text-blue-400' : 'text-app-text-muted'}`} />
-          <span>{isSyncScroll ? '🔗 同步滚动: 开' : '同步滚动'}</span>
+          <span>{isSyncScroll ? (t('statusbar.syncScrollOn') || '🔗 同步滚动: 开') : (t('statusbar.syncScroll') || '同步滚动')}</span>
         </button>
 
         <div className="h-3 w-px bg-app-border" />
@@ -444,10 +446,10 @@ export function StatusBar({
               ? 'bg-blue-500/25 text-blue-400 font-semibold border border-blue-500/40 shadow-sm' 
               : 'hover:bg-app-hover text-app-text-muted hover:text-app-text'
           }`}
-          title="切换 Warp 结构化命令块交互模式 (⌘⇧B / Ctrl+Shift+B)"
+          title={t('statusbar.commandBlockTooltip') || "切换 Warp 结构化命令块交互模式 (⌘⇧B / Ctrl+Shift+B)"}
         >
           <Sparkles className={`w-3 h-3 ${isCommandBlockMode ? 'text-blue-400' : 'text-app-text-muted'}`} />
-          <span>{isCommandBlockMode ? '🧬 命令块: 开' : '命令块'}</span>
+          <span>{isCommandBlockMode ? (t('statusbar.commandBlockOn') || '🧬 命令块: 开') : (t('statusbar.commandBlock') || '命令块')}</span>
         </button>
 
         <div className="h-3 w-px bg-app-border" />
@@ -458,10 +460,10 @@ export function StatusBar({
           className={`flex items-center space-x-1 px-2 py-0.5 rounded-md transition-all active:scale-95 ${
             isBroadcast ? 'bg-amber-500/20 text-amber-500 font-medium border border-amber-500/30 shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
           }`}
-          title="多终端输入广播模式"
+          title={t('statusbar.broadcastTooltip') || "多终端输入广播模式"}
         >
           <TerminalSquare className="w-3 h-3 text-amber-500" />
-          <span>{isBroadcast ? '📡 广播模式' : '单端发送'}</span>
+          <span>{isBroadcast ? (t('statusbar.broadcast') || '📡 广播模式') : (t('statusbar.singleSend') || 'Single Tab')}</span>
         </button>
 
         <div className="h-3 w-px bg-app-border" />
@@ -471,28 +473,28 @@ export function StatusBar({
           <button
             onClick={stopRecordingMacro}
             className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-rose-600/25 text-rose-500 border border-rose-500/40 font-semibold animate-pulse transition-all hover:bg-rose-600 hover:text-white active:scale-95 shadow-sm"
-            title="点击停止录制并保存"
+            title={t('statusbar.stopRecordingTooltip')}
           >
             <Square className="w-3 h-3 text-rose-500 fill-rose-500" />
-            <span>录制中 {formatSec(recordingSeconds)}</span>
+            <span>{(t('statusbar.recording') || '录制中')} {formatSec(recordingSeconds)}</span>
           </button>
         ) : (
           <div className="flex items-center space-x-1">
             <button
               onClick={startRecordingMacro}
               className="flex items-center space-x-1 px-2 py-0.5 rounded-md hover:bg-app-hover text-app-text-muted hover:text-rose-500 transition-all active:scale-95"
-              title="录制终端会话 (.cast 兼容格式)"
+              title={t('statusbar.recordSessionTooltip')}
             >
               <Circle className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
-              <span>录像</span>
+              <span>{t('statusbar.record') || '录像'}</span>
             </button>
             <button
               onClick={onOpenCastPlayer}
               className="flex items-center space-x-1 px-2 py-0.5 rounded-md hover:bg-app-hover text-app-text-muted hover:text-purple-500 transition-all active:scale-95"
-              title="打开可视化会话录像播放器"
+              title={t('statusbar.openCastPlayerTooltip')}
             >
               <Film className="w-3 h-3 text-purple-400" />
-              <span>播放器</span>
+              <span>{t('statusbar.player') || '播放器'}</span>
             </button>
           </div>
         )}
@@ -505,7 +507,7 @@ export function StatusBar({
             onClick={playMacro}
           >
             <Play className="w-3 h-3" />
-            <span>回放宏</span>
+            <span>{t('statusbar.replayMacro')}</span>
           </button>
         )}
       </div>

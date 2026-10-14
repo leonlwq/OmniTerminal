@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Columns, RefreshCw, X, ArrowRight, ArrowLeft, Check, AlertCircle, Folder, File, CheckCircle2 } from 'lucide-react';
 import { SftpUploadPaths, SftpDownloadPaths } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface DirDiffItem {
   relativePath: string;
@@ -36,6 +37,7 @@ export function FolderDiffModal({
   localDir,
   onSyncComplete,
 }: FolderDiffModalProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [diffResult, setDiffResult] = useState<DirDiffResult | null>(null);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
@@ -125,7 +127,7 @@ export function FolderDiffModal({
               <Columns className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">SFTP 目录结构与文件双向比对</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('folderDiff.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Directory Structure & File Content Diff Sync</span>
             </div>
           </div>
@@ -141,11 +143,11 @@ export function FolderDiffModal({
         <div className="p-3 bg-[#181818] border-b border-[#2b2b2b] flex items-center justify-between gap-4 shrink-0">
           <div className="flex-1 space-y-1.5 text-xs font-mono">
             <div className="truncate text-[#cccccc] flex items-center gap-2">
-              <span className="text-[#858585]">💻 本地路径:</span> 
+              <span className="text-[#858585]">{t('folderDiff.localPath')}</span> 
               <span className="text-[#cca700] bg-[#1e1e1e] px-2 py-0.5 rounded border border-[#3c3c3c]">{localDir}</span>
             </div>
             <div className="truncate text-[#cccccc] flex items-center gap-2">
-              <span className="text-[#858585]">🌐 远端路径:</span> 
+              <span className="text-[#858585]">{t('folderDiff.remotePath')}</span> 
               <span className="text-[#0078d4] bg-[#1e1e1e] px-2 py-0.5 rounded border border-[#3c3c3c]">{remoteDir}</span>
             </div>
           </div>
@@ -154,7 +156,7 @@ export function FolderDiffModal({
               onClick={() => setFilter(filter === 'diff_only' ? 'all' : 'diff_only')}
               className={`px-3 py-1 text-xs font-medium rounded border transition-all ${filter === 'diff_only' ? 'bg-[#04395e] border-[#0078d4] text-white' : 'bg-[#3c3c3c] border-[#3c3c3c] text-[#cccccc]'}`}
             >
-              {filter === 'diff_only' ? '仅显示差异项' : '显示全部文件'}
+              {filter === 'diff_only' ? t('folderDiff.diffOnly') : t('folderDiff.showAll')}
             </button>
             <button
               onClick={fetchDiff}
@@ -162,7 +164,7 @@ export function FolderDiffModal({
               className="px-3 py-1 bg-[#3c3c3c] hover:bg-[#484848] border border-[#3c3c3c] text-[#cccccc] text-xs font-medium rounded flex items-center space-x-1.5 transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>重新比对</span>
+              <span>{t('folderDiff.reDiff')}</span>
             </button>
           </div>
         </div>
@@ -172,12 +174,12 @@ export function FolderDiffModal({
           {loading ? (
             <div className="py-16 text-center text-[#858585] flex flex-col items-center gap-3">
               <RefreshCw className="w-8 h-8 animate-spin text-[#0078d4]" />
-              <span className="text-xs">正在递归扫描比对两端目录结构与文件哈希大小...</span>
+              <span className="text-xs">{t('folderDiff.scanning')}</span>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center text-[#858585] flex flex-col items-center gap-3">
               <CheckCircle2 className="w-10 h-10 text-[#89d185]" />
-              <span className="text-xs font-medium text-[#e0e0e0]">两端目录内容完全一致，未发现任何文件差异！</span>
+              <span className="text-xs font-medium text-[#e0e0e0]">{t('folderDiff.allIdentical')}</span>
             </div>
           ) : (
             <div className="border border-[#2b2b2b] rounded overflow-hidden shadow-sm">
@@ -192,10 +194,10 @@ export function FolderDiffModal({
                         className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                       />
                     </th>
-                    <th className="py-2 px-3">相对路径</th>
-                    <th className="py-2 px-3">比对状态</th>
-                    <th className="py-2 px-3">本地大小</th>
-                    <th className="py-2 px-3">远端大小</th>
+                    <th className="py-2 px-3">{t('folderDiff.colRelPath')}</th>
+                    <th className="py-2 px-3">{t('folderDiff.colStatus')}</th>
+                    <th className="py-2 px-3">{t('folderDiff.colLocalSize')}</th>
+                    <th className="py-2 px-3">{t('folderDiff.colRemoteSize')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] bg-[#252526]">
@@ -225,10 +227,10 @@ export function FolderDiffModal({
                           <span className="truncate">{item.relativePath}</span>
                         </td>
                         <td className="py-1.5 px-3 font-sans">
-                          {item.status === 'only_local' && <span className="px-2 py-0.5 bg-[#388a34]/20 text-[#89d185] border border-[#388a34]/40 rounded text-[10px] font-semibold">🟢 仅本地存在</span>}
-                          {item.status === 'only_remote' && <span className="px-2 py-0.5 bg-[#0078d4]/20 text-[#75beff] border border-[#0078d4]/40 rounded text-[10px] font-semibold">🔵 仅远端存在</span>}
-                          {item.status === 'modified' && <span className="px-2 py-0.5 bg-[#cca700]/20 text-[#cca700] border border-[#cca700]/40 rounded text-[10px] font-semibold">🟡 内容/大小不一致</span>}
-                          {item.status === 'same' && <span className="px-2 py-0.5 bg-[#3c3c3c]/50 text-[#858585] rounded text-[10px]">⚪ 一致</span>}
+                          {item.status === 'only_local' && <span className="px-2 py-0.5 bg-[#388a34]/20 text-[#89d185] border border-[#388a34]/40 rounded text-[10px] font-semibold">{t('folderDiff.statusLocalOnly')}</span>}
+                          {item.status === 'only_remote' && <span className="px-2 py-0.5 bg-[#0078d4]/20 text-[#75beff] border border-[#0078d4]/40 rounded text-[10px] font-semibold">{t('folderDiff.statusRemoteOnly')}</span>}
+                          {item.status === 'modified' && <span className="px-2 py-0.5 bg-[#cca700]/20 text-[#cca700] border border-[#cca700]/40 rounded text-[10px] font-semibold">{t('folderDiff.statusModified')}</span>}
+                          {item.status === 'same' && <span className="px-2 py-0.5 bg-[#3c3c3c]/50 text-[#858585] rounded text-[10px]">{t('folderDiff.statusSame')}</span>}
                         </td>
                         <td className="py-1.5 px-3 text-[#858585] text-[11px]">{item.status === 'only_remote' ? '—' : `${item.localSize} B`}</td>
                         <td className="py-1.5 px-3 text-[#858585] text-[11px]">{item.status === 'only_local' ? '—' : `${item.remoteSize} B`}</td>
@@ -244,8 +246,8 @@ export function FolderDiffModal({
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 bg-[#1f1f1f] border-t border-[#2b2b2b] shrink-0">
           <div className="text-xs text-[#858585]">
-            已勾选 <strong className="text-[#0078d4] font-bold">{selectedPaths.size}</strong> 项
-            {diffResult && ` (共扫描发现 ${diffResult.diffCount} 处差异)`}
+            {t('folderDiff.selectedItems').replace('{count}', String(selectedPaths.size))}
+            {diffResult && ' ' + t('folderDiff.diffFound').replace('{count}', String(diffResult.diffCount))}
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -254,7 +256,7 @@ export function FolderDiffModal({
               className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] disabled:opacity-40 text-white font-medium text-xs rounded flex items-center space-x-1.5 transition-colors shadow-sm"
             >
               <ArrowRight className="w-3.5 h-3.5" />
-              <span>上传覆盖远端</span>
+              <span>{t('folderDiff.uploadOverwrite')}</span>
             </button>
             <button
               onClick={() => handleSyncSelected('download')}
@@ -262,13 +264,13 @@ export function FolderDiffModal({
               className="px-3 py-1 bg-[#252526] hover:bg-[#2a2d2e] border border-[#3c3c3c] disabled:opacity-40 text-[#cccccc] hover:text-white font-medium text-xs rounded flex items-center space-x-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>下载覆盖本地</span>
+              <span>{t('folderDiff.downloadOverwrite')}</span>
             </button>
             <button
               onClick={onClose}
               className="px-3.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] font-medium text-xs rounded transition-colors"
             >
-              关闭
+              {t('common.close')}
             </button>
           </div>
         </div>

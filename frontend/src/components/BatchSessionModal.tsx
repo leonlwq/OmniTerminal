@@ -3,6 +3,7 @@ import { X, Layers, Save, CheckSquare, Square } from 'lucide-react';
 import { app, models } from '../../wailsjs/go/models';
 import { SaveSessionsBatch, GetAuthProfiles } from '../../wailsjs/go/app/App';
 import { THEMES } from './TerminalInstance';
+import { useI18n } from '../i18n/I18nContext';
 
 interface BatchSessionModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
   onSaveBatch,
   onSaved,
 }) => {
+  const { t } = useI18n();
   const [internalAuthProfiles, setInternalAuthProfiles] = useState<models.AuthProfile[]>([]);
   const authProfiles = propAuthProfiles || internalAuthProfiles;
 
@@ -104,7 +106,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">批量修改会话属性</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('batchSession.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Batch Edit Multi-Session Properties</span>
             </div>
           </div>
@@ -118,7 +120,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
 
         {/* Info banner */}
         <div className="px-5 py-2 bg-[#04395e]/25 border-b border-[#0078d4]/30 text-xs text-[#cccccc]">
-          正在批量配置 <strong className="text-white">{selectedSessions.length}</strong> 个已选中的会话。请勾选对应属性的复选框以指定需要批量覆盖的项。
+          {t('batchSession.desc').replace('{count}', String(selectedSessions.length))}
         </div>
 
         {/* Form area */}
@@ -135,7 +137,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('port')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">SSH 连接端口 (Port)</span>
+                <span className="text-xs">{t('batchSession.port')}</span>
               </label>
               <input 
                 type="number"
@@ -156,13 +158,13 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('user')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">登录用户名 (User)</span>
+                <span className="text-xs">{t('batchSession.user')}</span>
               </label>
               <input 
                 type="text"
                 disabled={!fieldsToUpdate.user}
                 value={user}
-                placeholder="例如: root / ubuntu"
+                placeholder="root / ubuntu..."
                 onChange={(e) => setUser(e.target.value)}
                 className="w-full bg-[#1e1e1e] px-3 py-1.5 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] text-xs rounded text-[#cccccc] disabled:opacity-30 outline-none"
               />
@@ -181,7 +183,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('authProfileId')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">统一认证档案 (Auth Profile)</span>
+                <span className="text-xs">{t('batchSession.authProfile')}</span>
               </label>
               <select 
                 disabled={!fieldsToUpdate.authProfileId}
@@ -189,7 +191,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                 onChange={(e) => setAuthProfileId(e.target.value)}
                 className="w-full bg-[#1e1e1e] px-3 py-1.5 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] text-xs rounded text-[#cccccc] disabled:opacity-30 outline-none"
               >
-                <option value="">不使用认证档案 (独立凭据)</option>
+                <option value="">(None)</option>
                 {authProfiles.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({p.user})</option>
                 ))}
@@ -206,7 +208,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('encoding')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">字符集编码 (Encoding)</span>
+                <span className="text-xs">{t('batchSession.encoding')}</span>
               </label>
               <select 
                 disabled={!fieldsToUpdate.encoding}
@@ -215,13 +217,13 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                 className="w-full bg-[#1e1e1e] px-3 py-1.5 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] text-xs rounded text-[#cccccc] disabled:opacity-30 outline-none"
               >
                 <option value="UTF-8">Unicode (UTF-8)</option>
-                <option value="GBK">简体中文 (GBK / GB2312)</option>
-                <option value="GB18030">简体中文 (GB18030)</option>
-                <option value="BIG5">繁体中文 (Big5)</option>
-                <option value="EUC-JP">日文 (EUC-JP)</option>
-                <option value="Shift-JIS">日文 (Shift-JIS)</option>
-                <option value="EUC-KR">韩文 (EUC-KR)</option>
-                <option value="ISO-8859-1">西欧语言 (ISO-8859-1)</option>
+                <option value="GBK">GBK / GB2312</option>
+                <option value="GB18030">GB18030</option>
+                <option value="BIG5">Big5</option>
+                <option value="EUC-JP">EUC-JP</option>
+                <option value="Shift-JIS">Shift-JIS</option>
+                <option value="EUC-KR">EUC-KR</option>
+                <option value="ISO-8859-1">ISO-8859-1</option>
               </select>
             </div>
           </div>
@@ -238,7 +240,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('overrideTheme')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">配色方案 (Color Theme)</span>
+                <span className="text-xs">{t('batchSession.colorTheme')}</span>
               </label>
               <select 
                 disabled={!fieldsToUpdate.overrideTheme}
@@ -246,15 +248,15 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                 onChange={(e) => setOverrideTheme(e.target.value)}
                 className="w-full bg-[#1e1e1e] px-3 py-1.5 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] text-xs rounded text-[#cccccc] disabled:opacity-30 outline-none"
               >
-                <option value="">跟随全局配色方案</option>
+                <option value="">Default</option>
                 {customThemes && customThemes.length > 0 && (
-                  <optgroup label="🎨 自定义配色方案 (Custom Themes)">
+                  <optgroup label="Custom Themes">
                     {customThemes.map((t: any) => (
                       <option key={t.name} value={t.name}>{t.name}</option>
                     ))}
                   </optgroup>
                 )}
-                <optgroup label="内置主题方案 (Built-in Themes)">
+                <optgroup label="Built-in Themes">
                   {Object.keys(THEMES).map(t => (
                     <option key={t} value={t}>{t}</option>
                   ))}
@@ -272,7 +274,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('termType')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">仿真终端类型 (Terminal Type)</span>
+                <span className="text-xs">{t('batchSession.terminalType')}</span>
               </label>
               <select 
                 disabled={!fieldsToUpdate.termType}
@@ -280,7 +282,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                 onChange={(e) => setTermType(e.target.value)}
                 className="w-full bg-[#1e1e1e] px-3 py-1.5 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] text-xs rounded text-[#cccccc] disabled:opacity-30 outline-none"
               >
-                <option value="xterm-256color">xterm-256color (默认)</option>
+                <option value="xterm-256color">xterm-256color</option>
                 <option value="xterm">xterm</option>
                 <option value="vt100">vt100</option>
                 <option value="vt220">vt220</option>
@@ -302,7 +304,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('overrideScrollback')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">回滚缓冲区行数 (Scrollback)</span>
+                <span className="text-xs">{t('batchSession.scrollback')}</span>
               </label>
               <input 
                 type="number"
@@ -323,7 +325,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
                   onChange={() => toggleField('overrideFontSize')}
                   className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                 />
-                <span className="text-xs">独立字体大小 (Font Size)</span>
+                <span className="text-xs">{t('batchSession.fontSize')}</span>
               </label>
               <input 
                 type="number"
@@ -343,7 +345,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] text-xs rounded font-medium transition-colors"
           >
-            取消
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -352,7 +354,7 @@ export const BatchSessionModal: React.FC<BatchSessionModalProps> = ({
             className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] disabled:opacity-40 text-white text-xs font-medium rounded transition-colors flex items-center space-x-1.5"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{saving ? '正在保存...' : `批量更新 (${selectedSessions.length} 个会话)`}</span>
+            <span>{saving ? t('common.saving') : t('batchSession.saveBtn').replace('{count}', String(selectedSessions.length))}</span>
           </button>
         </div>
       </div>

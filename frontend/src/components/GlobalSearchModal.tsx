@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, X, Terminal } from 'lucide-react';
 import { terminalBuffers } from './TerminalInstance';
 import { app } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface GlobalSearchModalProps {
   isGlobalSearchOpen: boolean;
@@ -16,6 +17,7 @@ export function GlobalSearchModal({
   openTabs,
   setActiveTabId
 }: GlobalSearchModalProps) {
+  const { t } = useI18n();
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [globalSearchResults, setGlobalSearchResults] = useState<{ tabId: string, line: string, index: number }[]>([]);
 
@@ -45,7 +47,7 @@ export function GlobalSearchModal({
               <Search className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">全局终端缓冲区搜索</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('globalSearch.modalTitle') || '全局终端缓冲区搜索'}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Cross-Tab Terminal Scrollback Search</span>
             </div>
           </div>
@@ -64,7 +66,7 @@ export function GlobalSearchModal({
               type="text"
               value={globalSearchQuery}
               onChange={(e) => setGlobalSearchQuery(e.target.value)}
-              placeholder="输入要在所有活动终端中检索的文本或正则..."
+              placeholder={t('globalSearch.inputPlaceholder') || '输入要在所有活动终端中检索的文本或正则...'}
               className="flex-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] rounded px-3 py-1.5 text-xs text-[#cccccc] outline-none transition-colors"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -77,10 +79,10 @@ export function GlobalSearchModal({
               onClick={performSearch}
               className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] rounded text-xs font-medium text-white transition-colors"
             >
-              检索全部
+              {t('globalSearch.searchBtn') || '检索全部'}
             </button>
           </div>
-          <p className="text-[11px] text-[#858585] mt-2">支持在当前所有打开会话的滚动历史缓冲区中快速全文匹配定位。</p>
+          <p className="text-[11px] text-[#858585] mt-2">{t('globalSearch.hint') || '支持在当前所有打开会话的滚动历史缓冲区中快速全文匹配定位。'}</p>
         </div>
 
         {/* Results list */}
@@ -88,7 +90,7 @@ export function GlobalSearchModal({
           {globalSearchResults.length > 0 ? (
             <div className="space-y-2">
               {globalSearchResults.map((res, i) => {
-                const t = openTabs.find(tab => tab.id === res.tabId);
+                const curTab = openTabs.find(tab => tab.id === res.tabId);
                 return (
                   <div
                     key={i}
@@ -101,9 +103,9 @@ export function GlobalSearchModal({
                     <div className="text-[11px] text-[#0078d4] font-medium mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Terminal className="w-3.5 h-3.5" />
-                        Tab: {t?.name || '未知会话'}
+                        Tab: {curTab?.name || 'Session'}
                       </span>
-                      <span className="text-[10px] text-[#858585] font-mono">第 {res.index + 1} 行</span>
+                      <span className="text-[10px] text-[#858585] font-mono">{(t('globalSearch.lineAt') || '第 {line} 行').replace('{line}', String(res.index + 1))}</span>
                     </div>
                     <div className="text-xs text-[#cccccc] font-mono break-all whitespace-pre-wrap line-clamp-2">
                       {res.line.length > 300 ? res.line.substring(0, 300) + '...' : res.line}
@@ -115,7 +117,7 @@ export function GlobalSearchModal({
           ) : (
             <div className="h-44 flex flex-col items-center justify-center text-xs text-[#858585] space-y-2">
               <Search className="w-8 h-8 opacity-20" />
-              <span>{globalSearchQuery ? '未找到匹配结果' : '输入关键字并回车开始全局检索'}</span>
+              <span>{globalSearchQuery ? (t('globalSearch.noMatch') || '未找到匹配结果') : (t('globalSearch.promptInput') || '输入关键字并回车开始全局检索')}</span>
             </div>
           )}
         </div>

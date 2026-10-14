@@ -14,6 +14,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ShareSessionStatus {
   sessionId: string;
@@ -45,6 +46,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
   sessionName,
   onOpenLocalViewer
 }) => {
+  const { t } = useI18n();
   const [status, setStatus] = useState<ShareSessionStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'readonly' | 'readwrite'>('readonly');
@@ -148,7 +150,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
         setStatus(prev => (prev ? { ...prev, isSharing: false, viewerCount: 0 } : null));
       }
     } catch (err: any) {
-      alert('停止共享失败: ' + (err?.message || String(err)));
+      alert((t('shareSession.stopFail') || '停止共享失败: ') + (err?.message || String(err)));
     } finally {
       setLoading(false);
     }
@@ -168,7 +170,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
   const formatRemainingTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const s = secs % 60;
-    return `${mins} 分 ${s < 10 ? '0' : ''}${s} 秒`;
+    return t('shareSession.minSec').replace('{mins}', String(mins)).replace('{secs}', (s < 10 ? '0' : '') + String(s));
   };
 
   if (!isOpen) return null;
@@ -183,9 +185,9 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
               <Radio className={`w-3.5 h-3.5 ${status?.isSharing ? 'animate-pulse text-[#89d185]' : ''}`} />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0]">终端会话实时共享与协同</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0]">{t('shareSession.title')}</h2>
               <p className="text-[11px] text-[#858585] truncate max-w-[280px]">
-                当前会话: {sessionName || sessionId}
+                {t('shareSession.currSession').replace('{name}', sessionName || sessionId)}
               </p>
             </div>
           </div>
@@ -214,23 +216,23 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                 <div className="flex items-center space-x-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#89d185] animate-ping" />
                   <div>
-                    <span className="text-xs font-semibold text-[#e0e0e0]">正在实时广播共享中</span>
+                    <span className="text-xs font-semibold text-[#e0e0e0]">{t("shareSession.broadcasting")}</span>
                     <p className="text-[11px] text-[#89d185] mt-0.5">
-                      模式: {status.mode === 'readwrite' ? '⌨️ 读写协同控制' : '👁️ 仅只读观察'} · 
-                      {status.hasPassword ? ' 已开启密码保护' : ' 免密访问'}
+                      {t('common.mode') || '模式'}: {status.mode === 'readwrite' ? t('shareSession.modeRW') : t('shareSession.modeRO')} · 
+                      {status.hasPassword ? t('shareSession.pwdProtected') : t('shareSession.noPwd')}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1.5 bg-[#1e1e1e] border border-[#3c3c3c] px-2.5 py-0.5 rounded text-[11px] font-mono text-[#cccccc]">
                   <Users className="w-3.5 h-3.5 text-[#0078d4]" />
-                  <span>{status.viewerCount} / {status.maxViewers} 人在线</span>
+                  <span>{t('shareSession.viewersOnline').replace('{current}', String(status.viewerCount)).replace('{max}', String(status.maxViewers))}</span>
                 </div>
               </div>
 
               {/* 局域网链接 */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-[#cccccc] block">
-                  局域网分享链接 (团队成员在同一 Wi-Fi 或局域网即可打开)
+                  {t('shareSession.lanLink')}
                 </label>
                 <div className="flex items-center space-x-2">
                   <input
@@ -244,7 +246,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors"
                   >
                     {copiedLan ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLan ? '已复制' : '复制'}</span>
+                    <span>{copiedLan ? t('common.copied', '已复制') : t('common.copy')}</span>
                   </button>
                 </div>
               </div>
@@ -252,7 +254,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
               {/* 本地回环链接 */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-[#858585] block">
-                  本地回环链接 (本机浏览器打开)
+                  {t('shareSession.loopbackLink')}
                 </label>
                 <div className="flex items-center space-x-2">
                   <input
@@ -266,13 +268,13 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
                   >
                     {copiedLocal ? <Check className="w-3.5 h-3.5 text-[#89d185]" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLocal ? '已复制' : '复制'}</span>
+                    <span>{copiedLocal ? t('common.copied', '已复制') : t('common.copy')}</span>
                   </button>
                   {onOpenLocalViewer && (
                     <button
                       onClick={() => onOpenLocalViewer(status.localUrl)}
                       className="p-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded"
-                      title="在应用内打开观察窗口"
+                      title={t('shareSession.openObserverTooltip') || '在应用内打开观察窗口'}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </button>
@@ -284,7 +286,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
               <div className="flex items-center justify-between text-xs text-[#858585] bg-[#252526] p-2.5 rounded border border-[#2b2b2b]">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-3.5 h-3.5 text-[#858585]" />
-                  <span>剩余共享有效时间:</span>
+                  <span>{t('shareSession.remainingTime') || '剩余共享有效时间:'}</span>
                 </div>
                 <span className="font-mono text-[#cca700] font-medium">
                   {formatRemainingTime(status.remainingSecs)}
@@ -296,7 +298,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
             <div className="space-y-4">
               {/* 共享模式选择 */}
               <div>
-                <label className="text-xs font-medium text-[#cccccc] block mb-2">协同控制模式</label>
+                <label className="text-xs font-medium text-[#cccccc] block mb-2">{t('shareSession.collabMode') || '协同控制模式'}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <label
                     className={`flex items-start space-x-3 p-3 rounded border cursor-pointer transition-colors ${
@@ -315,10 +317,10 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     <div>
                       <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#e0e0e0]">
                         <Eye className="w-3.5 h-3.5 text-[#0078d4]" />
-                        <span>只读观察模式</span>
+                        <span>{t('shareSession.readOnlyMode') || '只读观察模式'}</span>
                       </div>
                       <p className="text-[11px] text-[#858585] mt-1">
-                        观众仅可实时观看终端画面，无法敲击键盘或输入任何指令
+                        {t('shareSession.readOnlyDesc') || '观众仅可实时观看终端画面，无法敲击键盘或输入任何指令'}
                       </p>
                     </div>
                   </label>
@@ -340,10 +342,10 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     <div>
                       <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#e0e0e0]">
                         <Terminal className="w-3.5 h-3.5 text-[#0078d4]" />
-                        <span>读写协作模式</span>
+                        <span>{t('shareSession.readWriteMode') || '读写协作模式'}</span>
                       </div>
                       <p className="text-[11px] text-[#858585] mt-1">
-                        观众可在外部浏览器直接敲击键盘输入命令，与你共同控制终端
+                        {t('shareSession.readWriteDesc') || '观众可在外部浏览器直接敲击键盘输入命令，与你共同控制终端'}
                       </p>
                     </div>
                   </label>
@@ -353,13 +355,13 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
               {/* 访问密码 */}
               <div>
                 <label className="text-xs font-medium text-[#cccccc] block mb-1">
-                  访问密码 (可选，留空则免密进入)
+                  {t('shareSession.accessPassword') || '访问密码 (可选，留空则免密进入)'}
                 </label>
                 <div className="relative">
                   <Shield className="w-3.5 h-3.5 text-[#858585] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
-                    placeholder="设置临时访问密码..."
+                    placeholder={t('shareSession.passwordPlaceholder') || '设置临时访问密码...'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded pl-9 pr-3 py-1.5 text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#0078d4]"
@@ -378,9 +380,9 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     onChange={e => setMaxViewers(Number(e.target.value))}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] focus:outline-none focus:border-[#0078d4]"
                   >
-                    <option value={2}>2 人 (对排模式)</option>
-                    <option value={5}>5 人 (推荐默认)</option>
-                    <option value={10}>10 人 (演示广播)</option>
+                    <option value={2}>{t('shareSession.aud2') || '2 人 (对排模式)'}</option>
+                    <option value={5}>{t('shareSession.aud5') || '5 人 (推荐默认)'}</option>
+                    <option value={10}>{t('shareSession.aud10') || '10 人 (演示广播)'}</option>
                   </select>
                 </div>
                 <div>
@@ -392,10 +394,10 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                     onChange={e => setTimeoutMin(Number(e.target.value))}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] focus:outline-none focus:border-[#0078d4]"
                   >
-                    <option value={15}>15 分钟</option>
-                    <option value={30}>30 分钟 (默认)</option>
-                    <option value={60}>1 小时</option>
-                    <option value={120}>2 小时</option>
+                    <option value={15}>{t('shareSession.time15m') || '15 分钟'}</option>
+                    <option value={30}>{t('shareSession.time30m') || '30 分钟 (默认)'}</option>
+                    <option value={60}>{t('shareSession.time60m') || '1 小时'}</option>
+                    <option value={120}>{t('shareSession.time120m') || '2 小时'}</option>
                   </select>
                 </div>
               </div>
@@ -407,14 +409,14 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
         <div className="px-5 py-3 border-t border-[#2b2b2b] bg-[#1f1f1f] flex items-center justify-between shrink-0">
           <div className="text-[11px] text-[#858585] flex items-center space-x-1.5">
             <Radio className="w-3.5 h-3.5 text-[#0078d4]" />
-            <span>基于本地内置 WebSocket 服务 · 无需任何第三方云端转发</span>
+            <span>{t('shareSession.localWsNote')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={onClose}
               className="px-3.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
             >
-              关闭
+              {t('common.close')}
             </button>
             {status?.isSharing ? (
               <button
@@ -423,7 +425,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                 className="flex items-center space-x-1.5 px-3.5 py-1 bg-[#a1260d] hover:bg-[#b82a0e] text-white rounded text-xs font-medium transition-all disabled:opacity-50"
               >
                 <Power className="w-3.5 h-3.5" />
-                <span>{loading ? '正在停止...' : '停止共享'}</span>
+                <span>{loading ? t('common.stopping', '正在停止...') : t('shareSession.stopShare')}</span>
               </button>
             ) : (
               <button
@@ -432,7 +434,7 @@ export const ShareSessionModal: React.FC<ShareSessionModalProps> = ({
                 className="flex items-center space-x-1.5 px-4 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-all disabled:opacity-50"
               >
                 <Radio className="w-3.5 h-3.5" />
-                <span>{loading ? '正在启动...' : '启动实时共享'}</span>
+                <span>{loading ? t('common.starting', '正在启动...') : t('shareSession.startShare')}</span>
               </button>
             )}
           </div>

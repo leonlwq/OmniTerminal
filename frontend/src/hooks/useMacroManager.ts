@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { models } from '../../wailsjs/go/models';
 import { SaveSettings, WriteSSH } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 interface UseMacroManagerOptions {
   settings: models.AppSettings;
@@ -19,6 +20,7 @@ export function useMacroManager({
   setActiveCastContent,
   setIsCastPlayerOpen,
 }: UseMacroManagerOptions) {
+  const { t } = useI18n();
   const [isRecording, setIsRecording] = useState(false);
   const [macroStartTime, setMacroStartTime] = useState<number>(0);
   const [tempMacroActions, setTempMacroActions] = useState<models.MacroAction[]>([]);
@@ -68,7 +70,7 @@ export function useMacroManager({
   const startRecordingMacro = () => {
     if (isRecording) return;
     if (!activeTabId) {
-      alert("请先选中一个终端页签后再开始录制宏");
+      alert(t('macro.selectTabToRecord'));
       return;
     }
     setIsRecording(true);
@@ -116,14 +118,14 @@ export function useMacroManager({
         setSelectedMacroId(newMacro.id);
       })
       .catch(err => {
-        alert("保存宏方案失败: " + err);
+        alert(t('macro.saveFailed') + err);
       });
   };
 
   const playMacro = () => {
     if (!selectedMacroId) return;
     if (!activeTabId) {
-      alert("请激活一个用于回放宏的终端页签");
+      alert(t('macro.activateTabToPlay'));
       return;
     }
 

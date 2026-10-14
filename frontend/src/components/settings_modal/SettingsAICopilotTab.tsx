@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { models } from '../../../wailsjs/go/models';
 import { AITestConnection } from '../../../wailsjs/go/app/App';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SettingsAICopilotTabProps {
   settings: models.AppSettings;
@@ -13,12 +14,12 @@ interface SettingsAICopilotTabProps {
 }
 
 const PROVIDERS = [
-  { id: 'deepseek', name: 'DeepSeek (深度求索)', defaultUrl: 'https://api.deepseek.com/v1', defaultModel: 'deepseek-chat', desc: '国内极速访问，高智商代码与运维理解，资费极低，强烈推荐' },
-  { id: 'ollama', name: 'Ollama (本地私有离线)', defaultUrl: 'http://localhost:11434/v1', defaultModel: 'llama3', desc: '完全本地离线运行，数据绝不出局域网，免 API Key' },
-  { id: 'openai', name: 'OpenAI (GPT-4o)', defaultUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', desc: '国际标准模型，支持 gpt-4o 与 gpt-4o-mini' },
-  { id: 'claude', name: 'Claude (Anthropic)', defaultUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-3-5-sonnet-20241022', desc: '极高代码精准度，支持通过兼容中转代理接入' },
-  { id: 'gemini', name: 'Google Gemini', defaultUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', defaultModel: 'gemini-1.5-flash', desc: 'Google 官方模型 API' },
-  { id: 'custom', name: 'Custom (自定义 OpenAI 协议)', defaultUrl: '', defaultModel: '', desc: '兼容任意 OpenAI 标准 /v1/chat/completions 网关或 OneAPI' },
+  { id: 'deepseek', name: 'DeepSeek', defaultUrl: 'https://api.deepseek.com/v1', defaultModel: 'deepseek-chat', desc: 'Fast, high-quality reasoning and coding' },
+  { id: 'ollama', name: 'Ollama', defaultUrl: 'http://localhost:11434/v1', defaultModel: 'llama3', desc: 'Local private offline models, no API key needed' },
+  { id: 'openai', name: 'OpenAI (GPT-4o)', defaultUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', desc: 'OpenAI GPT-4o and GPT-4o-mini' },
+  { id: 'claude', name: 'Claude (Anthropic)', defaultUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-3-5-sonnet-20241022', desc: 'High coding accuracy, Anthropic Claude 3.5' },
+  { id: 'gemini', name: 'Google Gemini', defaultUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', defaultModel: 'gemini-1.5-flash', desc: 'Google official Gemini API' },
+  { id: 'custom', name: 'Custom (OpenAI Compatible)', defaultUrl: '', defaultModel: '', desc: 'Custom OpenAI-compatible /v1 endpoint' },
 ];
 
 export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
@@ -26,6 +27,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
   setSettings,
   onSaveSettings,
 }) => {
+  const { t } = useI18n();
   const aiCfg = settings.aiConfig || new models.AIConfig({
     provider: 'deepseek',
     apiKey: '',
@@ -75,19 +77,19 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
       if (ok) {
         setTestResult({
           success: true,
-          message: `连接成功！模型端点响应正常`,
+          message: t('settings.ai.connectedSuccess') || '连接成功！模型端点响应正常',
           latency: elapsed,
         });
       } else {
         setTestResult({
           success: false,
-          message: `连接失败：服务端未返回有效数据`,
+          message: t('settings.ai.connectedFail') || '连接失败：服务端未返回有效数据',
         });
       }
     } catch (err: any) {
       setTestResult({
         success: false,
-        message: err?.message || String(err) || '网络超时或凭据无效',
+        message: err?.message || String(err) || (t('settings.ai.connectedError') || '网络超时或凭据无效'),
       });
     } finally {
       setTesting(false);
@@ -104,14 +106,14 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-white">AI Copilot 大模型引擎配置</h3>
+              <h3 className="text-xs font-semibold text-white">{t('settings.ai.title') || 'AI Copilot 大模型引擎配置'}</h3>
               <p className="text-[11px] text-[#858585]">
-                驱动终端 ⌘K / Ctrl+K 行内命令生成、报错一键修复与运维脚本工坊
+                {t('settings.ai.desc') || '驱动终端 ⌘K / Ctrl+K 行内命令生成、报错一键修复与运维脚本工坊'}
               </p>
             </div>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-700/50 font-mono">
-            Phase 8.2 内置
+            {t('settings.ai.builtinTag') || 'Phase 8.2 内置'}
           </span>
         </div>
       </div>
@@ -120,12 +122,20 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
           <Cpu className="w-3.5 h-3.5 text-[#0078d4]" />
-          选择 AI 供应商 (Provider)
+          {t('settings.ai.provider') || '选择 AI 供应商 (Provider)'}
         </h4>
 
         <div className="grid grid-cols-2 gap-2.5">
           {PROVIDERS.map((p) => {
             const isSelected = (aiCfg.provider || 'deepseek').toLowerCase() === p.id;
+            const pName = (
+              p.id === 'deepseek' ? t('settings.ai.providerNameDeepseek') :
+              p.id === 'ollama' ? t('settings.ai.providerNameOllama') :
+              p.id === 'openai' ? t('settings.ai.providerNameOpenai') :
+              p.id === 'claude' ? t('settings.ai.providerNameClaude') :
+              p.id === 'gemini' ? t('settings.ai.providerNameGemini') :
+              t('settings.ai.providerNameCustom')
+            ) || p.name;
             return (
               <div
                 key={p.id}
@@ -138,12 +148,12 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-[#cccccc]'}`}>
-                    {p.name}
+                    {pName}
                   </span>
                   {isSelected && <Check className="w-3.5 h-3.5 text-[#3794ff]" />}
                 </div>
                 <div className="text-[10px] text-[#858585] mt-1 line-clamp-2 leading-relaxed">
-                  {p.desc}
+                  {(p.id === 'deepseek' ? t('settings.ai.providerDescDeepseek') : p.id === 'ollama' ? t('settings.ai.providerDescOllama') : p.id === 'openai' ? t('settings.ai.providerDescOpenai') : p.id === 'claude' ? t('settings.ai.providerDescClaude') : p.id === 'gemini' ? t('settings.ai.providerDescGemini') : t('settings.ai.providerDescCustom')) || p.desc}
                 </div>
               </div>
             );
@@ -155,7 +165,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
       <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-4 space-y-3.5 shadow-sm">
         <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
           <Key className="w-3.5 h-3.5 text-[#0078d4]" />
-          服务地址与认证凭据
+          {t('settings.ai.credentials') || '服务地址与认证凭据'}
         </h4>
 
         <div className="space-y-3">
@@ -163,10 +173,10 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-medium text-[#858585]">
-                API Key (密钥凭据)
+                {t('settings.ai.apiKey') || 'API Key (密钥凭据)'}
               </label>
               {aiCfg.provider === 'ollama' && (
-                <span className="text-[10px] text-emerald-400">本地 Ollama 服务无需填写 API Key</span>
+                <span className="text-[10px] text-emerald-400">{t('settings.ai.ollamaNoKey') || '本地 Ollama 服务无需填写 API Key'}</span>
               )}
             </div>
             <div className="relative">
@@ -174,7 +184,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
                 type={showApiKey ? 'text' : 'password'}
                 value={aiCfg.apiKey || ''}
                 onChange={(e) => updateAIConfig({ apiKey: e.target.value })}
-                placeholder={aiCfg.provider === 'ollama' ? '本地运行无需 API Key' : 'sk-...'}
+                placeholder={aiCfg.provider === 'ollama' ? (t('settings.ai.ollamaNoKeyPlaceholder') || '本地运行无需 API Key') : 'sk-...'}
                 disabled={aiCfg.provider === 'ollama'}
                 className="w-full px-3 py-1.5 pr-10 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] font-mono outline-none transition-all"
               />
@@ -195,7 +205,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-[#858585] flex items-center gap-1">
                 <Globe className="w-3 h-3 text-[#858585]" />
-                API Base URL (端点服务地址)
+                {t('settings.ai.baseUrl') || 'API Base URL (端点服务地址)'}
               </label>
               <input
                 type="text"
@@ -209,7 +219,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-[#858585] flex items-center gap-1">
                 <Terminal className="w-3 h-3 text-[#858585]" />
-                Model ID (模型名称)
+                {t('settings.ai.modelId') || 'Model ID (模型名称)'}
               </label>
               <input
                 type="text"
@@ -227,7 +237,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
               <div className="flex items-center justify-between text-[11px] text-[#858585]">
                 <span className="flex items-center gap-1">
                   <Sliders className="w-3 h-3 text-[#858585]" />
-                  Temperature (发散度):
+                  {t('settings.ai.temperature') || 'Temperature (发散度)'}:
                 </span>
                 <span className="font-mono text-white font-medium">{aiCfg.temperature ?? 0.2}</span>
               </div>
@@ -240,11 +250,11 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
                 onChange={(e) => updateAIConfig({ temperature: parseFloat(e.target.value) })}
                 className="w-full accent-[#0078d4] cursor-pointer"
               />
-              <div className="text-[9px] text-[#858585]">推荐 0.2 以保证生成的命令严谨准确，避免指令幻觉</div>
+              <div className="text-[9px] text-[#858585]">{t('settings.ai.tempRecommend') || '推荐 0.2 以保证生成的命令严谨准确，避免指令幻觉'}</div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#858585]">Max Tokens (单次上限)</label>
+              <label className="text-[11px] font-medium text-[#858585]">{t('settings.ai.maxTokens') || 'Max Tokens (单次上限)'}</label>
               <input
                 type="number"
                 min={256}
@@ -259,13 +269,13 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
           {/* Custom System Prompt */}
           <div className="space-y-1.5 pt-1">
             <label className="text-[11px] font-medium text-[#858585]">
-              自定义 System Prompt (系统提示词，留空使用官方预置优化版)
+              {t('settings.ai.systemPrompt') || '自定义 System Prompt (系统提示词，留空使用官方预置优化版)'}
             </label>
             <textarea
               rows={2}
               value={aiCfg.systemPrompt || ''}
               onChange={(e) => updateAIConfig({ systemPrompt: e.target.value })}
-              placeholder="留空则自动注入专家级运维命令转换与排障系统指令..."
+              placeholder={t('settings.ai.systemPromptPlaceholder') || '留空则自动注入专家级运维命令转换与排障系统指令...'}
               className="w-full px-3 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none transition-all resize-none"
             />
           </div>
@@ -282,12 +292,12 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
             {testing ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0078d4]" />
-                <span>正在测试 API 连通性...</span>
+                <span>{t('settings.ai.testing') || '正在测试 API 连通性...'}</span>
               </>
             ) : (
               <>
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>测试 API 连接 (Test Connection)</span>
+                <span>{t('settings.ai.testBtn') || '测试 API 连接 (Test Connection)'}</span>
               </>
             )}
           </button>
@@ -323,7 +333,7 @@ export const SettingsAICopilotTab: React.FC<SettingsAICopilotTabProps> = ({
           className="px-5 py-2 bg-[#0078d4] hover:bg-[#006cbe] active:scale-[0.99] text-white rounded font-medium text-xs tracking-wide transition-all shadow-sm flex items-center gap-1.5"
         >
           <Check className="w-3.5 h-3.5" />
-          <span>保存 AI 配置 (Save Preferences)</span>
+          <span>{t('settings.ai.saveBtn') || '保存 AI 配置 (Save Preferences)'}</span>
         </button>
       </div>
     </form>

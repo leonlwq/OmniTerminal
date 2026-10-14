@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { LockApp } from '../../wailsjs/go/app/App';
 import { models } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface UseAutoLockOptions {
   settings: models.AppSettings;
@@ -13,6 +14,7 @@ export function useAutoLock({
   setIsSettingsOpen,
   setSettingsInitialTab,
 }: UseAutoLockOptions) {
+  const { t } = useI18n();
   const [isLocked, setIsLocked] = useState(false);
   const idleTimerRef = useRef<number | null>(null);
 
@@ -47,7 +49,7 @@ export function useAutoLock({
 
   const handleLockWorkspace = useCallback(async () => {
     if (!settings.hasMasterPassword) {
-      if (window.confirm('您当前尚未启用主密码保护。\n\n工作区锁定需要先配置主密码以加密保护会话与本地凭证。\n\n是否立即前往【偏好设置 -> 安全与主密码】进行设置？')) {
+      if (window.confirm(t('autoLock.noMasterPwdConfirm'))) {
         setSettingsInitialTab('security');
         setIsSettingsOpen(true);
       }

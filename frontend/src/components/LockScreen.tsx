@@ -35,7 +35,7 @@ export function LockScreen({
           loadSettings();
           GetAuthProfiles().then(p => setAuthProfiles(p||[]));
         } else {
-          setLockError("主密码校验失败，请重试");
+          setLockError(t('lockScreen.errorFailed') || "主密码校验失败，请重试");
         }
       })
       .catch(err => {
@@ -54,8 +54,8 @@ export function LockScreen({
           <Lock className="h-7 w-7 animate-pulse" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-[#cccccc] tracking-tight">OmniTerminal 已加密锁定</h2>
-          <p className="text-xs text-[#858585] mt-1.5 leading-relaxed">请输入主密码 (Master Password) 以解锁本地安全凭据库与会话配置</p>
+          <h2 className="text-sm font-semibold text-[#cccccc] tracking-tight">{t('lockScreen.title') || 'OmniTerminal 已加密锁定'}</h2>
+          <p className="text-xs text-[#858585] mt-1.5 leading-relaxed">{t('lockScreen.subtitle') || '请输入主密码 (Master Password) 以解锁本地安全凭据库与会话配置'}</p>
         </div>
 
         <form onSubmit={handleUnlock} className="space-y-4 pt-2">
@@ -63,7 +63,7 @@ export function LockScreen({
             <KeyRound className="absolute left-3.5 top-2.5 h-4 w-4 text-[#858585]" />
             <input 
               type="password"
-              placeholder="请输入主密码..."
+              placeholder={t('lockScreen.pwdPlaceholder') || '请输入主密码...'}
               value={lockPassword}
               onChange={(e) => setLockPassword(e.target.value)}
               className="w-full pl-10 pr-4 py-2 text-xs bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded outline-none text-[#cccccc] transition-all font-mono placeholder-[#858585]"

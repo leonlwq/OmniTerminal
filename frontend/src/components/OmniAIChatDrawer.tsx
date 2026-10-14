@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { AIChat } from '../../wailsjs/go/app/App';
 import { models } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface ChatMessage {
   id: string;
@@ -48,6 +49,7 @@ function ChatMarkdownViewer({
   onRunInTerminal: (cmd: string) => void;
   onSaveQuickCommand?: (label: string, cmd: string) => void;
 }) {
+  const { t } = useI18n();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [savedIndex, setSavedIndex] = useState<number | null>(null);
 
@@ -79,10 +81,10 @@ function ChatMarkdownViewer({
                     type="button"
                     onClick={() => onInsertToTerminal(cleanCode)}
                     className="flex items-center gap-1 hover:text-white transition-colors px-2 py-0.5 rounded bg-[#0078d4]/15 hover:bg-[#0078d4]/30 text-blue-300 font-medium"
-                    title="填入当前终端提示符（不立即执行）"
+                    title={t('aiDrawer.insertTip') || "Fill into terminal"}
                   >
                     <ArrowDownToLine className="w-3 h-3" />
-                    <span>填入</span>
+                    <span>{t('aiDrawer.insertBtn')}</span>
                   </button>
 
                   {/* 直接运行 */}
@@ -90,10 +92,10 @@ function ChatMarkdownViewer({
                     type="button"
                     onClick={() => onRunInTerminal(cleanCode)}
                     className="flex items-center gap-1 hover:text-white transition-colors px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 font-medium"
-                    title="在当前终端中直接回车执行"
+                    title={t('aiDrawer.runTip') || "Execute in terminal"}
                   >
                     <Play className="w-3 h-3 fill-current" />
-                    <span>执行</span>
+                    <span>{t('aiDrawer.runBtn')}</span>
                   </button>
 
                   {/* 复制 */}
@@ -105,10 +107,10 @@ function ChatMarkdownViewer({
                       setTimeout(() => setCopiedIndex(null), 1500);
                     }}
                     className="flex items-center gap-1 hover:text-white transition-colors px-2 py-0.5 rounded bg-[#2d2d2d] hover:bg-[#3c3c3c] text-[#cccccc]"
-                    title="复制到剪贴板"
+                    title={t('common.copy') || "Copy"}
                   >
                     {copiedIndex === index ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedIndex === index ? '已复制' : '复制'}</span>
+                    <span>{copiedIndex === index ? t('aiDrawer.copiedBtn') : t('aiDrawer.copyBtn')}</span>
                   </button>
 
                   {/* 存为快捷命令 */}
@@ -122,10 +124,10 @@ function ChatMarkdownViewer({
                         setTimeout(() => setSavedIndex(null), 1500);
                       }}
                       className="flex items-center gap-1 hover:text-amber-300 transition-colors px-2 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/30 text-amber-300"
-                      title="保存为底部快捷命令"
+                      title={t('aiDrawer.saveQuickCmd') || "Save as quick command"}
                     >
                       {savedIndex === index ? <Check className="w-3 h-3 text-amber-400" /> : <BookmarkPlus className="w-3 h-3" />}
-                      <span>{savedIndex === index ? '已保存' : '存快捷'}</span>
+                      <span>{savedIndex === index ? (t('common.saved') || 'Saved') : (t('common.save') || 'Save')}</span>
                     </button>
                   )}
                 </div>
@@ -186,6 +188,7 @@ export function OmniAIChatDrawer({
   aiConfig,
   onSaveAIConfig,
 }: OmniAIChatDrawerProps) {
+  const { t } = useI18n();
   // 抽屉宽度（支持拖拽伸缩，范围 320px ~ 650px）
   const [width, setWidth] = useState<number>(() => {
     const saved = localStorage.getItem('omni_ai_drawer_width');
@@ -326,7 +329,7 @@ export function OmniAIChatDrawer({
       const newAssistantMsg: ChatMessage = {
         id: `msg_${Date.now()}_ai`,
         role: 'assistant',
-        content: responseText || '抱歉，AI 未返回有效内容。',
+        content: responseText || (t('aiDrawer.emptyResponse') || 'No response from AI.'),
         timestamp: Date.now(),
       };
 
@@ -371,7 +374,7 @@ export function OmniAIChatDrawer({
       <div
         onMouseDown={handleMouseDown}
         className="absolute top-0 bottom-0 -left-1 w-2 cursor-col-resize hover:bg-[#0078d4]/40 transition-colors z-30"
-        title="拖动调整 AI 侧边栏宽度"
+        title={t('aiDrawer.dragWidth') || "Drag to resize sidebar"}
       />
 
       {/* 顶栏 Header */}
@@ -382,12 +385,12 @@ export function OmniAIChatDrawer({
           </div>
           <div className="min-w-0">
             <div className="flex items-center space-x-1.5">
-              <span className="font-semibold text-xs text-white tracking-tight truncate">OmniAI 智能运维</span>
+              <span className="font-semibold text-xs text-white tracking-tight truncate">{t('aiDrawer.title')}</span>
               <button
                 type="button"
                 onClick={onOpenAIConfigModal}
                 className="text-[10px] px-2 py-0.5 rounded bg-[#252526] hover:bg-[#2d2d2d] border border-[#3c3c3c] text-[#cccccc] font-mono shrink-0 transition-all flex items-center gap-1 cursor-pointer"
-                title="点击快速打开大模型设置"
+                title={t('aiDrawer.openSettings') || "Click to open AI settings"}
               >
                 <span>{aiConfig.provider || 'deepseek'}</span>
                 {aiConfig.model && (
@@ -396,8 +399,8 @@ export function OmniAIChatDrawer({
               </button>
             </div>
             <div className="flex items-center space-x-1 text-[10px] text-[#858585] truncate">
-              <span>终端:</span>
-              <span className="text-[#3794ff] font-mono truncate">{activeSessionName || '无活动终端'}</span>
+              <span>{t('aiDrawer.terminal')}</span>
+              <span className="text-[#3794ff] font-mono truncate">{activeSessionName || t('aiDrawer.noActiveTerminal')}</span>
             </div>
           </div>
         </div>
@@ -412,7 +415,7 @@ export function OmniAIChatDrawer({
                 ? 'text-rose-400 bg-rose-500/20 ring-1 ring-rose-500/40'
                 : 'text-[#858585] hover:text-rose-400 hover:bg-rose-500/10'
             }`}
-            title="清空当前会话全部记录"
+            title={t('aiDrawer.clearHistory')}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -420,7 +423,7 @@ export function OmniAIChatDrawer({
             type="button"
             onClick={onOpenAIConfigModal}
             className="p-1.5 rounded text-[#858585] hover:text-white hover:bg-white/10 transition-colors"
-            title="设置大模型接入与参数 (LLM Provider Config)"
+            title={t('aiDrawer.settingsTooltip')}
           >
             <Settings className="w-3.5 h-3.5" />
           </button>
@@ -428,7 +431,7 @@ export function OmniAIChatDrawer({
             type="button"
             onClick={onClose}
             className="p-1.5 rounded text-[#858585] hover:text-white hover:bg-white/10 transition-colors"
-            title="关闭侧边栏 (Cmd+L)"
+            title={t('aiDrawer.closeTooltip')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -440,7 +443,7 @@ export function OmniAIChatDrawer({
         <div className="px-3.5 py-2 bg-rose-950/40 border-b border-rose-500/30 flex items-center justify-between text-xs text-rose-200 animate-in slide-in-from-top-1 duration-150">
           <span className="flex items-center gap-1.5 font-medium text-[11px]">
             <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            确定清空全部对话历史？
+            {t('aiDrawer.confirmClear')}
           </span>
           <div className="flex items-center space-x-1.5">
             <button
@@ -448,14 +451,14 @@ export function OmniAIChatDrawer({
               onClick={() => setShowClearConfirm(false)}
               className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-slate-300 text-[10px] transition-colors"
             >
-              取消
+              {t('common.cancel') || '取消'}
             </button>
             <button
               type="button"
               onClick={confirmClearHistory}
               className="px-2.5 py-0.5 rounded bg-[#a1260d] hover:bg-[#b82a0e] text-white text-[10px] font-semibold shadow-sm transition-all active:scale-95"
             >
-              确定清空
+              {t('aiDrawer.confirmClear') || '确定清空'}
             </button>
           </div>
         </div>
@@ -469,22 +472,22 @@ export function OmniAIChatDrawer({
               <Sparkles className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-xs font-semibold text-white">随时随地，运维有伴</h3>
+              <h3 className="text-xs font-semibold text-white">{t('aiDrawer.welcomeTitle')}</h3>
               <p className="text-[11px] text-[#858585] max-w-xs mx-auto leading-relaxed">
-                无需遮挡终端视口。在右侧随时向 OmniAI 提问命令用法、分析复杂报错或撰写自动化运维脚本。
+                {t('aiDrawer.welcomeDesc')}
               </p>
             </div>
 
             {/* 快速开场提示胶囊 */}
             <div className="space-y-1.5 pt-2 max-w-xs mx-auto text-left">
               <span className="text-[10px] text-[#858585] font-semibold uppercase tracking-wider block mb-1">
-                快捷提问示例
+                {t('aiDrawer.quickPromptsTitle')}
               </span>
               {[
-                "诊断终端报错原因并生成修复命令",
-                "查看 CPU 和内存占用最高的 5 个进程",
-                "编写一个按日期轮转清理日志的 Shell 脚本",
-                "排查当前服务器端口与监听服务状态",
+                t('aiDrawer.prompt1'),
+                t('aiDrawer.prompt2'),
+                t('aiDrawer.prompt3'),
+                t('aiDrawer.prompt4'),
               ].map((tip, idx) => (
                 <button
                   key={idx}
@@ -509,7 +512,7 @@ export function OmniAIChatDrawer({
                 <div className="flex items-center space-x-1.5">
                   {msg.role === 'user' ? (
                     <>
-                      <span>您</span>
+                      <span>{t('aiDrawer.userRole')}</span>
                       <span>•</span>
                       <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </>
@@ -528,7 +531,7 @@ export function OmniAIChatDrawer({
                   type="button"
                   onClick={() => handleDeleteMessage(msg.id)}
                   className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-all"
-                  title="删除此条消息"
+                  title={t('common.delete') || "Delete message"}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -548,19 +551,19 @@ export function OmniAIChatDrawer({
                     {msg.attachedContext.sessionName && (
                       <div className="flex items-center gap-1">
                         <Server className="w-3 h-3 text-cyan-300" />
-                        <span>主机: {msg.attachedContext.sessionName}</span>
+                        <span>Host: {msg.attachedContext.sessionName}</span>
                       </div>
                     )}
                     {msg.attachedContext.cwd && (
                       <div className="flex items-center gap-1">
                         <Folder className="w-3 h-3 text-yellow-300" />
-                        <span>路径: {msg.attachedContext.cwd}</span>
+                        <span>Path: {msg.attachedContext.cwd}</span>
                       </div>
                     )}
                     {msg.attachedContext.terminalSnippet && (
                       <div className="flex items-center gap-1 text-slate-300">
                         <Paperclip className="w-3 h-3 text-blue-300" />
-                        <span>已附加活动终端最近输出 (约 {msg.attachedContext.terminalSnippet.split('\n').length} 行)</span>
+                        <span>{t('aiDrawer.attachedSnippet') || "Attached recent output"} (~{msg.attachedContext.terminalSnippet.split('\n').length} lines)</span>
                       </div>
                     )}
                   </div>
@@ -586,7 +589,7 @@ export function OmniAIChatDrawer({
         {loading && (
           <div className="flex items-center space-x-2 text-[#858585] bg-[#252526] border border-[#2b2b2b] rounded-md px-3 py-2 w-fit">
             <Sparkles className="w-3.5 h-3.5 text-[#0078d4] animate-spin" />
-            <span className="text-xs text-[#cccccc] font-medium">OmniAI 正在深度思考中...</span>
+            <span className="text-xs text-[#cccccc] font-medium">{t('aiDrawer.thinking') || "OmniAI is thinking..."}</span>
           </div>
         )}
 
@@ -595,7 +598,7 @@ export function OmniAIChatDrawer({
           <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-md text-xs text-rose-300 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="font-semibold">请求发生错误:</span>
+              <span className="font-semibold">{t('aiDrawer.errorOccurred') || "Request error:"}</span>
               <p className="text-[11px] leading-relaxed break-all opacity-90">{errorMsg}</p>
             </div>
           </div>
@@ -617,10 +620,10 @@ export function OmniAIChatDrawer({
                   ? 'bg-[#0078d4]/20 border-[#0078d4] text-[#3794ff] font-semibold'
                   : 'bg-[#252526] border-[#3c3c3c] text-[#858585] hover:text-[#cccccc]'
               }`}
-              title="提问时自动附带当前终端最后 50 行输出日志"
+              title={t('aiDrawer.attachOutput')}
             >
               <Paperclip className="w-2.5 h-2.5" />
-              <span>附带终端输出</span>
+              <span>{t('aiDrawer.includeBuffer')}</span>
             </button>
 
             <button
@@ -631,14 +634,14 @@ export function OmniAIChatDrawer({
                   ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300 font-semibold'
                   : 'bg-[#252526] border-[#3c3c3c] text-[#858585] hover:text-[#cccccc]'
               }`}
-              title="提问时附带当前主机与工作路径信息"
+              title={t('aiDrawer.attachContext')}
             >
               <Server className="w-2.5 h-2.5" />
-              <span>附带主机/路径</span>
+              <span>{t('aiDrawer.includeEnv')}</span>
             </button>
           </div>
 
-          <span className="text-[10px] text-[#858585]">Enter 发送</span>
+          <span className="text-[10px] text-[#858585]">{t('aiDrawer.enterToSend')}</span>
         </div>
 
         {/* 文本输入框与发送按钮 */}
@@ -649,7 +652,7 @@ export function OmniAIChatDrawer({
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="向 OmniAI 提问... (Shift+Enter 换行)"
+            placeholder={t('aiDrawer.inputPlaceholder')}
             className="w-full bg-transparent text-xs text-[#cccccc] placeholder:text-[#858585] outline-none resize-none p-1 leading-relaxed custom-scrollbar"
           />
 
@@ -662,7 +665,7 @@ export function OmniAIChatDrawer({
                 ? 'bg-[#0078d4] hover:bg-[#006cbe] text-white shadow-sm active:scale-95'
                 : 'bg-white/5 text-[#858585] cursor-not-allowed'
             }`}
-            title="发送 (Enter)"
+            title={t('aiDrawer.send') + " (Enter)"}
           >
             <Send className="w-3.5 h-3.5" />
           </button>

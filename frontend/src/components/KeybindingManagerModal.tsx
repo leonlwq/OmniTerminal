@@ -15,6 +15,7 @@ import {
   normalizeKeyEvent,
   formatKeyDisplay,
 } from '../hooks/useKeybindingManager';
+import { useI18n } from '../i18n/I18nContext';
 
 interface KeybindingManagerModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
   customKeybindings,
   onSaveKeybindings,
 }) => {
+  const { t } = useI18n();
   const [bindings, setBindings] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -65,7 +67,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
         if (def.id === recordingId) continue;
         const currentKey = (bindings[def.id] || def.defaultKey).toLowerCase();
         if (currentKey === keyCombo.toLowerCase()) {
-          conflictingActions.push(def.label);
+          conflictingActions.push(t(`keybind.${def.id}.label`) || def.label);
         }
       }
 
@@ -91,12 +93,12 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
   if (!isOpen) return null;
 
   const categories = [
-    { id: 'all', label: '全部' },
-    { id: 'session', label: '会话管理' },
-    { id: 'tabs', label: '标签导航' },
-    { id: 'panels', label: '工作区面板' },
-    { id: 'terminal', label: '终端交互' },
-    { id: 'tools', label: '高阶工具' },
+    { id: 'all', label: t('keybinding.catAll') },
+    { id: 'session', label: t('keybinding.catSession') },
+    { id: 'tabs', label: t('keybinding.catTabs') },
+    { id: 'panels', label: t('keybinding.catPanels') },
+    { id: 'terminal', label: t('keybinding.catTerminal') },
+    { id: 'tools', label: t('keybinding.catTools') },
   ];
 
   const filteredBindings = DEFAULT_KEYBINDINGS.filter(item => {
@@ -104,9 +106,15 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     const activeKey = (bindings[item.id] || item.defaultKey).toLowerCase();
+    const locLabel = (t(`keybind.${item.id}.label`) || item.label).toLowerCase();
+    const locDesc = (t(`keybind.${item.id}.desc`) || item.description).toLowerCase();
+    const locCat = (t(`keybind.cat.${item.category}`) || item.categoryLabel).toLowerCase();
     return (
       item.label.toLowerCase().includes(term) ||
       item.description.toLowerCase().includes(term) ||
+      locLabel.includes(term) ||
+      locDesc.includes(term) ||
+      locCat.includes(term) ||
       activeKey.includes(term)
     );
   });
@@ -139,8 +147,8 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
               <Keyboard className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0]">快捷键与按键重映射 (Keyboard Shortcuts)</h2>
-              <p className="text-[11px] text-[#858585]">自定义全系统快捷键映射，自动检测键位冲突并支持即时恢复默认</p>
+              <h2 className="text-sm font-semibold text-[#e0e0e0]">{t('keybinding.title')}</h2>
+              <p className="text-[11px] text-[#858585]">{t('keybinding.subtitle')}</p>
             </div>
           </div>
           <button
@@ -173,7 +181,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
             <Search className="w-3.5 h-3.5 text-[#858585]" />
             <input
               type="text"
-              placeholder="搜索按键或功能..."
+              placeholder={t('keybinding.searchPlaceholder')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="bg-transparent text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none w-full"
@@ -187,14 +195,16 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-[#cca700] flex-shrink-0" />
               <span>
-                按键 <strong className="font-mono text-white">{formatKeyDisplay(conflictWarning.key)}</strong> 同时绑定到了：{conflictWarning.conflictsWith.join('、')}
+                {t('keybinding.conflictNotice')
+                  .replace('{key}', formatKeyDisplay(conflictWarning.key))
+                  .replace('{actions}', conflictWarning.conflictsWith.join('、'))}
               </span>
             </div>
             <button
               onClick={() => setConflictWarning(null)}
               className="text-[11px] text-[#cca700] hover:underline ml-4"
             >
-              忽略
+              {t('keybinding.ignore')}
             </button>
           </div>
         )}
@@ -213,17 +223,17 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
               >
                 <div className="flex-1 pr-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#e0e0e0]">{item.label}</span>
+                    <span className="text-xs font-medium text-[#e0e0e0]">{t(`keybind.${item.id}.label`) || item.label}</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#2d2d2d] text-[#858585] border border-[#3c3c3c]">
-                      {item.categoryLabel}
+                      {t(`keybind.cat.${item.category}`) || item.categoryLabel}
                     </span>
                     {isCustom && (
                       <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#04395e] text-white border border-[#0078d4]/50">
-                        自定义
+                        {t('keybinding.customBadge')}
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#858585] mt-0.5">{item.description}</p>
+                  <p className="text-[11px] text-[#858585] mt-0.5">{t(`keybind.${item.id}.desc`) || item.description}</p>
                 </div>
 
                 {/* Key badge & Actions */}
@@ -231,7 +241,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
                   {isRecording ? (
                     <div className="flex items-center gap-2 px-3 py-1 rounded bg-[#04395e]/40 border border-[#0078d4] text-[#a9cce3] text-xs font-mono animate-pulse">
                       <Flame className="w-3.5 h-3.5 text-[#0078d4]" />
-                      <span>请直接按下按键... (Esc 取消)</span>
+                      <span>{t('keybinding.pressKey')}</span>
                     </div>
                   ) : (
                     <button
@@ -241,7 +251,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
                           ? 'bg-[#04395e]/20 border-[#0078d4] text-[#a9cce3] hover:bg-[#04395e]/40'
                           : 'bg-[#2d2d2d] border-[#3c3c3c] text-[#cccccc] hover:border-[#555555]'
                       }`}
-                      title="点击录制新快捷键"
+                      title={t('keybinding.recordTooltip')}
                     >
                       <span>{formatKeyDisplay(currentKey)}</span>
                       <Edit2 className="w-3 h-3 text-[#858585] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -252,7 +262,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
                     <button
                       onClick={() => handleResetSingle(item.id)}
                       className="p-1 rounded text-[#858585] hover:text-[#e0e0e0] hover:bg-[#333333] transition-colors"
-                      title="恢复为默认按键"
+                      title={t('keybinding.resetTooltip')}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                     </button>
@@ -263,7 +273,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
           })}
           {filteredBindings.length === 0 && (
             <div className="text-center py-12 text-[#858585] text-xs">
-              没有找到匹配的快捷键
+              {t('keybinding.noMatching')}
             </div>
           )}
         </div>
@@ -275,7 +285,7 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-xs text-[#cccccc] transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            恢复所有默认
+            {t('keybinding.restoreAll')}
           </button>
 
           <div className="flex items-center gap-2">
@@ -283,14 +293,14 @@ export const KeybindingManagerModal: React.FC<KeybindingManagerModalProps> = ({
               onClick={onClose}
               className="px-3.5 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-xs font-medium text-[#cccccc] transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleSave}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium transition-colors"
             >
               <Check className="w-3.5 h-3.5" />
-              保存快捷键
+              {t('keybinding.save')}
             </button>
           </div>
         </div>

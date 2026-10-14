@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Monitor, Maximize, Minimize, RefreshCw, Eye, ShieldCheck, Settings, Power
@@ -15,6 +16,7 @@ export const VncInstance: React.FC<VncInstanceProps> = ({
   isActive,
   onStatusChange,
 }) => {
+  const { t } = useI18n();
   const [connecting, setConnecting] = useState(true);
   const [connected, setConnected] = useState(false);
   const [scaleMode, setScaleMode] = useState<'fit' | 'original'>('fit');
@@ -81,7 +83,7 @@ export const VncInstance: React.FC<VncInstanceProps> = ({
           <button
             onClick={() => setScaleMode(prev => prev === 'fit' ? 'original' : 'fit')}
             className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-            title={`当前显示模式: ${scaleMode === 'fit' ? '自适应缩放' : '原始像素'}`}
+            title={t('display.modeTooltip').replace('{mode}', scaleMode === 'fit' ? t('display.fit') : t('display.pixel'))}
           >
             {scaleMode === 'fit' ? <Minimize className="w-3.5 h-3.5 text-[#3794ff]" /> : <Maximize className="w-3.5 h-3.5" />}
           </button>
@@ -93,7 +95,7 @@ export const VncInstance: React.FC<VncInstanceProps> = ({
         {connecting && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#181818]/95 z-30 space-y-3">
             <RefreshCw className="w-8 h-8 text-[#0078d4] animate-spin" />
-            <p className="text-xs text-[#cccccc] font-medium">正在连接 VNC 远程图形桌面 ({tab.host}:{tab.port || 5900})...</p>
+            <p className="text-xs text-[#cccccc] font-medium">{t('vnc.connecting').replace('{host}', tab.host || '').replace('{port}', String(tab.port || 5900))}</p>
             <p className="text-[10px] text-[#858585] font-mono">RFB Protocol 003.008 Handshake & Security Authentication</p>
           </div>
         )}

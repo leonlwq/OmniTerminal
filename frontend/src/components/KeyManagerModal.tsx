@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { GenerateKeyPair, GetIdentityKeys, SaveIdentityKey, DeleteIdentityKey } from '../../wailsjs/go/app/App';
 import { models } from '../../wailsjs/go/models';
 import { X, Plus, Trash2, Save, Key, FileUp, Sparkles, Shield } from 'lucide-react';
@@ -8,6 +9,7 @@ interface KeyManagerModalProps {
 }
 
 export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => {
+  const { t } = useI18n();
   const [keys, setKeys] = useState<models.IdentityKey[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<models.IdentityKey>>({});
@@ -22,12 +24,12 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
   const loadKeys = () => {
     GetIdentityKeys()
       .then(k => setKeys(k || []))
-      .catch(err => setErrorMsg("无法加载全局密钥: " + err));
+      .catch(err => setErrorMsg((t('key.loadError') || "无法加载全局密钥: ") + err));
   };
 
   const handleAddNew = () => {
     setEditingId('new');
-    setFormData({ id: '', name: '新的全局密钥', privateKey: '', publicKey: '' });
+    setFormData({ id: '', name: t('key.newProfileDefault') || '新的全局密钥', privateKey: '', publicKey: '' });
     setErrorMsg('');
   };
 
@@ -39,11 +41,11 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
 
   const handleSave = () => {
     if (!formData.name) {
-      setErrorMsg("请输入密钥名称");
+      setErrorMsg(t('key.nameRequired') || "请输入密钥名称");
       return;
     }
     if (!formData.privateKey) {
-      setErrorMsg("私钥内容不能为空");
+      setErrorMsg(t('key.privateKeyRequired') || "私钥内容不能为空");
       return;
     }
     SaveIdentityKey(formData as models.IdentityKey)
@@ -51,17 +53,17 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
         setEditingId(null);
         loadKeys();
       })
-      .catch(err => setErrorMsg("保存失败: " + err));
+      .catch(err => setErrorMsg((t('key.saveError') || "保存失败: ") + err));
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("确定要删除此全局密钥吗？依赖此密钥的会话将无法连接。")) {
+    if (confirm(t('key.deleteConfirm') || "确定要删除此全局密钥吗？依赖此密钥的会话将无法连接。")) {
       DeleteIdentityKey(id)
         .then(() => {
           if (editingId === id) setEditingId(null);
           loadKeys();
         })
-        .catch(err => setErrorMsg("删除失败: " + err));
+        .catch(err => setErrorMsg((t('key.deleteError') || "删除失败: ") + err));
     }
   };
 
@@ -77,7 +79,7 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
         });
       })
       .catch(err => {
-        setErrorMsg("生成密钥对失败: " + err);
+        setErrorMsg((t('key.genError') || "生成密钥对失败: ") + err);
       })
       .finally(() => {
         setGenerating(false);
@@ -107,8 +109,8 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
               <Key className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xs font-semibold text-[#e0e0e0] leading-tight">全局 SSH 密钥管理器</h2>
-              <span className="text-[11px] text-[#858585] font-normal">Global SSH Key Pair & Identity Profiles</span>
+              <h2 className="text-xs font-semibold text-[#e0e0e0] leading-tight">{t('key.title') || '全局 SSH 密钥管理器'}</h2>
+              <span className="text-[11px] text-[#858585] font-normal">{t('key.subtitle') || 'Global SSH Key Pair & Identity Profiles'}</span>
             </div>
           </div>
           <button 
@@ -127,12 +129,12 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
               className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium rounded transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>导入 / 生成新密钥</span>
+              <span>{t('key.newBtn') || '导入 / 生成新密钥'}</span>
             </button>
             
             <div className="flex-1 overflow-y-auto space-y-0.5 pr-1">
               {keys.length === 0 ? (
-                <div className="text-center p-6 text-xs text-[#858585]">暂无已保存的全局密钥</div>
+                <div className="text-center p-6 text-xs text-[#858585]">{t('key.emptyList') || '暂无已保存的全局密钥'}</div>
               ) : (
                 keys.map(k => (
                   <div
@@ -151,7 +153,7 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(k.id); }}
                       className="opacity-0 group-hover:opacity-100 p-1 text-[#858585] hover:text-red-400 hover:bg-[#333333] rounded transition-colors shrink-0"
-                      title="删除"
+                      title={t('key.delete') || '删除'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -167,14 +169,14 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
               <div className="flex flex-col h-full">
                 <div className="px-5 py-2.5 border-b border-[#2b2b2b] bg-[#1f1f1f] flex items-center justify-between shrink-0">
                   <h3 className="text-xs font-semibold text-[#e0e0e0]">
-                    {editingId === 'new' ? '创建 / 导入全局密钥档案' : `编辑密钥: ${formData.name || ''}`}
+                    {editingId === 'new' ? (t('key.createProfile') || '创建 / 导入全局密钥档案') : (t('key.editProfile') || '编辑密钥: {name}').replace('{name}', formData.name || '')}
                   </h3>
                   <button
                     onClick={handleSave}
                     className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-semibold rounded transition-colors"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    保存密钥
+                    {t('key.saveBtn') || '保存密钥'}
                   </button>
                 </div>
                 
@@ -187,10 +189,10 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
 
                   <div className="space-y-4">
                     <div className="bg-[#252526] border border-[#2b2b2b] rounded-lg p-4 space-y-2 shadow-sm">
-                      <label className="text-[11px] font-medium text-[#858585]">密钥档案名称 *</label>
+                      <label className="text-[11px] font-medium text-[#858585]">{t('key.profileNameLabel') || '密钥档案名称 *'}</label>
                       <input
                         type="text"
-                        placeholder="例如: 生产跳板机专用 ED25519 密钥"
+                        placeholder={t('key.profileNamePlaceholder') || '例如: 生产跳板机专用 ED25519 密钥'}
                         value={formData.name || ''}
                         onChange={e => setFormData({...formData, name: e.target.value})}
                         className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none transition-colors"
@@ -201,7 +203,7 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
                       <div className="flex items-center justify-between border-b border-[#2b2b2b] pb-2.5">
                         <span className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-[#0078d4]" />
-                          生成全新高强度密钥对
+                          {t('key.genSectionTitle') || '生成全新高强度密钥对'}
                         </span>
                         <div className="flex gap-2 items-center">
                           <select 
@@ -222,23 +224,23 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
                               generating ? 'bg-[#0078d4]/50 text-white/50 cursor-not-allowed' : 'bg-[#0078d4] hover:bg-[#006cbe] text-white'
                             }`}
                           >
-                            {generating ? '正在生成...' : '立即生成并填充'}
+                            {generating ? (t('key.generating') || '正在生成...') : (t('key.genBtn') || '立即生成并填充')}
                           </button>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-medium text-[#858585]">或直接导入本地私钥文件 (PEM / OpenSSH)</span>
+                        <span className="text-xs font-medium text-[#858585]">{t('key.importLocalTitle') || '或直接导入本地私钥文件 (PEM / OpenSSH)'}</span>
                         <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] text-xs font-medium rounded transition-colors">
                           <FileUp className="w-3.5 h-3.5 text-[#0078d4]" />
-                          <span>浏览文件...</span>
+                          <span>{t('key.browseFile') || '浏览文件...'}</span>
                           <input type="file" className="hidden" onChange={handleFileUpload} />
                         </label>
                       </div>
                     </div>
 
                     <div className="bg-[#252526] border border-[#2b2b2b] rounded-lg p-4 space-y-2 shadow-sm">
-                      <label className="text-[11px] font-medium text-[#858585]">私钥内容 (PEM / OpenSSH Key) *</label>
+                      <label className="text-[11px] font-medium text-[#858585]">{t('key.privateKeyLabel') || '私钥内容 (PEM / OpenSSH Key) *'}</label>
                       <textarea
                         placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
                         value={formData.privateKey || ''}
@@ -254,7 +256,7 @@ export const KeyManagerModal: React.FC<KeyManagerModalProps> = ({ onClose }) => 
                 <div className="w-12 h-12 rounded-lg bg-[#252526] border border-[#2b2b2b] flex items-center justify-center text-[#0078d4] mb-3">
                   <Key className="w-6 h-6" />
                 </div>
-                <p className="text-xs text-[#858585] font-medium">请选择左侧的密钥档案进行编辑，或点击“导入 / 生成新密钥”</p>
+                <p className="text-xs text-[#858585] font-medium">{t('key.emptyDetails') || '请选择左侧的密钥档案进行编辑，或点击“导入 / 生成新密钥”'}</p>
               </div>
             )}
           </div>

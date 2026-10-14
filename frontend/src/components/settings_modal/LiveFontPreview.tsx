@@ -1,5 +1,6 @@
 import React from 'react';
 import { Terminal as TerminalIcon, Eye } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface LiveFontPreviewProps {
   fontFamily: string;
@@ -42,6 +43,7 @@ export const LiveFontPreview: React.FC<LiveFontPreviewProps> = ({
   customGlyphs = true,
   drawBoldTextInBrightColors = true,
 }) => {
+  const { t } = useI18n();
   const combinedFont = nonAsciiFontFamily ? `${fontFamily}, ${nonAsciiFontFamily}` : fontFamily;
   const effectiveBg = themeObj?.background || '#181818';
   const effectiveFg = themeObj?.foreground || '#cccccc';
@@ -72,7 +74,7 @@ export const LiveFontPreview: React.FC<LiveFontPreviewProps> = ({
           <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]/80 border border-[#1aab29]/50" />
           <span className="text-[10px] text-[#858585] font-mono ml-2 flex items-center gap-1">
             <TerminalIcon className="w-3 h-3 text-[#0078d4]" />
-            实时外观仿真视口 (Live Terminal Preview)
+            {t('livePreview.title') || '实时外观仿真视口 (Live Terminal Preview)'}
           </span>
         </div>
         <div className="flex items-center space-x-2 text-[10px] text-[#858585] font-mono">
@@ -83,7 +85,7 @@ export const LiveFontPreview: React.FC<LiveFontPreviewProps> = ({
             {fontWeight}
           </span>
           <span className="text-emerald-400 font-medium flex items-center gap-1">
-            <Eye className="w-2.5 h-2.5" /> 所见即所得
+            <Eye className="w-2.5 h-2.5" /> {t('livePreview.wysiwyg') || '所见即所得'}
           </span>
         </div>
       </div>
@@ -128,22 +130,22 @@ export const LiveFontPreview: React.FC<LiveFontPreviewProps> = ({
           <span> threshold </span>
           <span style={{ color: ansi.yellow }}>&gt;=</span>
           <span> 10); </span>
-          <span style={{ color: '#64748b' }}>// =&gt; true (连字演示)</span>
+          <span style={{ color: '#64748b' }}>// =&gt; true (Ligatures)</span>
         </div>
 
         {/* Line 3: CJK & Unicode Alignment */}
         <div className="whitespace-pre">
           <span style={{ color: ansi.green }}>✦ </span>
-          <span>全角字符宽度对齐：</span>
-          <span style={{ color: ansi.yellow }}>你好，世界！</span>
+          <span>{t('livePreview.cjkAlign') || '全角字符宽度对齐：'}</span>
+          <span style={{ color: ansi.yellow }}>{t('livePreview.cjkHello') || '你好，世界！'}</span>
           <span> 🚀 </span>
           <span style={{ color: ansi.blue }}>[0123456789]</span>
-          <span style={{ color: '#64748b' }}> (CJK/Emoji 测试)</span>
+          <span style={{ color: '#64748b' }}>{t('livePreview.cjkTest') || ' (CJK/Emoji 测试)'}</span>
         </div>
 
         {/* Line 4: ANSI Color Pills & Selection simulation */}
         <div className="flex items-center gap-1.5 my-1 whitespace-pre flex-wrap">
-          <span className="text-[10px] opacity-75 mr-1">调色盘:</span>
+          <span className="text-[10px] opacity-75 mr-1">{t('livePreview.palette') || '调色盘:'}</span>
           {Object.entries(ansi).map(([colorName, colorHex]) => (
             <span 
               key={colorName} 
@@ -166,7 +168,7 @@ export const LiveFontPreview: React.FC<LiveFontPreviewProps> = ({
               fontWeight: fontWeightBold as any,
             }}
           >
-            OmniTerminal v2.5 高性能工作台
+            {t('livePreview.version') || 'OmniTerminal 高性能工作台'}
           </span>
           <span style={{ color: effectiveFg }}>"</span>
 

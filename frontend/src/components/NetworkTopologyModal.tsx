@@ -4,6 +4,7 @@ import {
   Server, Laptop, ArrowRight, Activity, Terminal, FolderOpen,
   Share2, Eye, Filter, Info
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface TopologyNode {
   id: string;
@@ -55,6 +56,7 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
   onSelectSession,
   onOpenSftp,
 }) => {
+  const { t } = useI18n();
   const [data, setData] = useState<NetworkTopologyData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<TopologyNode | null>(null);
@@ -231,13 +233,13 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-[#e0e0e0] flex items-center gap-2">
-                SSH 隧道与网络链路拓扑图谱
+                {t('topology.title')}
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#04395e]/40 text-[#0078d4] border border-[#0078d4]/30">
-                  {nodes.length} 节点 / {edges.length} 链路 / {tunnels.length} 隧道
+                  {nodes.length} Nodes / {edges.length} Edges / {tunnels.length} Tunnels
                 </span>
               </h2>
               <p className="text-xs text-[#858585]">
-                实时拓扑分析、跳板机级联链条 (Jump-Host) 与端口转发管线动态流向
+                {t('topology.subtitle')}
               </p>
             </div>
           </div>
@@ -247,21 +249,21 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
             <button
               onClick={() => setZoom(prev => Math.min(2.0, prev + 0.15))}
               className="p-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors"
-              title="放大画布"
+              title={t('topo.zoomIn') || '放大画布'}
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={() => setZoom(prev => Math.max(0.4, prev - 0.15))}
               className="p-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors"
-              title="缩小画布"
+              title={t('topo.zoomOut') || '缩小画布'}
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <button
               onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
               className="p-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors"
-              title="重置视角"
+              title={t('topo.resetView') || '重置视角'}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
@@ -269,14 +271,14 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
               onClick={fetchTopology}
               disabled={isLoading}
               className="p-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors"
-              title="刷新拓扑"
+              title={t('topo.refresh') || '刷新拓扑'}
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#0078d4]' : ''}`} />
             </button>
             <button
               onClick={onClose}
               className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#333333] transition-colors ml-1"
-              title="关闭"
+              title={t('topo.close') || '关闭'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -437,7 +439,7 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
                       </span>
                       {node.activeTunnelsCount > 0 && (
                         <span className="px-1.5 py-0.2 rounded bg-[#04395e]/40 text-[#0078d4] border border-[#0078d4]/30">
-                          {node.activeTunnelsCount} 隧道
+                          {(t('topo.tunnelsCount') || '{count} 隧道').replace('{count}', String(node.activeTunnelsCount))}
                         </span>
                       )}
                     </div>
@@ -451,7 +453,7 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
           <div className="w-80 bg-[#181818] border-l border-[#2b2b2b] flex flex-col p-4 space-y-3.5 overflow-y-auto custom-scrollbar">
             <h3 className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-1.5 pb-2 border-b border-[#2b2b2b]">
               <Info className="w-4 h-4 text-[#0078d4]" />
-              节点与隧道详细信息
+              {t('topo.nodeDetailTitle') || '节点与隧道详细信息'}
             </h3>
 
             {selectedNode ? (
@@ -465,27 +467,27 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
                     </span>
                   </div>
                   <div className="font-mono text-[#858585] space-y-1 text-[11px]">
-                    <div>主机: <span className="text-[#cccccc]">{selectedNode.host}:{selectedNode.port}</span></div>
-                    <div>用户: <span className="text-[#cccccc]">{selectedNode.user}</span></div>
-                    <div>状态: <span className="text-[#4ec9b0] font-semibold">{selectedNode.status}</span></div>
-                    <div>RTT 时延: <span className="text-[#0078d4]">{selectedNode.rttMs} ms</span></div>
-                    <div>在线时长: <span className="text-[#cccccc]">{selectedNode.uptime}</span></div>
+                    <div>{t('topo.detailHost') || '主机: '}<span className="text-[#cccccc]">{selectedNode.host}:{selectedNode.port}</span></div>
+                    <div>{t('topo.detailUser') || '用户: '}<span className="text-[#cccccc]">{selectedNode.user}</span></div>
+                    <div>{t('topo.detailStatus') || '状态: '}<span className="text-[#4ec9b0] font-semibold">{selectedNode.status}</span></div>
+                    <div>{t('topo.detailRtt') || 'RTT 时延: '}<span className="text-[#0078d4]">{selectedNode.rttMs} ms</span></div>
+                    <div>{t('topo.detailUptime') || '在线时长: '}<span className="text-[#cccccc]">{selectedNode.uptime}</span></div>
                   </div>
                 </div>
 
                 {/* Node Tunnels */}
                 <div>
-                  <h4 className="text-[11px] font-medium text-[#858585] mb-1.5">经由此节点的活动隧道:</h4>
+                  <h4 className="text-[11px] font-medium text-[#858585] mb-1.5">{t('topo.activeTunnelsHeader') || '经由此节点的活动隧道:'}</h4>
                   {tunnels.filter(t => t.sessionId === selectedNode.id).length === 0 ? (
                     <div className="p-2.5 rounded bg-[#252526] border border-[#2b2b2b] text-[#858585] text-center text-xs">
-                      无活动转发隧道
+                      {t('topo.noActiveTunnels') || '无活动转发隧道'}
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {tunnels.filter(t => t.sessionId === selectedNode.id).map((tun, i) => (
                         <div key={i} className="p-2.5 rounded bg-[#252526] border border-[#2b2b2b] text-[11px] font-mono space-y-1">
                           <div className="flex items-center justify-between">
-                            <span className="text-[#0078d4] font-semibold">{tun.type} 转发</span>
+                            <span className="text-[#0078d4] font-semibold">{(t('topo.forwarding') || '{type} 转发').replace('{type}', tun.type)}</span>
                             <span className="text-[10px] text-[#4ec9b0]">ACTIVE</span>
                           </div>
                           <div className="text-[#cccccc] truncate">{tun.localAddr} → {tun.remoteAddr}</div>
@@ -507,7 +509,7 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
                         className="w-full flex items-center justify-center gap-2 py-1.5 rounded bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium transition-colors"
                       >
                         <Terminal className="w-3.5 h-3.5" />
-                        <span>切换至终端 (Terminal)</span>
+                        <span>{t('topology.switchTerm')}</span>
                       </button>
                     )}
                     {onOpenSftp && (
@@ -519,7 +521,7 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
                         className="w-full flex items-center justify-center gap-2 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors"
                       >
                         <FolderOpen className="w-3.5 h-3.5 text-[#cca700]" />
-                        <span>打开 SFTP 浏览器</span>
+                        <span>{t('topology.openSftp')}</span>
                       </button>
                     )}
                   </div>
@@ -528,24 +530,24 @@ export const NetworkTopologyModal: React.FC<NetworkTopologyModalProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center h-48 text-[#858585] text-center space-y-2">
                 <Share2 className="w-8 h-8 opacity-30" />
-                <p className="text-xs">点击画布中任意节点查看链路详情与隧道管线</p>
+                <p className="text-xs">{t('topo.clickNodeHint') || '点击画布中任意节点查看链路详情与隧道管线'}</p>
               </div>
             )}
 
             {/* Legend */}
             <div className="mt-auto pt-4 border-t border-[#2b2b2b] space-y-2 text-[11px] text-[#858585]">
-              <span className="font-semibold text-[#e0e0e0] block">图例说明:</span>
+              <span className="font-semibold text-[#e0e0e0] block">{t('topology.legend')}</span>
               <div className="flex items-center gap-2">
                 <Laptop className="w-3.5 h-3.5 text-[#4ec9b0]" />
-                <span>本机客户端</span>
+                <span>{t('topology.localClient')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5 text-[#cca700]" />
-                <span>Bastion / Jump-Host 跳板机</span>
+                <span>{t('topology.jumpHost')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Server className="w-3.5 h-3.5 text-[#0078d4]" />
-                <span>目标服务器集群</span>
+                <span>{t('topology.targetCluster')}</span>
               </div>
             </div>
           </div>

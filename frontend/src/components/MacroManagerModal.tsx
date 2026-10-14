@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Plus, Code, X } from 'lucide-react';
 import { models } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface MacroManagerModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface MacroManagerModalProps {
 }
 
 export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: MacroManagerModalProps) {
+  const { t } = useI18n();
   const [selectedMacroId, setSelectedMacroId] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -17,7 +19,7 @@ export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: Ma
   const macros = settings?.macros || [];
 
   const handleDelete = (id: string) => {
-    if (confirm("确定要删除此宏方案吗？")) {
+    if (confirm(t('macro.deleteConfirm') || "确定要删除此宏方案吗？")) {
       const newSettings = new models.AppSettings({
         ...settings,
         macros: macros.filter((m: any) => m.id !== id)
@@ -37,7 +39,7 @@ export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: Ma
               <Code className="h-3.5 w-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">终端宏交互管理器</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('macro.modalTitle') || '终端宏交互管理器'}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Terminal Action Macro Manager</span>
             </div>
           </div>
@@ -52,23 +54,23 @@ export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: Ma
         {/* Content */}
         <div className="p-5 flex flex-col h-[340px] bg-[#1e1e1e]">
           <div className="flex justify-between items-center mb-2.5">
-            <span className="text-xs text-[#858585] font-medium">已保存的宏脚本方案</span>
+            <span className="text-xs text-[#858585] font-medium">{t('macro.savedTitle') || '已保存的宏脚本方案'}</span>
           </div>
 
           <div className="flex-1 border border-[#2b2b2b] rounded bg-[#252526] overflow-y-auto">
             {macros.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-xs text-[#858585] space-y-2 p-6 text-center">
                 <Code className="w-8 h-8 opacity-20" />
-                <p>暂无已保存的宏记录</p>
-                <p className="text-[11px] text-[#666666]">使用终端下方的录制工具可录制按键交互序列并保存为宏。</p>
+                <p>{t('macro.emptyTitle') || '暂无已保存的宏记录'}</p>
+                <p className="text-[11px] text-[#666666]">{t('macro.emptyDesc') || '使用终端下方的录制工具可录制按键交互序列并保存为宏。'}</p>
               </div>
             ) : (
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#1f1f1f] sticky top-0 border-b border-[#2b2b2b] text-[#858585] text-[11px]">
                   <tr>
-                    <th className="font-medium px-3.5 py-2 w-1/2">方案名称</th>
-                    <th className="font-medium px-3.5 py-2 w-1/4">动作步数</th>
-                    <th className="font-medium px-3.5 py-2 w-1/4 text-right">操作</th>
+                    <th className="font-medium px-3.5 py-2 w-1/2">{t('macro.colName') || '方案名称'}</th>
+                    <th className="font-medium px-3.5 py-2 w-1/4">{t('macro.colSteps') || '动作步数'}</th>
+                    <th className="font-medium px-3.5 py-2 w-1/4 text-right">{t('macro.colActions') || '操作'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b]">
@@ -81,12 +83,12 @@ export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: Ma
                       }`}
                     >
                       <td className="px-3.5 py-2 truncate font-medium">{macro.name}</td>
-                      <td className="px-3.5 py-2 text-[#858585] font-mono text-[11px]">{macro.actions?.length || 0} 步</td>
+                      <td className="px-3.5 py-2 text-[#858585] font-mono text-[11px]">{(t('macro.stepCount') || '{count} 步').replace('{count}', String(macro.actions?.length || 0))}</td>
                       <td className="px-3.5 py-2 text-right">
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleDelete(macro.id); }}
                           className="p-1 text-[#858585] hover:text-[#f14c4c] hover:bg-[#331c19] rounded transition-colors"
-                          title="删除"
+                          title={t('common.delete') || '删除'}
                         >
                           <Trash2 className="h-3.5 w-3.5 inline" />
                         </button>
@@ -105,7 +107,7 @@ export function MacroManagerModal({ isOpen, onClose, settings, setSettings }: Ma
             onClick={onClose} 
             className="px-4 py-1.5 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors"
           >
-            关闭
+            {t('common.close') || '关闭'}
           </button>
         </div>
       </div>

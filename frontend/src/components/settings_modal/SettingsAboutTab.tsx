@@ -18,7 +18,7 @@ export function SettingsAboutTab() {
           </div>
         </div>
         <p className="text-xs text-[#858585] max-w-sm mx-auto leading-relaxed pt-1">
-          现代跨平台高性能 SSH / Telnet / 串口与 SFTP 终端工作台。
+          {t('settings.about.desc') || '现代跨平台高性能 SSH / Telnet / 串口与 SFTP 终端工作台。'}
         </p>
         <div className="text-[11px] text-[#6e7681] pt-5 border-t border-[#2b2b2b] max-w-xs mx-auto">
           MIT License • Built with Security, Elegance and High Performance

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   X, Save, Copy, Download, FileText, CheckCircle2, AlertTriangle, RefreshCw
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ContainerFileEditorModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
   initialContent,
   onSave,
 }) => {
+  const { t } = useI18n();
   const [content, setContent] = useState(initialContent || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'success' | 'error' | null>(null);
@@ -61,7 +63,7 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
             </div>
             <div>
               <h3 className="font-semibold text-xs text-white flex items-center gap-2">
-                <span>容器文件在线编辑: {filePath.split('/').pop()}</span>
+                <span>{t('container.editFileTitle').replace('{file}', filePath.split('/').pop() || '')}</span>
                 <span className="text-[10px] bg-[#0078d4]/20 text-[#3794ff] px-1.5 py-0.2 rounded font-mono">
                   {containerName}
                 </span>
@@ -74,20 +76,20 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
             {saveStatus === 'success' && (
               <span className="text-emerald-400 text-xs flex items-center gap-1 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>已写回容器！</span>
+                <span>OK</span>
               </span>
             )}
             {saveStatus === 'error' && (
               <span className="text-rose-400 text-xs flex items-center gap-1 font-medium">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                <span>写回容器失败</span>
+                <span>Error</span>
               </span>
             )}
 
             <button
               onClick={() => navigator.clipboard.writeText(content)}
               className="p-1.5 rounded hover:bg-[#333333] text-[#858585] hover:text-white transition-colors"
-              title="复制全部内容"
+              title={t('common.copy')}
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
@@ -102,7 +104,7 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
                 a.click();
               }}
               className="p-1.5 rounded hover:bg-[#333333] text-[#858585] hover:text-white transition-colors"
-              title="下载到本地"
+              title="Download"
             >
               <Download className="w-3.5 h-3.5" />
             </button>
@@ -113,7 +115,7 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
               className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded flex items-center gap-1.5 text-xs transition-colors disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? '正在写回...' : '保存写回容器'}</span>
+              <span>{isSaving ? t('container.savingBack') : t('container.saveBack')}</span>
             </button>
 
             <button
@@ -137,8 +139,8 @@ export const ContainerFileEditorModal: React.FC<ContainerFileEditorModalProps> =
 
         {/* Footer */}
         <div className="px-5 py-2 bg-[#1f1f1f] border-t border-[#2b2b2b] flex items-center justify-between text-[10px] text-[#858585] shrink-0 font-mono">
-          <span>行数: {content.split('\n').length} | 字符数: {content.length}</span>
-          <span>按「保存写回容器」将通过 exec 流写回容器文件系统</span>
+          <span>Lines: {content.split('\n').length} | Chars: {content.length}</span>
+          <span>Docker/K8s Exec Stream Sync</span>
         </div>
 
       </div>

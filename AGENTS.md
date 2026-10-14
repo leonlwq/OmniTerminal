@@ -42,6 +42,20 @@
 - **VS Code Dark Modern 现代工程美学**：基底 `#1e1e1e`，镀铬与侧栏 `#181818`，面板卡片 `#252526`，微边框 `#2b2b2b`，主字阶 `#cccccc`，经典高亮蓝 `#0078d4`。
 - **一体化顶栏与 Command Center**：Unified Header 整合品牌、Omnibar 快速连接检索胶囊与工作区工具组。
 
+### 国际化与本地化约定 (i18n & Localization)
+
+- **语言自动探测与无缝降级**：初始化时自动探测 `navigator.language`，若无用户显式设置偏好则自适应系统语言（中文 `zh-CN`、英文 `en-US`、日文 `ja-JP`、韩文 `ko-KR`），缺失词条安全降级至英文或传入 fallback。
+- **配置持久化联动**：语言设置通过 `internal/models/config_models.go` 的 `AppSettings.Language` 与前端 `I18nProvider` 同步持久化，配置重载与重启保持一致。
+- **界面与子功能全景覆盖**：
+  - 核心工作台：首页（`QuickStartPage`）、菜单顶栏（`Toolbar`）、会话侧栏（`SessionSidebar`）、状态栏（`StatusBar`）、活动栏（`ActivityBar`）。
+  - 全局偏好设置中心（全部 9 个选项卡与预览器）：`SettingsModal`、`SettingsAppearanceTab`、`ThemePreviewGallery`、`LiveFontPreview`、`SettingsSecurityTab`、`SettingsOSTab`、`SettingsInteractionTab`、`SettingsStatusBarTab`、`SettingsTemplateTab`、`SettingsAICopilotTab`、`SettingsQuickCmdsTab`、`SettingsAboutTab`。
+  - 全量子功能面板与弹窗（100% 词条键值化，4 种语言完整对齐）：
+    - 万能命令中心（`CommandPaletteModal`）、OmniAI 智能运维对话抽屉（`OmniAIChatDrawer`）、版本检测更新（`UpdateModal`）、参数化 SOP Runbook 运维手册（`RunbookManagerModal`）、AI Copilot 模态框（`OmniAICopilotModal`）、大模型接入配置（`AIConfigModal`）。
+    - 标签页右键菜单（`TabContextMenu`）、终端右键菜单（`TerminalContextMenu`）、会话树右键菜单（`SessionTreeContextMenu`）、危险命令安全粘贴拦截（`SafePasteModal`）、主机健康巡检大盘（`InspectionReportModal`）。
+    - SFTP 双栏文件传输管理器（`SftpPanel`）、多行命令撰写抽屉（`ComposePane`）、端到端加密云同步（`CloudSyncModal`）、TOTP / MFA 令牌管理（`TOTPManagerModal`）、SSH 身份密钥管理（`KeyManagerModal`）、端口转发与隧道监控（`TunnelMonitorModal`）、快捷键速查（`ShortcutReferenceModal`）、标签页工作台管理（`TabManagerModal`）、全局搜索（`GlobalSearchModal`）、历史命令检索（`CommandHistoryModal`）。
+    - 会话配置全量 6 大选项卡：`SessionConnectionTab`、`SessionAppearanceTab`、`SessionAuthTab`、`SessionTerminalTab`、`SessionTunnelTab`、`SessionAuditTab`。
+  - 彻底清除各子功能页面直接硬编码中文，杜绝在非中文语言下回退默认中文。
+
 ### 代码质量底线
 
 - **零 Warning 编译**：每次提交与合并前确保 `wails build` 与 `go test ./...` 及 `./build.sh` 零告警、零报错。

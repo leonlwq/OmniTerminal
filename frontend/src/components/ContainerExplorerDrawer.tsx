@@ -27,6 +27,7 @@ import {
 import { MultiLogMatrixModal } from './MultiLogMatrixModal';
 import { ContainerFileEditorModal } from './ContainerFileEditorModal';
 import { ContainerFileInfo } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ContainerInfo {
   id: string;
@@ -89,6 +90,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
   onOpenContainerTerminal,
   onOpenTerminal,
 }) => {
+  const { t } = useI18n();
   const hostSessions = sessions || activeSessions || [];
   const [activeMode, setActiveMode] = useState<'docker' | 'k8s'>('docker');
   const [selectedHost, setSelectedHost] = useState<string>('local');
@@ -238,7 +240,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
 
   // 查看日志
   const handleViewLogs = async (containerId: string, name: string) => {
-    setLogModal({ isOpen: true, name, logs: '正在拉取日志...', loading: true });
+    setLogModal({ isOpen: true, name, logs: t('container.fetchingLogs') || '正在拉取日志...', loading: true });
     try {
       const wailsApp = (window as any).go?.app?.App;
       if (wailsApp) {
@@ -247,10 +249,10 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
           containerId,
           200
         );
-        setLogModal({ isOpen: true, name, logs: logs || '(无日志输出)', loading: false });
+        setLogModal({ isOpen: true, name, logs: logs || t('container.noLogs') || '(无日志输出)', loading: false });
       }
     } catch (err: any) {
-      setLogModal({ isOpen: true, name, logs: `读取日志失败: ${err?.message || err}`, loading: false });
+      setLogModal({ isOpen: true, name, logs: `${t('container.readLogsFail') || '读取日志失败: '}${err?.message || err}`, loading: false });
     }
   };
 
@@ -327,7 +329,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
     try {
       const wailsApp = (window as any).go?.app?.App;
       if (!wailsApp || !wailsApp.ListContainerFiles) {
-        setFileError('后端未支持 ListContainerFiles 接口');
+        setFileError(t('container.noListApi') || '后端未支持 ListContainerFiles 接口');
         return;
       }
 
@@ -392,14 +394,14 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
       isOpen: true,
       filePath: file.path,
       fileName: file.name,
-      content: '正在读取文件内容...',
+      content: t('container.readingFile') || '正在读取文件内容...',
       loading: true,
     });
 
     try {
       const wailsApp = (window as any).go?.app?.App;
       if (!wailsApp || !wailsApp.ReadContainerFile) {
-        setFileEditorState(prev => prev ? { ...prev, content: '后端未支持 ReadContainerFile', loading: false } : null);
+        setFileEditorState(prev => prev ? { ...prev, content: t('container.noReadApi') || '后端未支持 ReadContainerFile', loading: false } : null);
         return;
       }
 
@@ -415,7 +417,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
       );
       setFileEditorState(prev => prev ? { ...prev, content: text ?? '', loading: false } : null);
     } catch (err: any) {
-      setFileEditorState(prev => prev ? { ...prev, content: `[读取失败]: ${err?.message || err}`, loading: false } : null);
+      setFileEditorState(prev => prev ? { ...prev, content: `${t('container.readFail') || '[读取失败]: '}${err?.message || err}`, loading: false } : null);
     }
   };
 
@@ -500,7 +502,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 className="flex items-center gap-1 text-xs text-[#cccccc] hover:text-white bg-[#252526] hover:bg-[#333333] px-2 py-1 rounded border border-[#3c3c3c] transition-colors shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                返回容器
+                {t('container.back')}
               </button>
               <div className="flex items-center gap-1.5 overflow-hidden">
                 {activeContainerForFiles.type === 'docker' ? (
@@ -518,7 +520,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 onClick={() => loadContainerFiles(containerPath)}
                 disabled={loadingFiles}
                 className="p-1 rounded hover:bg-white/10 text-[#858585] hover:text-white transition-colors"
-                title="刷新目录"
+                title={t('common.refresh', '刷新')}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin text-[#3794ff]' : ''}`} />
               </button>
@@ -539,7 +541,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 onClick={handleGoUpDir}
                 disabled={containerPath === '/'}
                 className="p-1 rounded hover:bg-white/10 text-[#858585] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent mr-1"
-                title="上一级目录"
+                title={t('common.upDir', '上一级目录')}
               >
                 <ChevronUp className="w-3.5 h-3.5" />
               </button>
@@ -579,7 +581,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
               <Search className="w-3 h-3 text-[#858585]" />
               <input
                 type="text"
-                placeholder="过滤当前目录文件..."
+                placeholder={t('common.filterPlaceholder', '过滤当前目录文件...')}
                 value={fileFilter}
                 onChange={e => setFileFilter(e.target.value)}
                 className="bg-transparent text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none w-full"
@@ -600,25 +602,25 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
             {loadingFiles ? (
               <div className="flex flex-col items-center justify-center py-20 text-[#858585] text-xs gap-2">
                 <RefreshCw className="w-5 h-5 animate-spin text-[#0078d4]" />
-                <span>正在读取容器虚拟文件系统...</span>
+                <span>{t('common.loading')}</span>
               </div>
             ) : fileError ? (
               <div className="p-4 bg-rose-950/20 border border-rose-900/40 rounded text-rose-300 text-xs space-y-2 m-2">
                 <div className="flex items-center gap-2 font-semibold">
                   <AlertCircle className="w-4 h-4 text-rose-400" />
-                  <span>读取目录失败</span>
+                  <span>{t('common.failed', '读取失败')}</span>
                 </div>
                 <p className="font-mono text-[11px] break-all">{fileError}</p>
                 <button
                   onClick={() => loadContainerFiles(containerPath)}
                   className="px-2.5 py-1 bg-rose-900/40 hover:bg-rose-900/60 rounded text-xs text-white transition-colors"
                 >
-                  重试
+                  {t('common.retry', '重试')}
                 </button>
               </div>
             ) : sortedFiles.length === 0 ? (
               <div className="text-center py-20 text-[#858585] text-xs">
-                {fileFilter ? '未找到匹配的文件' : '此目录为空'}
+                {fileFilter ? t('common.noMatches', '未找到匹配项') : t('common.empty', '此目录为空')}
               </div>
             ) : (
               <div className="divide-y divide-[#252526]">
@@ -657,7 +659,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                             handleOpenFileItem(f);
                           }}
                           className="opacity-0 group-hover:opacity-100 p-1 rounded bg-[#0078d4]/15 hover:bg-[#0078d4] text-blue-300 hover:text-white transition-all"
-                          title="查看与编辑"
+                          title={t('common.edit', '编辑')}
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
@@ -679,7 +681,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 {activeMode === 'docker' ? <Box className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
               </div>
               <span className="font-semibold text-xs text-white">
-                {activeMode === 'docker' ? 'Docker 容器直连' : 'Kubernetes Pod 直连'}
+                {activeMode === 'docker' ? t('container.dockerDirect') : t('container.k8sDirect')}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -687,7 +689,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 onClick={loadData}
                 disabled={loading}
                 className="p-1 rounded hover:bg-white/10 text-[#858585] hover:text-white transition-colors"
-                title="刷新"
+                title={t('common.refresh')}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#3794ff]' : ''}`} />
               </button>
@@ -714,7 +716,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 }`}
               >
                 <Box className="w-3.5 h-3.5" />
-                Docker 容器
+                Docker
               </button>
               <button
                 onClick={() => {
@@ -741,7 +743,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 }}
                 className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-2 py-1 text-xs text-[#cccccc] focus:outline-none"
               >
-                <option value="local">💻 本地守护进程 (Local Docker/K8s)</option>
+                <option value="local">{t('container.localDaemon')}</option>
                 {hostSessions
                   .filter(s => !s.isFolder && (s.protocol === 'ssh' || !s.protocol))
                   .map(s => (
@@ -757,7 +759,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder="命名空间 (留空为全部 -A)..."
+                  placeholder={t('container.nsPlaceholder')}
                   value={k8sNamespace}
                   onChange={e => setK8sNamespace(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && loadData()}
@@ -772,7 +774,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 <Search className="w-3 h-3 text-[#858585]" />
                 <input
                   type="text"
-                  placeholder="搜索名称 / 镜像..."
+                  placeholder={t('container.searchPlaceholder')}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="bg-transparent text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none w-full"
@@ -782,7 +784,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 value={selectedShell}
                 onChange={e => setSelectedShell(e.target.value)}
                 className="bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-1.5 py-1 text-[11px] text-[#cccccc] focus:outline-none"
-                title="直连终端所用 Shell"
+                title="Shell"
               >
                 <option value="/bin/bash">bash</option>
                 <option value="/bin/sh">sh</option>
@@ -815,7 +817,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                         <button
                           onClick={e => handleToggleSelect(c.id, e)}
                           className="text-[#858585] hover:text-[#0078d4] transition-colors p-0.5"
-                          title={isSelected ? '取消勾选' : '勾选加入日志流矩阵'}
+                          title={isSelected ? t('common.uncheck', '取消勾选') : t('common.check', '勾选')}
                         >
                           {isSelected ? (
                             <CheckSquare className="w-3.5 h-3.5 text-[#0078d4]" />
@@ -851,27 +853,27 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                         className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#0078d4]/15 hover:bg-[#0078d4] border border-[#0078d4]/30 hover:border-[#0078d4] text-blue-300 hover:text-white text-[11px] font-medium transition-colors"
                       >
                         <Terminal className="w-3 h-3" />
-                        终端
+                        {t('container.terminal')}
                       </button>
                       <button
                         onClick={() => handleViewLogs(c.id, cName)}
                         className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#252526] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#cccccc] hover:text-white text-[11px] transition-colors"
                       >
                         <FileText className="w-3 h-3" />
-                        日志
+                        {t('container.logs')}
                       </button>
                       <button
                         onClick={() => handleOpenContainerFiles(c)}
                         className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#252526] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#cccccc] hover:text-white text-[11px] transition-colors"
-                        title="浏览容器内虚拟文件"
+                        title={t('container.files')}
                       >
                         <Folder className="w-3 h-3 text-amber-400" />
-                        文件
+                        {t('container.files')}
                       </button>
                       <button
                         onClick={() => handleRestart(c.id)}
                         className="p-1 rounded bg-[#252526] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#cccccc] hover:text-amber-300 transition-colors"
-                        title="重启容器"
+                        title={t('common.restart', '重启')}
                       >
                         <RotateCcw className="w-3 h-3" />
                       </button>
@@ -879,7 +881,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                         <button
                           onClick={() => handleStop(c.id)}
                           className="p-1 rounded bg-[#252526] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#cccccc] hover:text-rose-400 transition-colors"
-                          title="停止容器"
+                          title={t('common.stop', '停止')}
                         >
                           <Square className="w-3 h-3" />
                         </button>
@@ -909,7 +911,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                         <button
                           onClick={e => handleToggleSelect(p.name, e)}
                           className="text-[#858585] hover:text-[#0078d4] transition-colors p-0.5"
-                          title={isSelected ? '取消勾选' : '勾选加入日志流矩阵'}
+                          title={isSelected ? t('common.uncheck', '取消勾选') : t('common.check', '勾选')}
                         >
                           {isSelected ? (
                             <CheckSquare className="w-3.5 h-3.5 text-[#0078d4]" />
@@ -946,19 +948,19 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                         className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#0078d4]/15 hover:bg-[#0078d4] border border-[#0078d4]/30 hover:border-[#0078d4] text-blue-300 hover:text-white text-[11px] font-medium transition-colors"
                       >
                         <Terminal className="w-3 h-3" />
-                        直连 Shell
+                        {t('container.terminal')}
                       </button>
                       <button
                         onClick={() => handleOpenPodFiles(p)}
                         className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#252526] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#cccccc] hover:text-white text-[11px] transition-colors"
-                        title="浏览 Pod 内虚拟文件"
+                        title={t('container.files')}
                       >
                         <Folder className="w-3 h-3 text-amber-400" />
-                        文件
+                        {t('container.files')}
                       </button>
                       {p.containers?.length > 1 && (
                         <span className="text-[10px] text-[#858585]">
-                          ({p.containers.length} 容器)
+                          ({p.containers.length})
                         </span>
                       )}
                     </div>
@@ -969,7 +971,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
             {((activeMode === 'docker' && filteredContainers.length === 0) ||
               (activeMode === 'k8s' && filteredPods.length === 0)) && (
               <div className="text-center py-16 text-[#858585] text-xs">
-                {loading ? '正在检索容器数据...' : '未找到运行中的容器或 Pod'}
+                {loading ? t('common.loading') : t('container.noContainers')}
               </div>
             )}
           </div>
@@ -981,21 +983,21 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
                 <span className="w-5 h-5 rounded-full bg-[#0078d4] text-white flex items-center justify-center font-bold text-[10px]">
                   {selectedContainerIds.size}
                 </span>
-                <span>已选 {selectedContainerIds.size} 个容器</span>
+                <span>{t('container.selectedCount').replace('{count}', String(selectedContainerIds.size))}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setSelectedContainerIds(new Set())}
                   className="px-2 py-1 text-xs text-[#858585] hover:text-[#cccccc] transition-colors"
                 >
-                  清空
+                  {t('common.clear')}
                 </button>
                 <button
                   onClick={() => setIsMultiLogMatrixOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#0078d4] hover:bg-[#0062ab] text-white text-xs font-medium shadow-sm transition-colors"
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  启动日志矩阵
+                  {t('container.startMatrix')}
                 </button>
               </div>
             </div>
@@ -1030,7 +1032,7 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
             <div className="flex items-center justify-between px-4 py-2.5 bg-[#1f1f1f] border-b border-[#2b2b2b]">
               <span className="text-xs font-semibold text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#3794ff]" />
-                容器日志: {logModal.name}
+                {t('container.logs')}: {logModal.name}
               </span>
               <button
                 onClick={() => setLogModal(null)}

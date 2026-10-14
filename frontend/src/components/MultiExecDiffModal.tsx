@@ -3,6 +3,7 @@ import {
   X, Play, Copy, Check, Download, AlertCircle, CheckCircle2, 
   Server, Clock, Terminal, Columns, LayoutGrid, FileText, ChevronRight
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface CommandDiffResult {
   sessionId: string;
@@ -19,20 +20,23 @@ interface MultiExecDiffModalProps {
   availableSessions: { id: string; name: string; host: string; isConnected?: boolean }[];
 }
 
-const PRESET_COMMANDS = [
-  { label: '系统信息', cmd: 'uname -a' },
-  { label: '磁盘用量', cmd: 'df -h' },
-  { label: '内存状态', cmd: 'free -m' },
-  { label: '负载与开机时长', cmd: 'uptime' },
-  { label: '系统发行版', cmd: 'cat /etc/os-release | grep PRETTY_NAME' },
-  { label: 'Docker 容器', cmd: 'docker ps --format "table {{.Names}}\t{{.Status}}"' },
-];
+// Preset commands will be evaluated inside component with i18n
 
 export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
   isOpen,
   onClose,
   availableSessions,
 }) => {
+  const { t } = useI18n();
+
+  const presetCommands = [
+    { label: t('diff.presetSysInfo') || '系统信息', cmd: 'uname -a' },
+    { label: t('diff.presetDisk') || '磁盘用量', cmd: 'df -h' },
+    { label: t('diff.presetMem') || '内存状态', cmd: 'free -m' },
+    { label: t('diff.presetUptime') || '负载与开机时长', cmd: 'uptime' },
+    { label: t('diff.presetOS') || '系统发行版', cmd: 'cat /etc/os-release | grep PRETTY_NAME' },
+    { label: t('diff.presetDocker') || 'Docker 容器', cmd: 'docker ps --format "table {{.Names}}\t{{.Status}}"' },
+  ];
   const [command, setCommand] = useState<string>('uname -a');
   const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>(
     availableSessions.slice(0, 4).map(s => s.id)
@@ -103,7 +107,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
     });
 
     navigator.clipboard.writeText(md);
-    setExportNotice('Markdown 已复制到剪贴板！');
+    setExportNotice(t('diff.copyMdNotice') || 'Markdown 已复制到剪贴板！');
     setTimeout(() => setExportNotice(''), 2500);
   };
 
@@ -130,10 +134,10 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-[#e0e0e0] flex items-center gap-2">
-                批量命令执行结果多主机对比面板 (Multi-Host Output Diff)
+                {t('multiExecDiff.title')}
               </h2>
               <p className="text-xs text-[#858585]">
-                并发投递诊断命令、实时采集多机输出、结果差异比对与一致性分析
+                {t('multiExecDiff.subtitle')}
               </p>
             </div>
           </div>
@@ -149,10 +153,10 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
               onClick={exportMarkdown}
               disabled={results.length === 0}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors disabled:opacity-40"
-              title="导出 Markdown 对比报告"
+              title="Markdown"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>导出 Markdown</span>
+              <span>{t('multiExecDiff.exportMd')}</span>
             </button>
             <button
               onClick={onClose}
@@ -174,7 +178,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleRun()}
-                placeholder="输入待下发的 Shell 命令 (例如 df -h, uname -a, free -m)..."
+                placeholder={t('multiExecDiff.cmdPlaceholder')}
                 className="w-full bg-transparent text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none font-mono"
               />
             </div>
@@ -184,7 +188,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
               className="flex items-center gap-2 px-4 py-1.5 rounded bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium disabled:opacity-40 transition-colors shrink-0"
             >
               <Play className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
-              <span>{isRunning ? '正在并发执行...' : '并发执行'}</span>
+              <span>{isRunning ? t('multiExecDiff.executing') : t('multiExecDiff.execute')}</span>
             </button>
           </div>
 
@@ -192,8 +196,8 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
           <div className="flex items-center justify-between gap-4 text-xs">
             {/* Presets */}
             <div className="flex items-center gap-1.5 overflow-x-auto">
-              <span className="text-[#858585] shrink-0">快捷预设:</span>
-              {PRESET_COMMANDS.map(p => (
+              <span className="text-[#858585] shrink-0">{t('common.quickPresets', '快捷预设:')}</span>
+              {presetCommands.map(p => (
                 <button
                   key={p.cmd}
                   onClick={() => setCommand(p.cmd)}
@@ -213,7 +217,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                 }`}
               >
                 <Columns className="w-3.5 h-3.5" />
-                <span>并排对比</span>
+                <span>{t('multiExecDiff.sideBySide')}</span>
               </button>
               <button
                 onClick={() => setViewMode('matrix')}
@@ -222,7 +226,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
-                <span>一致性分组</span>
+                <span>{t('multiExecDiff.grouped')}</span>
               </button>
               <button
                 onClick={() => setViewMode('unified')}
@@ -231,7 +235,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>聚合日志</span>
+                <span>{t('multiExecDiff.aggregated')}</span>
               </button>
             </div>
           </div>
@@ -242,12 +246,12 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
               onClick={handleSelectAll}
               className="text-[11px] text-[#0078d4] hover:underline shrink-0"
             >
-              {selectedSessionIds.length === availableSessions.length ? '取消全选' : '全选主机'}
+              {selectedSessionIds.length === availableSessions.length ? t('multiExecDiff.deselectAll') : t('multiExecDiff.selectAll')}
             </button>
             <span className="text-[#858585]">|</span>
             <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar">
               {availableSessions.length === 0 ? (
-                <span className="text-xs text-[#858585]">当前没有可用连接</span>
+                <span className="text-xs text-[#858585]">{t('multiExecDiff.noAvailableConn')}</span>
               ) : (
                 availableSessions.map(sess => {
                   const isChecked = selectedSessionIds.includes(sess.id);
@@ -281,7 +285,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
           {results.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-[#858585] space-y-3">
               <Columns className="w-10 h-10 opacity-30" />
-              <p className="text-xs">请选择目标主机并点击「并发执行」查看多机输出对比</p>
+              <p className="text-xs">{t('multiExecDiff.emptyPrompt')}</p>
             </div>
           ) : viewMode === 'side-by-side' ? (
             /* Side-by-Side View */
@@ -310,7 +314,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                       <button
                         onClick={() => copyToClipboard(res.output || res.error || '', res.sessionId)}
                         className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#333333] transition-colors"
-                        title="复制该机器输出"
+                        title={t('diff.copyOutputTooltip') || '复制该机器输出'}
                       >
                         {copiedId === res.sessionId ? <Check className="w-3.5 h-3.5 text-[#4ec9b0]" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -322,7 +326,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                     {res.error ? (
                       <span className="text-[#f14c4c]">{res.error}</span>
                     ) : (
-                      res.output || <span className="text-[#858585] italic">&lt;无输出&gt;</span>
+                      res.output || <span className="text-[#858585] italic">{t('diff.noOutput') || '<无输出>'}</span>
                     )}
                   </div>
                 </div>
@@ -345,10 +349,10 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                   )}
                   <div>
                     <h3 className="text-xs font-semibold">
-                      {isAllConsistent ? '所有主机执行结果 100% 完全一致' : `检测到输出差异: 存在 ${groupKeys.length} 组不同结果`}
+                      {isAllConsistent ? (t('diff.allConsistent') || '所有主机执行结果 100% 完全一致') : (t('diff.outputDiff', `检测到输出差异: 存在 ${groupKeys.length} 组不同结果`).replace('{count}', String(groupKeys.length)))}
                     </h3>
                     <p className="text-[11px] opacity-80 mt-0.5">
-                      共 {results.length} 台主机参与对比执行
+                      {(t('diff.totalHostsCount') || '共 {count} 台主机参与对比执行').replace('{count}', String(results.length))}
                     </p>
                   </div>
                 </div>
@@ -363,20 +367,20 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                       <div className="flex items-center justify-between px-3.5 py-2 bg-[#1f1f1f] border-b border-[#2b2b2b]">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-[#e0e0e0]">
-                            输出形态 #{idx + 1}
+                            {(t('diff.outputPattern') || '输出形态 #{idx}').replace('{idx}', String(idx + 1))}
                           </span>
                           <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#04395e]/40 text-[#0078d4] border border-[#0078d4]/30 font-mono">
-                            {hostsInGroup.length} 台主机匹配
+                            {(t('diff.hostsMatched') || '{count} 台主机匹配').replace('{count}', String(hostsInGroup.length))}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] text-[#858585]">
-                            主机列表: {hostsInGroup.map(h => h.hostName).join(', ')}
+                            {t('diff.hostList') || '主机列表: '}{hostsInGroup.map(h => h.hostName).join(', ')}
                           </span>
                           <button
                             onClick={() => copyToClipboard(key, `group_${idx}`)}
                             className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#333333] transition-colors"
-                            title="复制输出"
+                            title={t('diff.copyGroupOutput') || '复制输出'}
                           >
                             {copiedId === `group_${idx}` ? <Check className="w-3.5 h-3.5 text-[#4ec9b0]" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
@@ -384,7 +388,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                       </div>
 
                       <pre className="p-3 font-mono text-xs text-[#cccccc] bg-[#181818] overflow-x-auto whitespace-pre-wrap select-text leading-relaxed custom-scrollbar">
-                        {key || '<无输出>'}
+                        {key || t('diff.noOutput') || '<无输出>'}
                       </pre>
                     </div>
                   );
@@ -400,7 +404,7 @@ export const MultiExecDiffModal: React.FC<MultiExecDiffModalProps> = ({
                     === [{res.hostName}] (耗时: {res.durationMs}ms, 退出码: {res.exitCode}) ===
                   </div>
                   <pre className="text-[#cccccc] whitespace-pre-wrap pl-2 leading-relaxed">
-                    {res.error || res.output || '<无输出>'}
+                    {res.error || res.output || t('diff.noOutput') || '<无输出>'}
                   </pre>
                 </div>
               ))}

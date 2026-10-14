@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Monitor, Maximize, Minimize, RefreshCw, KeyRound, 
@@ -16,6 +17,7 @@ export const RdpInstance: React.FC<RdpInstanceProps> = ({
   isActive,
   onStatusChange,
 }) => {
+  const { t } = useI18n();
   const [connecting, setConnecting] = useState(true);
   const [connected, setConnected] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -86,21 +88,21 @@ export const RdpInstance: React.FC<RdpInstanceProps> = ({
           <button
             onClick={handleSendCtrlAltDel}
             className="px-2 py-0.5 bg-[#0078d4]/20 hover:bg-[#0078d4] text-[#3794ff] hover:text-white rounded text-[10px] font-medium transition-colors"
-            title="发送 Ctrl+Alt+Delete 安全中断指令"
+            title={t('rdp.cadTooltip')}
           >
             Ctrl+Alt+Del
           </button>
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
             className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-            title={isAudioEnabled ? "静音远程音频" : "启用远程音频重定向"}
+            title={isAudioEnabled ? t('rdp.audioMute') : t('rdp.audioEnable')}
           >
             {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => setScaleMode(prev => prev === 'fit' ? 'original' : 'fit')}
             className="p-1 text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] rounded transition-colors"
-            title={`当前显示模式: ${scaleMode === 'fit' ? '自适应缩放' : '原始像素'}`}
+            title={t('display.modeTooltip').replace('{mode}', scaleMode === 'fit' ? t('display.fit') : t('display.pixel'))}
           >
             {scaleMode === 'fit' ? <Minimize className="w-3.5 h-3.5 text-[#3794ff]" /> : <Maximize className="w-3.5 h-3.5" />}
           </button>
@@ -112,7 +114,7 @@ export const RdpInstance: React.FC<RdpInstanceProps> = ({
         {connecting && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#090b0e]/95 z-30 space-y-3">
             <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-xs text-slate-300 font-medium">正在建立 RDP 远程图形桌面通道 ({tab.host}:{tab.port || 3389})...</p>
+            <p className="text-xs text-slate-300 font-medium">{t('rdp.connecting').replace('{host}', tab.host || '').replace('{port}', String(tab.port || 3389))}</p>
             <p className="text-[10px] text-slate-500 font-mono">Negotiating NLA / TLS Security & Screen Resolution</p>
           </div>
         )}

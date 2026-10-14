@@ -3,6 +3,7 @@ import {
   X, RefreshCw, Search, Layers, Server, Radio, AlertCircle 
 } from 'lucide-react';
 import { RemoteProcessItem, RemoteServiceItem, RemotePortItem } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface RemoteOpsModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
   activeSessionId,
   sessionName,
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'processes' | 'services' | 'ports'>('processes');
   
   // Data states
@@ -45,19 +47,19 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
       if (!appRpc.GetRemoteProcesses) { setLoading(false); return; }
       appRpc.GetRemoteProcesses(activeSessionId)
         .then((data: RemoteProcessItem[]) => setProcesses(data || []))
-        .catch((err: any) => setErrorMsg('加载进程列表失败: ' + (err?.message || err)))
+        .catch((err: any) => setErrorMsg(t('remoteOps.loadProcErr') + (err?.message || err)))
         .finally(() => setLoading(false));
     } else if (activeTab === 'services') {
       if (!appRpc.GetRemoteServices) { setLoading(false); return; }
       appRpc.GetRemoteServices(activeSessionId)
         .then((data: RemoteServiceItem[]) => setServices(data || []))
-        .catch((err: any) => setErrorMsg('加载系统服务失败: ' + (err?.message || err)))
+        .catch((err: any) => setErrorMsg(t('remoteOps.loadSvcErr') + (err?.message || err)))
         .finally(() => setLoading(false));
     } else if (activeTab === 'ports') {
       if (!appRpc.GetRemotePorts) { setLoading(false); return; }
       appRpc.GetRemotePorts(activeSessionId)
         .then((data: RemotePortItem[]) => setPorts(data || []))
-        .catch((err: any) => setErrorMsg('加载监听端口失败: ' + (err?.message || err)))
+        .catch((err: any) => setErrorMsg(t('remoteOps.loadPortErr') + (err?.message || err)))
         .finally(() => setLoading(false));
     }
   };
@@ -71,8 +73,8 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
   if (!isOpen) return null;
 
   const handleKill = (pid: number, force: boolean) => {
-    const actionName = force ? '强制终止 (kill -9)' : '正常结束 (SIGTERM)';
-    if (!confirm(`确定要对 PID ${pid} 执行 ${actionName} 吗？`)) return;
+    const actionName = force ? t('remoteOps.killForce') : t('remoteOps.killNormal');
+    if (!confirm(t('remoteOps.killConfirm').replace('{pid}', String(pid)).replace('{action}', actionName))) return;
 
     const killFn = (window as any).go?.app?.App?.KillRemoteProcess;
     if (!killFn) return;
@@ -81,7 +83,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
       .then(() => {
         loadData();
       })
-      .catch((err: any) => setErrorMsg('终止进程失败: ' + (err?.message || err)));
+      .catch((err: any) => setErrorMsg(t('remoteOps.killErr') + (err?.message || err)));
   };
 
   const handleServiceAction = (unit: string, action: string) => {
@@ -143,7 +145,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight flex items-center gap-2">
-                远程主机运维工作台
+                {t('remoteOps.title')}
                 <span className="text-[11px] px-2 py-0.5 bg-[#2d2d2d] text-[#0078d4] border border-[#3c3c3c] rounded font-mono font-normal">
                   {sessionName}
                 </span>
@@ -159,7 +161,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               onClick={loadData}
               disabled={loading}
               className="p-1.5 text-[#858585] hover:text-[#e0e0e0] rounded hover:bg-[#333333] transition-colors disabled:opacity-50"
-              title="刷新数据"
+              title={t('common.refresh')}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -184,7 +186,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              进程管理 ({processes.length})
+              {t('remoteOps.processes').replace('{count}', String(processes.length))}
             </button>
             <button
               onClick={() => setActiveTab('services')}
@@ -195,7 +197,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               }`}
             >
               <Server className="w-3.5 h-3.5" />
-              系统服务 ({services.length})
+              {t('remoteOps.services').replace('{count}', String(services.length))}
             </button>
             <button
               onClick={() => setActiveTab('ports')}
@@ -206,7 +208,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              监听端口 ({ports.length})
+              {t('remoteOps.ports').replace('{count}', String(ports.length))}
             </button>
           </div>
 
@@ -214,7 +216,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-[#858585]" />
             <input
               type="text"
-              placeholder="搜索 PID、命令、服务名..."
+              placeholder={t('remoteOps.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none transition-all placeholder:text-[#858585]"
@@ -246,7 +248,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
                     >
                       PID {sortField === 'pid' && (sortAsc ? '▲' : '▼')}
                     </th>
-                    <th className="py-2 px-3">用户</th>
+                    <th className="py-2 px-3">{t('remoteOps.colUser')}</th>
                     <th
                       className="py-2 px-3 cursor-pointer hover:text-[#cccccc]"
                       onClick={() => {
@@ -265,17 +267,17 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
                     >
                       MEM % {sortField === 'mem' && (sortAsc ? '▲' : '▼')}
                     </th>
-                    <th className="py-2 px-3">状态</th>
-                    <th className="py-2 px-3">运行时间</th>
-                    <th className="py-2 px-3">命令行 / 程序</th>
-                    <th className="py-2 px-3 text-right">操作</th>
+                    <th className="py-2 px-3">{t('remoteOps.colStatus')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.colUptime')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.colCommand')}</th>
+                    <th className="py-2 px-3 text-right">{t('remoteOps.colAction')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] font-mono text-[11px]">
                   {filteredProcesses.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="text-center py-8 text-[#858585] font-sans text-xs">
-                        未匹配到符合条件的进程
+                        {t('remoteOps.noMatchingProc')}
                       </td>
                     </tr>
                   ) : (
@@ -296,14 +298,14 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
                             className="px-2 py-0.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-[10px] border border-[#3c3c3c] transition-colors"
                             title="SIGTERM"
                           >
-                            结束
+                            {t('remoteOps.killTerm')}
                           </button>
                           <button
                             onClick={() => handleKill(p.pid, true)}
                             className="px-2 py-0.5 bg-[#a1260d]/20 hover:bg-[#a1260d]/30 text-[#f48771] rounded text-[10px] border border-[#a1260d]/40 transition-colors font-semibold"
                             title="SIGKILL (kill -9)"
                           >
-                            强制
+                            {t('remoteOps.killForce')}
                           </button>
                         </td>
                       </tr>
@@ -320,17 +322,17 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               <table className="w-full text-left text-xs border-collapse font-sans">
                 <thead>
                   <tr className="bg-[#1f1f1f] text-[#858585] border-b border-[#2b2b2b] select-none text-[11px]">
-                    <th className="py-2 px-3">服务单元 (Unit)</th>
-                    <th className="py-2 px-3">状态</th>
-                    <th className="py-2 px-3">描述</th>
-                    <th className="py-2 px-3 text-right">操作</th>
+                    <th className="py-2 px-3">{t('remoteOps.serviceUnit')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.colStatus')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.colDesc')}</th>
+                    <th className="py-2 px-3 text-right">{t('remoteOps.colAction')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] text-[11px]">
                   {filteredServices.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="text-center py-8 text-[#858585] text-xs">
-                        未匹配到符合条件的服务
+                        {t('remoteOps.noMatchingSvc')}
                       </td>
                     </tr>
                   ) : (
@@ -358,13 +360,13 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
                                 onClick={() => handleServiceAction(s.unit, 'restart')}
                                 className="px-2 py-0.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-[10px] border border-[#3c3c3c] transition-colors"
                               >
-                                重启
+                                {t('remoteOps.restart')}
                               </button>
                               <button
                                 onClick={() => handleServiceAction(s.unit, 'stop')}
                                 className="px-2 py-0.5 bg-[#a1260d]/20 hover:bg-[#a1260d]/30 text-[#f48771] rounded text-[10px] border border-[#a1260d]/40 transition-colors"
                               >
-                                停止
+                                {t('remoteOps.stop')}
                               </button>
                             </>
                           ) : (
@@ -372,7 +374,7 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
                               onClick={() => handleServiceAction(s.unit, 'start')}
                               className="px-2.5 py-0.5 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-[10px] transition-colors"
                             >
-                              启动
+                              {t('remoteOps.start')}
                             </button>
                           )}
                         </td>
@@ -390,16 +392,16 @@ export const RemoteOpsModal: React.FC<RemoteOpsModalProps> = ({
               <table className="w-full text-left text-xs border-collapse font-sans">
                 <thead>
                   <tr className="bg-[#1f1f1f] text-[#858585] border-b border-[#2b2b2b] select-none text-[11px]">
-                    <th className="py-2 px-3">协议</th>
-                    <th className="py-2 px-3">监听地址与端口 (Local Address)</th>
-                    <th className="py-2 px-3">状态</th>
+                    <th className="py-2 px-3">{t('remoteOps.proto')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.localAddress')}</th>
+                    <th className="py-2 px-3">{t('remoteOps.colStatus')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] font-mono text-[11px]">
                   {filteredPorts.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="text-center py-8 text-[#858585] font-sans text-xs">
-                        未扫描到开放的监听端口
+                        {t('remoteOps.noMatchingPort')}
                       </td>
                     </tr>
                   ) : (

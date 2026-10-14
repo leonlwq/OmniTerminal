@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { X } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
 import { SplitMode } from '../hooks/useTabManager';
@@ -90,7 +91,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors"
         >
-          🔌 重新连接会话
+          {t('treeMenu.connectCurrentTab') || '🔌 重新连接会话'}
         </button>
         <button
           onClick={() => {
@@ -102,7 +103,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors"
         >
-          👥 克隆会话标签
+          {t('tabMenu.clone') || '👥 克隆会话标签'}
         </button>
         <button
           onClick={() => {
@@ -111,7 +112,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center justify-between"
         >
-          <span>{lockedTabs.includes(tabContextMenu.tabId) ? '🔓 解锁标签页' : '🔒 锁定标签页'}</span>
+          <span>{lockedTabs.includes(tabContextMenu.tabId) ? t('tabMenu.unlock') : t('tabMenu.lock')}</span>
         </button>
         <button
           onClick={() => {
@@ -123,7 +124,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors"
         >
-          ✏️ 重命名标签页
+          {t('tabMenu.rename') || '✏️ 重命名标签页'}
         </button>
         <button
           onClick={() => {
@@ -131,7 +132,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-blue-600/30 text-blue-400 transition-colors"
         >
-          🪟 拆离到独立窗口 (Detach)
+          {t('tabMenu.detach') || '🪟 拆离到独立窗口'}
         </button>
         <button
           onClick={() => {
@@ -145,7 +146,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-emerald-600/20 text-emerald-400 transition-colors"
         >
-          📡 协同共享此会话...
+          {t('common.share') || '📡 协同共享此会话...'}
         </button>
         <div className="h-px bg-[#2d2d30] mx-2 my-1" />
         <button
@@ -161,14 +162,14 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
                 setSecondaryTabId(other.id);
                 setSplitMode('vertical');
               } else {
-                alert("无其他可用于分屏的标签页，请先打开一个新标签页！");
+                alert(t('tabMenu.noSplitTabAlert'));
               }
             }
             setTabContextMenu(null);
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-blue-400 transition-colors"
         >
-          ◫ 向右拆分(同屏)
+          {t('tabMenu.splitVertical') || '◫ 向右拆分'}
         </button>
         <button
           onClick={() => {
@@ -183,14 +184,14 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
                 setSecondaryTabId(other.id);
                 setSplitMode('horizontal');
               } else {
-                alert("无其他可用于分屏的标签页，请先打开一个新标签页！");
+                alert(t('tabMenu.noSplitTabAlert'));
               }
             }
             setTabContextMenu(null);
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-blue-400 transition-colors"
         >
-          ⊟ 向下拆分(同屏)
+          {t('tabMenu.splitHorizontal') || '⊟ 向下拆分'}
         </button>
         {splitMode !== 'none' && (
           <button
@@ -216,7 +217,7 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
           }}
           className="w-full text-left px-3 py-1.5 hover:bg-blue-600/20 text-blue-400 transition-colors border-b border-app-border"
         >
-          {linkedTabIds.includes(tabContextMenu.tabId) ? '🔗 退出同步链接组 (Unlink)' : '🔗 加入同步链接组 (Session Link)'}
+          {linkedTabIds.includes(tabContextMenu.tabId) ? t('tabContext.unlinkGroup') : t('tabContext.linkGroup')}
         </button>
         <button
           onClick={() => {
@@ -239,17 +240,17 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
         
         {/* 🎨 颜色标签 (Color Tag) */}
         <div className="px-3 py-1.5 border-t border-app-border bg-[#11141a]">
-          <span className="text-[10px] text-app-text-muted block mb-1 font-semibold">🎨 标签颜色:</span>
+          <span className="text-[10px] text-app-text-muted block mb-1 font-semibold">{t('treeMenu.colorTag') || '🎨 标签颜色:'}</span>
           <div className="flex items-center gap-1.5 flex-wrap">
             {[
-              { id: 'red', bg: 'bg-rose-500', name: '红色' },
-              { id: 'orange', bg: 'bg-orange-500', name: '橙色' },
-              { id: 'yellow', bg: 'bg-amber-400', name: '黄色' },
-              { id: 'green', bg: 'bg-emerald-400', name: '绿色' },
-              { id: 'cyan', bg: 'bg-cyan-400', name: '青色' },
-              { id: 'blue', bg: 'bg-blue-500', name: '蓝色' },
-              { id: 'purple', bg: 'bg-purple-500', name: '紫色' },
-              { id: 'pink', bg: 'bg-pink-400', name: '粉色' },
+              { id: 'red', bg: 'bg-rose-500', name: t('color.red') || '红色' },
+              { id: 'orange', bg: 'bg-orange-500', name: t('color.orange') || '橙色' },
+              { id: 'yellow', bg: 'bg-amber-400', name: t('color.yellow') || '黄色' },
+              { id: 'green', bg: 'bg-emerald-400', name: t('color.green') || '绿色' },
+              { id: 'cyan', bg: 'bg-cyan-400', name: t('color.cyan') || '青色' },
+              { id: 'blue', bg: 'bg-blue-500', name: t('color.blue') || '蓝色' },
+              { id: 'purple', bg: 'bg-purple-500', name: t('color.purple') || '紫色' },
+              { id: 'pink', bg: 'bg-pink-400', name: t('color.pink') || '粉色' },
             ].map(c => (
               <button
                 key={c.id}
@@ -267,9 +268,9 @@ export const TabContextMenu: React.FC<TabContextMenuProps> = ({
                 setTabContextMenu(null);
               }}
               className="text-[9px] px-1 py-0.5 text-slate-400 hover:text-white rounded bg-white/10 ml-auto"
-              title="清除颜色标签"
+              title={t('common.clear') || '清除'}
             >
-              清除
+              {t('common.clear') || '清除'}
             </button>
           </div>
         </div>
@@ -293,13 +294,14 @@ export const RenameTabModal: React.FC<RenameTabModalProps> = ({
   setRenameInput,
   onSubmit,
 }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-50 p-2">
       <div className="bg-[#1e1e1e] border border-app-border rounded-none shadow-md max-w-xs w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-100">
         <div className="flex items-center justify-between px-2 py-1 bg-[#2d2d30] border-b border-app-border shrink-0">
-          <h3 className="text-xs font-bold text-app-text">重命名标签页</h3>
+          <h3 className="text-xs font-bold text-app-text">{t('tabMenu.rename') || '重命名标签页'}</h3>
           <button
             onClick={onClose}
             className="text-slate-450 hover:text-app-text rounded p-1 hover:bg-app-hover transition-colors"
@@ -309,7 +311,7 @@ export const RenameTabModal: React.FC<RenameTabModalProps> = ({
         </div>
         <form onSubmit={onSubmit} className="p-2 space-y-4">
           <div className="space-y-1 text-xs">
-            <label className="text-[10px] font-bold text-app-text-muted uppercase tracking-wide">临时新名称 *</label>
+            <label className="text-[10px] font-bold text-app-text-muted uppercase tracking-wide">{t('sessionModal.sessionName') || '临时新名称 *'}</label>
             <input
               type="text"
               value={renameInput}
@@ -325,13 +327,13 @@ export const RenameTabModal: React.FC<RenameTabModalProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 border border-app-border hover:bg-app-hover rounded-none text-slate-350 transition-colors"
             >
-              取消
+              {t('common.cancel') || '取消'}
             </button>
             <button
               type="submit"
               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-none text-white transition-colors shadow-md font-bold"
             >
-              确认修改
+              {t('common.confirm') || '确认修改'}
             </button>
           </div>
         </form>

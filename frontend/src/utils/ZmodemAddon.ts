@@ -113,20 +113,20 @@ export class ZmodemAddon {
 
             const b64Data = bytesToBase64(merged);
             SaveZmodemFile(name, b64Data).then(() => {
-                this.term.write(`\r\n\x1b[32m[ZMODEM] 文件下载完成: ${name}\x1b[0m\r\n`);
+                this.term.write(`\r\n\x1b[32m[ZMODEM] File download complete: ${name}\x1b[0m\r\n`);
             }).catch((err: any) => {
                 console.error("SaveZmodemFile failed", err);
-                this.term.write(`\r\n\x1b[31m[ZMODEM] 保存文件出错: ${err}\x1b[0m\r\n`);
+                this.term.write(`\r\n\x1b[31m[ZMODEM] Error saving file: ${err}\x1b[0m\r\n`);
             });
         }).catch((err: any) => {
             console.error("ZMODEM download error", err);
-            this.term.write(`\r\n\x1b[31m[ZMODEM] 下载出错: ${err}\x1b[0m\r\n`);
+            this.term.write(`\r\n\x1b[31m[ZMODEM] Download error: ${err}\x1b[0m\r\n`);
         });
     }
 
     public triggerUpload() {
         if (!this.session || this.session.type !== 'send') {
-            this.term.write("\r\n\x1b[33m[ZMODEM] 未检测到上传会话，请先执行 rz 命令\x1b[0m\r\n");
+            this.term.write("\r\n\x1b[33m[ZMODEM] No active upload session detected. Please run 'rz' first.\x1b[0m\r\n");
             return;
         }
 
@@ -146,26 +146,26 @@ export class ZmodemAddon {
             Zmodem.Browser.send_files(this.session, files, {
                 on_offer_response: (obj: any, xfer: any) => {
                     if (xfer) {
-                        this.term.write(`\r\n\x1b[34m[ZMODEM] 正在上传: ${xfer.get_details().name} ...\x1b[0m\r\n`);
+                        this.term.write(`\r\n\x1b[34m[ZMODEM] Uploading: ${xfer.get_details().name} ...\x1b[0m\r\n`);
                     } else {
-                        this.term.write(`\r\n\x1b[33m[ZMODEM] 上传跳过。\x1b[0m\r\n`);
+                        this.term.write(`\r\n\x1b[33m[ZMODEM] Upload skipped.\x1b[0m\r\n`);
                     }
                 },
                 on_progress: (obj: any, xfer: any, chunk: any) => {
                     // Progress could be handled here
                 },
                 on_file_complete: (obj: any, xfer: any) => {
-                    this.term.write(`\r\n\x1b[32m[ZMODEM] 上传完成: ${xfer.get_details().name}\x1b[0m\r\n`);
+                    this.term.write(`\r\n\x1b[32m[ZMODEM] Upload complete: ${xfer.get_details().name}\x1b[0m\r\n`);
                 }
             }).then(() => {
                 this.session.close();
                 this.session = null;
             }).catch((err: any) => {
-                this.term.write(`\r\n\x1b[31m[ZMODEM] 上传失败: ${err}\x1b[0m\r\n`);
+                this.term.write(`\r\n\x1b[31m[ZMODEM] Upload failed: ${err}\x1b[0m\r\n`);
                 this.session = null;
             });
         }).catch((err) => {
-             this.term.write(`\r\n\x1b[31m[ZMODEM] 读取文件失败: ${err}\x1b[0m\r\n`);
+             this.term.write(`\r\n\x1b[31m[ZMODEM] Failed to read files: ${err}\x1b[0m\r\n`);
              this.session.abort();
              this.session = null;
         });

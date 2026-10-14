@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Code, X, FileText, Terminal, CheckCircle2, AlertCircle, Loader2, Save, Trash2, Plus, Sparkles } from 'lucide-react';
 import { runTerminalScript } from '../ScriptEngine';
 import { app } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ScriptRunnerModalProps {
   isOpen: boolean;
@@ -77,6 +78,7 @@ export function ScriptRunnerModal({
   activeTabName,
   openTabs = [],
 }: ScriptRunnerModalProps) {
+  const { t } = useI18n();
   const [selectedTargetId, setSelectedTargetId] = useState<string>(activeTabId || '');
   const [scriptCode, setScriptCode] = useState(DEFAULT_TEMPLATES[0].code);
   const [running, setRunning] = useState(false);
@@ -105,7 +107,7 @@ export function ScriptRunnerModal({
 
   const handleSaveCustomScript = () => {
     if (!newScriptName.trim()) {
-      alert('请输入脚本名称');
+      alert(t('scriptRunner.inputNameAlert') || '请输入脚本名称');
       return;
     }
     const newScript: CustomScript = {
@@ -121,7 +123,7 @@ export function ScriptRunnerModal({
   };
 
   const handleDeleteCustomScript = (id: string) => {
-    if (confirm('确认删除此自定义脚本？')) {
+    if (confirm(t('scriptRunner.deleteConfirm') || '确认删除此自定义脚本？')) {
       const updated = userScripts.filter((s) => s.id !== id);
       setUserScripts(updated);
       localStorage.setItem('omniterminal_custom_scripts', JSON.stringify(updated));
@@ -131,7 +133,7 @@ export function ScriptRunnerModal({
   const handleRunScript = async () => {
     const targetId = selectedTargetId || activeTabId;
     if (!targetId) {
-      alert("请先选择一个目标终端会话");
+      alert(t('scriptRunner.selectTargetAlert') || '请先选择一个目标终端会话');
       return;
     }
     setRunning(true);
@@ -143,14 +145,14 @@ export function ScriptRunnerModal({
     };
 
     try {
-      logHandler("🚀 脚本开始执行...");
+      logHandler(t('scriptRunner.logStarted') || '🚀 脚本开始执行...');
       const result = await runTerminalScript(scriptCode, targetId, logHandler);
       logHandler(`✅ ${result}`);
-      setStatusMsg("脚本执行成功");
+      setStatusMsg(t('scriptRunner.statusSuccess') || '脚本执行成功');
     } catch (err: any) {
       const msg = typeof err === 'string' ? err : err.message || JSON.stringify(err);
-      logHandler(`❌ 执行失败: ${msg}`);
-      setStatusMsg("脚本执行异常中断");
+      logHandler(`${t('scriptRunner.logFailed') || '❌ 执行失败: '}${msg}`);
+      setStatusMsg(t('scriptRunner.statusFailed') || '脚本执行异常中断');
     } finally {
       setRunning(false);
     }
@@ -166,7 +168,7 @@ export function ScriptRunnerModal({
               <Code className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">OmniScript 自动化运维脚本工作台</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('scriptRunner.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">
                 JavaScript / xsh Automation Script Console
               </span>
@@ -176,10 +178,10 @@ export function ScriptRunnerModal({
             <button
               onClick={() => setIsSavingModalOpen(true)}
               className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors flex items-center space-x-1.5"
-              title="保存当前代码为自定义脚本"
+              title={t('scriptRunner.saveScript')}
             >
               <Save className="w-3.5 h-3.5 text-[#0078d4]" />
-              <span>保存脚本</span>
+              <span>{t('scriptRunner.saveScript')}</span>
             </button>
             <button 
               onClick={onClose} 
@@ -193,14 +195,14 @@ export function ScriptRunnerModal({
         {/* Target and template toolbar */}
         <div className="p-3 bg-[#252526] border-b border-[#2b2b2b] flex items-center justify-between gap-4 shrink-0">
           <div className="text-xs flex items-center gap-2">
-            <span className="text-[#858585] font-medium">目标终端:</span>
+            <span className="text-[#858585] font-medium">{t('scriptRunner.targetTerminal')}</span>
             <select
               value={selectedTargetId}
               onChange={(e) => setSelectedTargetId(e.target.value)}
               className="px-2.5 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] rounded text-xs text-[#0078d4] font-medium outline-none"
             >
               {openTabs.length === 0 ? (
-                <option value="">[ 无活动终端 ]</option>
+                <option value="">{t('scriptRunner.noActiveTerm')}</option>
               ) : (
                 openTabs.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -212,7 +214,7 @@ export function ScriptRunnerModal({
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] text-[#858585]">方案预设:</span>
+            <span className="text-[11px] text-[#858585]">{t('scriptRunner.presetSchemes')}</span>
             <select
               onChange={(e) => {
                 const val = e.target.value;
@@ -229,7 +231,7 @@ export function ScriptRunnerModal({
               }}
               className="px-2.5 py-1 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
             >
-              <optgroup label="🌟 官方精选模板">
+              <optgroup label={t('scriptRunner.officialPresets')}>
                 {DEFAULT_TEMPLATES.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -237,7 +239,7 @@ export function ScriptRunnerModal({
                 ))}
               </optgroup>
               {userScripts.length > 0 && (
-                <optgroup label="💾 我的自定义脚本">
+                <optgroup label={t('scriptRunner.myScripts')}>
                   {userScripts.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name}
@@ -269,12 +271,12 @@ export function ScriptRunnerModal({
             <div className="px-3 py-1.5 bg-[#252526] border-b border-[#2b2b2b] text-[11px] text-[#858585] font-mono font-medium flex justify-between items-center">
               <span>Execution Output & Live Logs</span>
               {logs.length > 0 && (
-                <button onClick={() => setLogs([])} className="text-[#858585] hover:text-[#cccccc] text-[10px] px-1.5 py-0.5 rounded hover:bg-[#333333]">清空日志</button>
+                <button onClick={() => setLogs([])} className="text-[#858585] hover:text-[#cccccc] text-[10px] px-1.5 py-0.5 rounded hover:bg-[#333333]">{t('common.clear')}</button>
               )}
             </div>
             <div className="flex-1 p-3 font-mono text-[11px] text-[#cccccc] overflow-y-auto space-y-1.5 select-text custom-scrollbar">
               {logs.length === 0 ? (
-                <div className="text-[#858585] italic">就绪，点击下方按钮开始执行脚本...</div>
+                <div className="text-[#858585] italic">{t('scriptRunner.readyToRun')}</div>
               ) : (
                 logs.map((log, idx) => (
                   <div key={idx} className="break-all leading-normal">{log}</div>
@@ -287,7 +289,7 @@ export function ScriptRunnerModal({
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 bg-[#1f1f1f] border-t border-[#2b2b2b] shrink-0">
           <div className="text-[11px] text-[#858585]">
-            支持标准 API: <code className="text-[#0078d4] font-mono">xsh.Screen.Send()</code>, <code className="text-[#0078d4] font-mono">xsh.Screen.WaitForString()</code>, <code className="text-[#0078d4] font-mono">xsh.Session.Sleep()</code>
+            API: <code className="text-[#0078d4] font-mono">xsh.Screen.Send()</code>, <code className="text-[#0078d4] font-mono">xsh.Screen.WaitForString()</code>, <code className="text-[#0078d4] font-mono">xsh.Session.Sleep()</code>
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -296,13 +298,13 @@ export function ScriptRunnerModal({
               className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] disabled:opacity-40 text-white font-medium text-xs rounded flex items-center space-x-1.5 transition-colors"
             >
               {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-              <span>{running ? '执行中...' : '运行脚本 (Run)'}</span>
+              <span>{running ? t('scriptRunner.running') : t('scriptRunner.run')}</span>
             </button>
             <button
               onClick={onClose}
               className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] font-medium text-xs rounded transition-colors"
             >
-              关闭
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -313,11 +315,11 @@ export function ScriptRunnerModal({
             <div className="bg-[#252526] border border-[#2b2b2b] shadow-2xl rounded-lg p-4 w-80 space-y-3 text-[#cccccc]">
               <h4 className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-2">
                 <Save className="w-3.5 h-3.5 text-[#0078d4]" />
-                保存为自定义脚本
+                {t('scriptRunner.saveAsCustom')}
               </h4>
               <input
                 type="text"
-                placeholder="例如: 生产 Redis 故障排查"
+                placeholder="Redis Check..."
                 value={newScriptName}
                 onChange={(e) => setNewScriptName(e.target.value)}
                 className="w-full px-3 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
@@ -329,14 +331,14 @@ export function ScriptRunnerModal({
                   onClick={() => setIsSavingModalOpen(false)}
                   className="px-2.5 py-1 text-xs text-[#858585] hover:text-[#cccccc]"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveCustomScript}
                   className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs font-medium rounded"
                 >
-                  保存
+                  {t('common.save')}
                 </button>
               </div>
             </div>

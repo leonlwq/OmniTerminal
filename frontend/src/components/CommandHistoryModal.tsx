@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, History, Terminal, Trash2, Copy, Play, X, Clock, Server, Check, AlertTriangle } from 'lucide-react';
 import { GetCommandHistory, ClearCommandHistory } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface CommandHistoryItem {
   id: string;
@@ -27,6 +28,7 @@ export function CommandHistoryModal({
   onInsertCommand,
   activeSessionId,
 }: CommandHistoryModalProps) {
+  const { t } = useI18n();
   const [historyList, setHistoryList] = useState<CommandHistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSessionFilter, setSelectedSessionFilter] = useState<string>('all');
@@ -109,13 +111,13 @@ export function CommandHistoryModal({
       await ClearCommandHistory();
       setHistoryList([]);
       setSelectedIndex(0);
-      setClearNotice('已清空全部历史记录');
+      setClearNotice(t('cmdHistory.clearedAll'));
       setTimeout(() => setClearNotice(null), 2500);
     } catch (e) {
       console.error('Failed to clear history', e);
       // 即便后端抛异常，前端也同步清空
       setHistoryList([]);
-      setClearNotice('历史记录已清除');
+      setClearNotice(t('cmdHistory.cleared'));
       setTimeout(() => setClearNotice(null), 2500);
     }
   };
@@ -163,8 +165,8 @@ export function CommandHistoryModal({
               <History className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#e0e0e0] leading-tight">跨会话命令历史检索 (Command History)</h3>
-              <p className="text-[11px] text-[#858585]">全局持久化记录，支持快速模糊检索、复用与一键执行</p>
+              <h3 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('cmdHistory.title') || '跨会话命令历史检索 (Command History)'}</h3>
+              <p className="text-[11px] text-[#858585]">{t('cmdHistory.subtitle') || '全局持久化记录，支持快速模糊检索、复用与一键执行'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -180,17 +182,17 @@ export function CommandHistoryModal({
                   ? 'bg-[#a1260d] hover:bg-[#b82d0f] text-white font-medium shadow-sm animate-pulse'
                   : 'bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-[#f14c4c] border border-[#3c3c3c]'
               }`}
-              title={confirmClear ? '点击确定清空全部命令历史' : '清空所有命令历史'}
+              title={confirmClear ? (t('cmdHistory.clearTitleConfirm') || '点击确定清空全部命令历史') : (t('cmdHistory.clearTitleNormal') || '清空所有命令历史')}
             >
               {confirmClear ? (
                 <>
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>⚠️ 确认清空全部历史?</span>
+                  <span>{t('cmdHistory.clearConfirm') || '⚠️ 确认清空全部历史?'}</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>清空历史</span>
+                  <span>{t('cmdHistory.clearHistory') || '清空历史'}</span>
                 </>
               )}
             </button>
@@ -215,7 +217,7 @@ export function CommandHistoryModal({
                 setSearchQuery(e.target.value);
                 setSelectedIndex(0);
               }}
-              placeholder="搜索历史命令、服务器名称或 IP 地址... (支持拼音与模糊匹配)"
+              placeholder={t('cmdHistory.searchPlaceholder') || '搜索历史命令、服务器名称或 IP 地址... (支持拼音与模糊匹配)'}
               className="w-full pl-9 pr-8 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] placeholder-[#858585] outline-none"
             />
             {searchQuery && (
@@ -231,7 +233,7 @@ export function CommandHistoryModal({
           {/* 会话过滤胶囊 */}
           {uniqueSessions.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pt-0.5 text-[11px]">
-              <span className="text-[#858585] text-[10px] shrink-0 font-medium">会话过滤:</span>
+              <span className="text-[#858585] text-[10px] shrink-0 font-medium">{t('cmdHistory.filterLabel') || '会话过滤:'}</span>
               <button
                 onClick={() => setSelectedSessionFilter('all')}
                 className={`px-2.5 py-0.5 rounded shrink-0 transition-colors font-medium ${
@@ -240,7 +242,7 @@ export function CommandHistoryModal({
                     : 'bg-[#252526] text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e] border border-[#2b2b2b]'
                 }`}
               >
-                全部 ({historyList.length})
+                {(t('cmdHistory.all') || '全部')} ({historyList.length})
               </button>
               {uniqueSessions.map(sess => (
                 <button
@@ -265,8 +267,8 @@ export function CommandHistoryModal({
           {filteredList.length === 0 ? (
             <div className="py-16 text-center text-[#858585] space-y-2">
               <History className="w-10 h-10 mx-auto text-[#555555]" />
-              <div className="text-xs">暂无匹配的命令历史</div>
-              <div className="text-[10px] text-[#666666]">在任意终端执行的命令都将自动汇总在此处</div>
+              <div className="text-xs">{t('cmdHistory.emptyTitle') || '暂无匹配的命令历史'}</div>
+              <div className="text-[10px] text-[#666666]">{t('cmdHistory.emptySubtitle') || '在任意终端执行的命令都将自动汇总在此处'}</div>
             </div>
           ) : (
             filteredList.map((item, idx) => {
@@ -312,7 +314,7 @@ export function CommandHistoryModal({
                         handleCopy(item);
                       }}
                       className="p-1 rounded bg-[#1e1e1e] hover:bg-[#333333] text-[#858585] hover:text-[#cccccc] border border-[#3c3c3c] transition-colors"
-                      title="复制命令至剪贴板"
+                      title={t('cmdHistory.copyTip') || '复制命令至剪贴板'}
                     >
                       {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-[#4ec9b0]" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -323,9 +325,9 @@ export function CommandHistoryModal({
                         onClose();
                       }}
                       className="px-2 py-0.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white border border-[#3c3c3c] text-[11px] font-medium transition-colors"
-                      title="插入到终端光标处 (不自动回车)"
+                      title={t('cmdHistory.insertTip') || '插入到终端光标处 (不自动回车)'}
                     >
-                      填入
+                      {t('cmdHistory.insertBtn') || '填入'}
                     </button>
                     <button
                       onClick={e => {
@@ -334,10 +336,10 @@ export function CommandHistoryModal({
                         onClose();
                       }}
                       className="px-2.5 py-0.5 rounded bg-[#0078d4] hover:bg-[#006cbe] text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
-                      title="立即在活动终端中执行 (Enter)"
+                      title={t('cmdHistory.runTip') || '立即在活动终端中执行 (Enter)'}
                     >
                       <Play className="w-3 h-3 fill-current" />
-                      <span>执行</span>
+                      <span>{t('cmdHistory.runBtn') || '执行'}</span>
                     </button>
                   </div>
                 </div>
@@ -349,13 +351,13 @@ export function CommandHistoryModal({
         {/* Footer */}
         <div className="px-5 py-2.5 bg-[#1f1f1f] border-t border-[#2b2b2b] flex items-center justify-between text-[11px] text-[#858585]">
           <div className="flex items-center gap-3">
-            <span>↑↓ 切换选中</span>
+            <span>{t('cmdHistory.navTip') || '↑↓ 切换选中'}</span>
             <span>·</span>
-            <span>Enter 立即执行</span>
+            <span>{t('cmdHistory.runKeyTip') || 'Enter 立即执行'}</span>
             <span>·</span>
-            <span>双击快速投递</span>
+            <span>{t('cmdHistory.dblClickTip') || '双击快速投递'}</span>
           </div>
-          <div>共 {filteredList.length} 条记录</div>
+          <div>{(t('cmdHistory.totalRecords') || '共 {count} 条记录').replace('{count}', String(filteredList.length))}</div>
         </div>
       </div>
     </div>

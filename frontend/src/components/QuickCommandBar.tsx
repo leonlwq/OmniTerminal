@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React from 'react';
 import { models, app } from '../../wailsjs/go/models';
 
@@ -38,6 +39,7 @@ export function QuickCommandBar({
   macroSeconds,
   formatMacroTime
 }: QuickCommandBarProps) {
+  const { t } = useI18n();
   return (
     <>
       {/* 快捷命令栏 (Quick Command Bar) */}
@@ -54,12 +56,12 @@ export function QuickCommandBar({
           }}
           className="px-1 py-0.5 bg-app-toolbar border border-app-border text-[10px] text-app-text font-medium rounded-none outline-none max-w-[150px] truncate"
         >
-          <option value="">[无快捷指令集]</option>
+          <option value="">{t("quickCmd.noGroup")}</option>
           {renderCmdSetOptions('', 0)}
         </select>
         
         {activeCommands.length === 0 ? (
-          <span className="text-[10px] text-app-text-muted italic px-2">双击此处添加一个新的按钮...</span>
+          <span className="text-[10px] text-app-text-muted italic px-2">{t("quickCmd.dblClickAdd")}</span>
         ) : (
           activeCommands.map((btn, idx) => (
             <button 
@@ -82,13 +84,13 @@ export function QuickCommandBar({
             onClick={() => setIsBroadcast(false)}
             className={`px-2 py-0.5 text-[10px] ${!isBroadcast ? 'bg-app-toolbar text-app-text' : 'text-app-text-muted hover:bg-app-hover'}`}
           >
-            当前会话
+            {t("quickCmd.currSession")}
           </button>
           <button 
             onClick={() => setIsBroadcast(true)}
             className={`px-2 py-0.5 text-[10px] ${isBroadcast ? 'bg-red-900/50 text-red-400' : 'text-app-text-muted hover:bg-app-hover'}`}
           >
-            全部会话
+            {t("quickCmd.allSessions")}
           </button>
         </div>
         
@@ -97,8 +99,8 @@ export function QuickCommandBar({
             type="text" 
             placeholder={
               isBroadcast 
-                ? `📢 正在发送到所有 ${openTabsCount} 个标签页...` 
-                : (activeTabId ? "输入命令回车发送..." : "无活动终端")
+                ? t("quickCmd.broadcasting").replace("{count}", String(openTabsCount)) 
+                : (activeTabId ? t("quickCmd.inputSend") : t("quickCmd.noActiveTerm"))
             }
             value={quickCmd}
             onChange={(e) => setQuickCmd(e.target.value)}
@@ -121,7 +123,7 @@ export function QuickCommandBar({
             <span className="text-[10px] font-bold text-red-500 font-mono">REC {formatMacroTime(macroSeconds)}</span>
           </div>
           <button onClick={stopRecordingMacro} className="px-2 py-0.5 bg-red-900 hover:bg-red-800 text-[10px] text-white rounded">
-            停止录制
+            {t("quickCmd.stopRecord")}
           </button>
         </div>
       )}

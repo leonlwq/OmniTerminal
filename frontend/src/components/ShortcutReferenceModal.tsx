@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { X, Keyboard } from 'lucide-react';
 
 interface ShortcutReferenceModalProps {
@@ -7,57 +8,58 @@ interface ShortcutReferenceModalProps {
 }
 
 export function ShortcutReferenceModal({ isOpen, onClose }: ShortcutReferenceModalProps) {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   const shortcutGroups = [
     {
-      title: '选项卡与导航 (Tabs & Navigation)',
+      title: t('shortcuts.groupTabs'),
       shortcuts: [
-        { key: 'Ctrl+Tab / ⌘⇧] / ⌥⌘→', desc: '向右切换至下一个选项卡' },
-        { key: 'Ctrl+Shift+Tab / ⌘⇧[ / ⌥⌘←', desc: '向左切换至上一个选项卡' },
-        { key: 'Ctrl+1~9 / ⌘1~9 / Alt+1~9', desc: '直接切换到第 1~9 个选项卡' },
-        { key: 'Ctrl+T / ⌘T', desc: '新建本地终端选项卡' },
-        { key: 'Ctrl+W / ⌘W', desc: '关闭当前选项卡' },
-        { key: 'Ctrl+K / ⌘K', desc: '唤起 OmniAI 快速指令生成弹窗' },
-        { key: 'Ctrl+L / ⌘L', desc: '唤起/折叠 OmniAI 右侧智能运维对话侧边栏' }
+        { key: 'Ctrl+Tab / ⌘⇧] / ⌥⌘→', desc: t('shortcuts.nextTab') },
+        { key: 'Ctrl+Shift+Tab / ⌘⇧[ / ⌥⌘←', desc: t('shortcuts.prevTab') },
+        { key: 'Ctrl+1~9 / ⌘1~9 / Alt+1~9', desc: t('shortcuts.gotoTab') },
+        { key: 'Ctrl+T / ⌘T', desc: t('shortcuts.newLocalTab') },
+        { key: 'Ctrl+W / ⌘W', desc: t('shortcuts.closeTab') },
+        { key: 'Ctrl+K / ⌘K', desc: t('shortcuts.quickCopilot') },
+        { key: 'Ctrl+L / ⌘L', desc: t('shortcuts.toggleAiDrawer') }
       ]
     },
     {
-      title: '终端操作与编辑 (Terminal & Screen)',
+      title: t('shortcuts.groupTerminal'),
       shortcuts: [
-        { key: 'Ctrl+C / ⌘C', desc: '有选区时复制文本 / 无选区时中断 (SIGINT)' },
-        { key: 'Ctrl+V / ⌘V / ⇧Insert', desc: '快速粘贴系统剪贴板内容' },
-        { key: 'Ctrl+Shift+A / ⌘A', desc: '全选终端屏幕文本' },
-        { key: 'Ctrl+Shift+L / ⌘L', desc: '清屏并清空回滚缓冲区' },
-        { key: 'Ctrl+F / ⌘F', desc: '唤出终端内置快速查找栏' },
-        { key: 'Ctrl+Shift+F / ⌘⇧F', desc: '唤起 Live Buffer 实时日志过滤器' },
-        { key: 'Ctrl+= / ⌘+', desc: '放大终端字号' },
-        { key: 'Ctrl+- / ⌘-', desc: '缩小终端字号' },
-        { key: 'Ctrl+0 / ⌘0', desc: '重置为全局默认字号' },
-        { key: 'Shift+PgUp / Shift+PgDn', desc: '终端回滚缓冲区快速翻页' }
+        { key: 'Ctrl+C / ⌘C', desc: t('shortcuts.smartCopy') },
+        { key: 'Ctrl+V / ⌘V / ⇧Insert', desc: t('shortcuts.quickPaste') },
+        { key: 'Ctrl+Shift+A / ⌘A', desc: t('shortcuts.selectAll') },
+        { key: 'Ctrl+Shift+L / ⌘L', desc: t('shortcuts.clearBuffer') },
+        { key: 'Ctrl+F / ⌘F', desc: t('shortcuts.findInTerm') },
+        { key: 'Ctrl+Shift+F / ⌘⇧F', desc: t('shortcuts.liveFilter') },
+        { key: 'Ctrl+= / ⌘+', desc: t('shortcuts.zoomIn') },
+        { key: 'Ctrl+- / ⌘-', desc: t('shortcuts.zoomOut') },
+        { key: 'Ctrl+0 / ⌘0', desc: t('shortcuts.zoomReset') },
+        { key: 'Shift+PgUp / Shift+PgDn', desc: t('shortcuts.pageScroll') }
       ]
     },
     {
-      title: '工作区与运维工具 (Workspace & Ops Panels)',
+      title: t('shortcuts.groupWorkspace'),
       shortcuts: [
-        { key: 'Ctrl+P / ⌘P', desc: '唤起万能命令调色板 (Command Palette)' },
-        { key: 'Ctrl+Shift+H / ⌘⇧H', desc: '跨会话命令历史检索与一键执行' },
-        { key: 'Ctrl+N / ⌘N', desc: '新建远程会话配置' },
-        { key: 'Ctrl+I / ⌘I', desc: '从 OpenSSH ~/.ssh/config 导入会话' },
-        { key: 'Ctrl+B / ⌘B', desc: '展开/收起左侧会话管理器' },
-        { key: 'Ctrl+, / ⌘, / Alt+O', desc: '打开全局偏好设置中心' },
-        { key: 'Ctrl+Shift+P / ⌘⇧P', desc: '展开/收起多行指令撰写窗格 (Compose)' },
-        { key: 'Ctrl+Shift+S / ⌘⇧S', desc: '展开/收起 SFTP 文件管理器' },
-        { key: 'Ctrl+Alt+F / ⌥⌘F', desc: '跨全部终端全局缓冲区搜索' },
-        { key: 'Alt+B / ⌥⌘B', desc: '开启/关闭多终端输入同步广播' },
-        { key: 'Ctrl+Shift+D / ⌘⇧D', desc: '左右垂直分屏' },
-        { key: 'Ctrl+Shift+E / ⌘⇧E', desc: '上下水平分屏' },
-        { key: 'Ctrl+Shift+U / ⌘⇧U', desc: 'SSH 隧道与端口转发监控' },
-        { key: 'Ctrl+Shift+M / ⌘⇧M', desc: '主机性能与实时负载监控' },
-        { key: 'Ctrl+Shift+O / ⌘⇧O', desc: '远程进程与服务管理工作台' },
-        { key: 'Ctrl+Shift+L / ⌘⇧L', desc: '远程服务器日志实时追踪器' },
-        { key: 'F11 / ⌃⌘F', desc: '切换全屏工作区模式' },
-        { key: 'Ctrl+/ / ⌘/ / F1', desc: '打开快捷键指南' }
+        { key: 'Ctrl+P / ⌘P', desc: t('shortcuts.cmdPalette') },
+        { key: 'Ctrl+Shift+H / ⌘⇧H', desc: t('shortcuts.cmdHistory') },
+        { key: 'Ctrl+N / ⌘N', desc: t('shortcuts.newSession') },
+        { key: 'Ctrl+I / ⌘I', desc: t('shortcuts.importConfig') },
+        { key: 'Ctrl+B / ⌘B', desc: t('shortcuts.toggleSidebar') },
+        { key: 'Ctrl+, / ⌘, / Alt+O', desc: t('shortcuts.openSettings') },
+        { key: 'Ctrl+Shift+P / ⌘⇧P', desc: t('shortcuts.toggleCompose') },
+        { key: 'Ctrl+Shift+S / ⌘⇧S', desc: t('shortcuts.toggleSftp') },
+        { key: 'Ctrl+Alt+F / ⌥⌘F', desc: t('shortcuts.globalSearch') },
+        { key: 'Alt+B / ⌥⌘B', desc: t('shortcuts.toggleBroadcast') },
+        { key: 'Ctrl+Shift+D / ⌘⇧D', desc: t('shortcuts.splitVertical') },
+        { key: 'Ctrl+Shift+E / ⌘⇧E', desc: t('shortcuts.splitHorizontal') },
+        { key: 'Ctrl+Shift+U / ⌘⇧U', desc: t('shortcuts.tunnelMonitor') },
+        { key: 'Ctrl+Shift+M / ⌘⇧M', desc: t('shortcuts.hostMonitor') },
+        { key: 'Ctrl+Shift+O / ⌘⇧O', desc: t('shortcuts.remoteOps') },
+        { key: 'Ctrl+Shift+L / ⌘⇧L', desc: t('shortcuts.realtimeLog') },
+        { key: 'F11 / ⌃⌘F', desc: t('shortcuts.fullscreen') },
+        { key: 'Ctrl+/ / ⌘/ / F1', desc: t('shortcuts.openGuide') }
       ]
     }
   ];
@@ -72,7 +74,7 @@ export function ShortcutReferenceModal({ isOpen, onClose }: ShortcutReferenceMod
               <Keyboard className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">键盘快捷键指南</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('shortcutRef.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Keyboard Shortcuts & Hotkeys</span>
             </div>
           </div>
@@ -112,7 +114,7 @@ export function ShortcutReferenceModal({ isOpen, onClose }: ShortcutReferenceMod
             onClick={onClose} 
             className="px-3 py-1 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors"
           >
-            关闭
+            {t('common.close')}
           </button>
         </div>
       </div>

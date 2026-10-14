@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Activity, Plus, Sparkles } from 'lucide-react';
+import { X, Activity } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface TriggerManagerModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface TriggerManagerModalProps {
 }
 
 export function TriggerManagerModal({ isOpen, onClose }: TriggerManagerModalProps) {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -19,7 +21,7 @@ export function TriggerManagerModal({ isOpen, onClose }: TriggerManagerModalProp
               <Activity className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">终端触发器管理器</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('trigger.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Terminal Event & Text Action Triggers</span>
             </div>
           </div>
@@ -37,10 +39,10 @@ export function TriggerManagerModal({ isOpen, onClose }: TriggerManagerModalProp
             <Activity className="w-5 h-5" />
           </div>
           <div className="text-xs text-[#e0e0e0] font-medium">
-            会话级触发器支持在会话属性中配置
+            {t('trigger.sessionLevel')}
           </div>
           <p className="text-[11px] text-[#858585] max-w-xs leading-relaxed">
-            可在单个会话属性「终端与交互」中设置关键词响应动作。全局触发器规则集正在持续演进中。
+            {t('trigger.desc')}
           </p>
         </div>
 
@@ -50,7 +52,7 @@ export function TriggerManagerModal({ isOpen, onClose }: TriggerManagerModalProp
             onClick={onClose} 
             className="px-4 py-1.5 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors"
           >
-            关闭
+            {t('common.close')}
           </button>
         </div>
       </div>

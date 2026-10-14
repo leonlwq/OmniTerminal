@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Command, Folder, Plus, X, Trash2 } from 'lucide-react';
 import { models } from '../../../wailsjs/go/models';
 import { SaveSettings } from '../../../wailsjs/go/app/App';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SettingsQuickCmdsTabProps {
   settings: models.AppSettings;
@@ -12,6 +13,7 @@ export function SettingsQuickCmdsTab({
   settings,
   setSettings,
 }: SettingsQuickCmdsTabProps) {
+  const { t } = useI18n();
   const [newSetName, setNewSetName] = useState('');
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [newCmdLabel, setNewCmdLabel] = useState('');
@@ -144,11 +146,11 @@ export function SettingsQuickCmdsTab({
                   
                   {/* Left Column: Sets Tree */}
                   <div className="border border-[#2b2b2b] rounded-md p-3.5 flex flex-col bg-[#252526] shadow-sm">
-                    <h4 className="font-semibold text-xs text-[#cccccc] mb-2 shrink-0">所有快捷命令方案</h4>
+                    <h4 className="font-semibold text-xs text-[#cccccc] mb-2 shrink-0">{t('settings.quickCmds.title') || '所有快捷命令方案'}</h4>
                     <div className="flex space-x-1.5 mb-3 shrink-0">
                       <input 
                         type="text" 
-                        placeholder="方案名称..."
+                        placeholder={t('settings.quickCmds.placeholderName') || '方案名称...'}
                         value={newSetName}
                         onChange={(e) => setNewSetName(e.target.value)}
                         className="flex-1 px-2.5 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] min-w-0 outline-none"
@@ -156,22 +158,22 @@ export function SettingsQuickCmdsTab({
                       <button 
                         onClick={() => handleCreateCmdSet(true)}
                         className="px-2.5 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] border border-[#3c3c3c] rounded text-[#cccccc] text-xs font-medium whitespace-nowrap transition-colors"
-                        title="新建文件夹"
+                        title={t('settings.quickCmds.newFolderTitle') || '新建文件夹'}
                       >
-                        + 目录
+                        {t('settings.quickCmds.newFolder') || '+ 目录'}
                       </button>
                       <button 
                         onClick={() => handleCreateCmdSet(false)}
                         className="px-2.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] rounded text-white text-xs font-medium whitespace-nowrap transition-colors shadow-sm"
-                        title="新建命令集"
+                        title={t('settings.quickCmds.newSetTitle') || '新建命令集'}
                       >
-                        + 集合
+                        {t('settings.quickCmds.newSet') || '+ 集合'}
                       </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-1 pr-1">
                       {(settings.quickCommandSets || []).length === 0 ? (
-                        <p className="text-[#858585] text-center py-6 text-xs">暂无快捷方案</p>
+                        <p className="text-[#858585] text-center py-6 text-xs">{t('settings.quickCmds.emptySets') || '暂无快捷方案'}</p>
                       ) : (
                         renderCmdSetTree('', 0)
                       )}
@@ -183,26 +185,26 @@ export function SettingsQuickCmdsTab({
                     {editingSetId ? (
                       <>
                         <h4 className="font-semibold text-xs text-[#cccccc] mb-2 shrink-0 flex items-center justify-between">
-                          <span>{currentEditingSet?.isFolder ? '📁 文件夹' : '⚡ 方案内容'}: { currentEditingSet?.setName }</span>
+                          <span>{currentEditingSet?.isFolder ? (t('settings.quickCmds.folderLabel') || '📁 文件夹') : (t('settings.quickCmds.setLabel') || '⚡ 方案内容')}: { currentEditingSet?.setName }</span>
                         </h4>
                         
                         {currentEditingSet?.isFolder ? (
                           <div className="flex-1 flex items-center justify-center text-[#858585] text-center p-4 text-xs">
-                            这是一个方案分组文件夹。请在左侧选中具体命令集或新建子集。
+                            {t('settings.quickCmds.folderHint') || '这是一个方案分组文件夹。请在左侧选中具体命令集或新建子集。'}
                           </div>
                         ) : (
                           <>
                             <div className="space-y-2 mb-3 shrink-0 p-2.5 bg-[#1e1e1e] border border-[#3c3c3c] rounded-md">
                               <input 
                                 type="text" 
-                                placeholder="快捷标签 (如: 重启 Nginx)"
+                                placeholder={t('settings.quickCmds.labelPlaceholder') || '快捷标签 (如: 重启 Nginx)'}
                                 value={newCmdLabel}
                                 onChange={(e) => setNewCmdLabel(e.target.value)}
                                 className="w-full px-2.5 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                               />
                               <input 
                                 type="text" 
-                                placeholder="指令内容 (如: systemctl restart nginx)"
+                                placeholder={t('settings.quickCmds.cmdPlaceholder') || '指令内容 (如: systemctl restart nginx)'}
                                 value={newCmdText}
                                 onChange={(e) => setNewCmdText(e.target.value)}
                                 className="w-full px-2.5 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded text-xs text-[#cccccc] font-mono outline-none"
@@ -211,13 +213,13 @@ export function SettingsQuickCmdsTab({
                                 onClick={handleAddCmdToSet}
                                 className="w-full py-1.5 bg-[#0078d4] hover:bg-[#006cbe] rounded text-white text-xs font-medium shadow-sm transition-all"
                               >
-                                + 添加命令到当前方案
+                                {t('settings.quickCmds.addBtn') || '+ 添加命令到当前方案'}
                               </button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
                               {(currentEditingSet?.commands || []).length === 0 ? (
-                                <p className="text-[#858585] text-center py-6 text-xs">暂无按键指令，请在上方添加</p>
+                                <p className="text-[#858585] text-center py-6 text-xs">{t('settings.quickCmds.emptyCmds') || '暂无按键指令，请在上方添加'}</p>
                               ) : (
                                 (currentEditingSet?.commands || []).map((cmd: models.QuickCommand, idx: number) => (
                                   <div 
@@ -243,7 +245,7 @@ export function SettingsQuickCmdsTab({
                       </>
                     ) : (
                       <div className="flex-1 flex items-center justify-center text-[#858585] text-center p-4 text-xs">
-                        请在左侧选择或新建一个方案，以开始定制快捷按键
+                        {t('settings.quickCmds.noSelection') || '请在左侧选择或新建一个方案，以开始定制快捷按键'}
                       </div>
                     )}
                   </div>

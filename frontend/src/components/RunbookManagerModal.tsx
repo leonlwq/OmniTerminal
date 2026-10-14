@@ -5,6 +5,7 @@ import {
   History, Clock, Terminal, Tag, ChevronRight, RefreshCw, X, Check,
   Edit2, Save, FileText, FastForward, PlayCircle
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 import { RunbookTemplate, RunbookVariable, RunbookStep, RunbookExecutionRecord, RunbookStepResult } from '../types';
 
 interface RunbookManagerModalProps {
@@ -24,11 +25,12 @@ export function RunbookManagerModal({
   sessions = [],
   onSendCommand,
 }: RunbookManagerModalProps) {
+  const { t } = useI18n();
   const [viewMode, setViewMode] = useState<'list' | 'edit' | 'run' | 'history'>('list');
   const [runbooks, setRunbooks] = useState<RunbookTemplate[]>([]);
   const [history, setHistory] = useState<RunbookExecutionRecord[]>([]);
   const [selectedRunbook, setSelectedRunbook] = useState<RunbookTemplate | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -91,7 +93,7 @@ export function RunbookManagerModal({
 
   // 类别汇总
   const categories = useMemo(() => {
-    const set = new Set<string>(['全部']);
+    const set = new Set<string>(['All']);
     runbooks.forEach(rb => {
       if (rb.category) set.add(rb.category);
     });
@@ -101,7 +103,7 @@ export function RunbookManagerModal({
   // 过滤后的列表
   const filteredRunbooks = useMemo(() => {
     return runbooks.filter(rb => {
-      const matchCat = selectedCategory === '全部' || rb.category === selectedCategory;
+      const matchCat = selectedCategory === 'All' || rb.category === selectedCategory;
       const matchQuery = !searchQuery ||
         rb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         rb.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -151,7 +153,7 @@ export function RunbookManagerModal({
         stepName: step.name,
         command: resolvedCmd,
         status: 'skipped', // 临时态
-        output: '正在向终端投递命令并监控执行...',
+        output: t('runbook.runningStep') || 'Delivering command to terminal...',
         exitCode: 0,
         durationMs: 0,
       }
@@ -174,7 +176,7 @@ export function RunbookManagerModal({
         stepName: step.name,
         command: resolvedCmd,
         status: 'success',
-        output: `[✓ 执行成功] 命令已成功下发至终端 (${durationMs}ms)`,
+        output: `[✓ Success] Command executed (${durationMs}ms)`,
         exitCode: 0,
         durationMs,
       };
@@ -190,7 +192,7 @@ export function RunbookManagerModal({
         stepName: step.name,
         command: resolvedCmd,
         status: 'failed',
-        output: `[✗ 执行失败]: ${err?.message || err}`,
+        output: `[✗ Failed]: ${err?.message || err}`,
         exitCode: 1,
         durationMs,
       };
@@ -209,7 +211,7 @@ export function RunbookManagerModal({
       setCurrentStepIndex(i);
       const ok = await executeStep(i);
       if (!ok && !selectedRunbook.steps[i].continueOnError) {
-        alert(`步骤 ${i + 1} (${selectedRunbook.steps[i].name}) 执行失败，流水线已自动终止！`);
+        alert(`Step ${i + 1} (${selectedRunbook.steps[i].name}) failed. Pipeline terminated!`);
         break;
       }
       // 步骤间隔微延迟
@@ -236,7 +238,7 @@ export function RunbookManagerModal({
           startTime: runStartTime || new Date().toLocaleString(),
           endTime: new Date().toLocaleTimeString(),
           status: hasFailed ? 'failed' : 'success',
-          targetHost: activeSessionName || '活动终端',
+          targetHost: activeSessionName || 'Terminal',
           variableValues: runParams,
           stepResults: resultsList,
         };
@@ -252,7 +254,7 @@ export function RunbookManagerModal({
   const handleSaveEdit = async () => {
     if (!editingRunbook) return;
     if (!editingRunbook.name.trim()) {
-      alert('SOP 名称不能为空！');
+      alert(t('runbook.nameRequired') || 'SOP name is required!');
       return;
     }
     try {
@@ -264,13 +266,13 @@ export function RunbookManagerModal({
         setViewMode('list');
       }
     } catch (err: any) {
-      alert('保存 SOP 手册失败: ' + (err?.message || err));
+      alert((t('runbook.saveFailed') || 'Failed to save SOP: ') + (err?.message || err));
     }
   };
 
   // 删除 SOP
   const handleDeleteRunbook = async (id: string) => {
-    if (!confirm('确定要删除此 SOP 运维手册吗？此操作无法撤销。')) return;
+    if (!confirm(t('confirm.deleteSubtitle') || 'Delete this SOP runbook?')) return;
     try {
       const appRpc = (window as any).go?.app?.App;
       if (appRpc?.DeleteRunbook) {
@@ -279,7 +281,7 @@ export function RunbookManagerModal({
         setSelectedRunbook(null);
       }
     } catch (err: any) {
-      alert('删除失败: ' + (err?.message || err));
+      alert((t('common.deleteFailed') || 'Delete failed: ') + (err?.message || err));
     }
   };
 
@@ -297,7 +299,7 @@ export function RunbookManagerModal({
         a.click();
       }
     } catch (err: any) {
-      alert('导出失败: ' + (err?.message || err));
+      alert((t('common.exportFailed') || 'Export failed: ') + (err?.message || err));
     }
   };
 
@@ -313,10 +315,10 @@ export function RunbookManagerModal({
         if (appRpc?.ImportRunbooks) {
           await appRpc.ImportRunbooks(content);
           await loadRunbooks();
-          alert('✓ 成功导入 SOP 运维手册！');
+          alert('✓ SOP runbook imported successfully!');
         }
       } catch (err: any) {
-        alert('导入失败: ' + (err?.message || err));
+        alert((t('common.importFailed') || 'Import failed: ') + (err?.message || err));
       }
     };
     reader.readAsText(file);
@@ -337,10 +339,10 @@ export function RunbookManagerModal({
             </div>
             <div>
               <h3 className="font-semibold text-sm text-[#e0e0e0] flex items-center gap-2">
-                参数化 SOP Runbook 运维手册与交互式执行流
+                {t('runbook.title')}
               </h3>
               <p className="text-[11px] text-[#858585]">
-                多步骤标准运维流程 (SOP) 编排、动态变量注入与分步审计流水线
+                {t('runbook.subtitle')}
               </p>
             </div>
           </div>
@@ -357,7 +359,7 @@ export function RunbookManagerModal({
               }`}
             >
               <History className="w-3.5 h-3.5" />
-              <span>审计历史 ({history.length})</span>
+              <span>{t('runbook.auditHistory')} ({history.length})</span>
             </button>
             <button onClick={onClose} className="text-[#858585] hover:text-[#e0e0e0] p-1.5 rounded hover:bg-[#333333] transition-colors">
               <X className="w-4 h-4" />
@@ -371,10 +373,10 @@ export function RunbookManagerModal({
           <div className="flex-1 flex overflow-hidden bg-[#1e1e1e]">
             <div className="w-80 border-r border-[#2b2b2b] flex flex-col">
               <div className="p-3 bg-[#1f1f1f] border-b border-[#2b2b2b] flex items-center justify-between text-xs font-semibold">
-                <span>执行记录列表</span>
+                <span>{t('runbook.historyList')}</span>
                 <button
                   onClick={async () => {
-                    if (confirm('确认清空所有历史执行审计记录？')) {
+                    if (confirm(t('runbook.confirmClearHistory'))) {
                       const appRpc = (window as any).go?.app?.App;
                       if (appRpc?.ClearRunbookHistory) {
                         await appRpc.ClearRunbookHistory();
@@ -385,7 +387,7 @@ export function RunbookManagerModal({
                   }}
                   className="text-[#858585] hover:text-rose-400 text-[11px]"
                 >
-                  清空
+                  {t('runbook.clearHistoryBtn')}
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto divide-y divide-[#2b2b2b]">
@@ -404,17 +406,17 @@ export function RunbookManagerModal({
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                           : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                       }`}>
-                        {rec.status === 'success' ? '成功' : '失败'}
+                        {rec.status === 'success' ? t('runbook.success') : t('runbook.fail')}
                       </span>
                     </div>
                     <div className="text-[11px] text-[#858585] flex items-center justify-between">
-                      <span>目标: {rec.targetHost}</span>
+                      <span>{t('runbook.target')} {rec.targetHost}</span>
                       <span>{rec.startTime}</span>
                     </div>
                   </div>
                 ))}
                 {history.length === 0 && (
-                  <div className="p-8 text-center text-[#858585] text-xs">暂无历史执行记录</div>
+                  <div className="p-8 text-center text-[#858585] text-xs">{t('runbook.noHistory')}</div>
                 )}
               </div>
             </div>
@@ -426,19 +428,19 @@ export function RunbookManagerModal({
                     <div>
                       <h4 className="font-bold text-sm text-white">{viewingRecord.runbookName}</h4>
                       <p className="text-[11px] text-[#858585]">
-                        目标: {viewingRecord.targetHost} | 时间: {viewingRecord.startTime} ~ {viewingRecord.endTime}
+                        {t('runbook.target')} {viewingRecord.targetHost} | Time: {viewingRecord.startTime} ~ {viewingRecord.endTime}
                       </p>
                     </div>
                     <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                       viewingRecord.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
                     }`}>
-                      {viewingRecord.status === 'success' ? '✓ 全流程执行通过' : '✗ 执行异常终止'}
+                      {viewingRecord.status === 'success' ? t('runbook.allStepsPassed') : t('runbook.aborted')}
                     </span>
                   </div>
 
                   {/* 变量参数快照 */}
                   <div className="space-y-1">
-                    <span className="text-[#858585] font-semibold text-[11px]">参数快照 (Parameters):</span>
+                    <span className="text-[#858585] font-semibold text-[11px]">{t('runbook.paramSnapshot')}</span>
                     <div className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-2.5 font-mono text-[11px] grid grid-cols-2 gap-2">
                       {Object.entries(viewingRecord.variableValues || {}).map(([k, v]) => (
                         <div key={k} className="flex items-center gap-2">
@@ -451,7 +453,7 @@ export function RunbookManagerModal({
 
                   {/* 步骤明细 */}
                   <div className="space-y-2">
-                    <span className="text-[#858585] font-semibold text-[11px]">步骤执行明细 ({viewingRecord.stepResults?.length || 0}):</span>
+                    <span className="text-[#858585] font-semibold text-[11px]">{t('runbook.stepDetails')} ({viewingRecord.stepResults?.length || 0}):</span>
                     {viewingRecord.stepResults?.map((st, i) => (
                       <div key={st.stepId || i} className="bg-[#1e1e1e] border border-[#2b2b2b] rounded p-3 space-y-2">
                         <div className="flex items-center justify-between">
@@ -470,7 +472,7 @@ export function RunbookManagerModal({
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-[#858585]">
-                  请在左侧列表中点击选择要查看的执行审计记录
+                  {t('runbook.selectHistoryHint')}
                 </div>
               )}
             </div>
@@ -482,21 +484,21 @@ export function RunbookManagerModal({
               <div>
                 <h4 className="font-semibold text-sm text-white flex items-center gap-2">
                   <Play className="w-4 h-4 text-emerald-400" />
-                  <span>执行 SOP: {selectedRunbook.name}</span>
+                  <span>{t('runbook.executingSop')} {selectedRunbook.name}</span>
                 </h4>
                 <p className="text-[11px] text-[#858585] mt-0.5">{selectedRunbook.description}</p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 bg-[#181818] px-2.5 py-1 rounded border border-[#333333] text-xs">
                   <Terminal className="w-3.5 h-3.5 text-[#0078d4]" />
-                  <span className="text-[#858585]">执行目标:</span>
-                  <span className="text-white font-medium">{activeSessionName || '当前活动终端'}</span>
+                  <span className="text-[#858585]">{t('runbook.execTarget')}</span>
+                  <span className="text-white font-medium">{activeSessionName || 'Active Terminal'}</span>
                 </div>
                 <button
                   onClick={() => setViewMode('list')}
                   className="px-3 py-1 bg-[#333333] hover:bg-[#444444] text-[#cccccc] rounded text-xs transition-colors"
                 >
-                  退出执行
+                  {t('runbook.exitExec')}
                 </button>
               </div>
             </div>
@@ -505,9 +507,9 @@ export function RunbookManagerModal({
               {/* 参数填写面板 */}
               <div className="w-80 border-r border-[#2b2b2b] bg-[#181818] p-4 flex flex-col space-y-4 overflow-y-auto text-xs">
                 <div>
-                  <span className="font-semibold text-white block mb-1">动态参数填写 (Variables)</span>
+                  <span className="font-semibold text-white block mb-1">{t('runbook.paramFill')}</span>
                   <p className="text-[11px] text-[#858585]">
-                    执行前将自动替换命令中的占位符
+                    {t('runbook.paramFillDesc')}
                   </p>
                 </div>
 
@@ -516,7 +518,7 @@ export function RunbookManagerModal({
                     <div key={v.name} className="space-y-1">
                       <label className="text-[11px] font-mono text-[#0078d4] flex items-center justify-between">
                         <span>${`{${v.name}}`}</span>
-                        {v.required && <span className="text-rose-400 text-[10px]">*必填</span>}
+                        {v.required && <span className="text-rose-400 text-[10px]">{t('runbook.required')}</span>}
                       </label>
                       {v.type === 'select' && v.options?.length ? (
                         <select
@@ -541,26 +543,26 @@ export function RunbookManagerModal({
                     </div>
                   ))}
                   {selectedRunbook.variables.length === 0 && (
-                    <div className="text-[#858585] text-center py-6">此 SOP 无需配置动态参数</div>
+                    <div className="text-[#858585] text-center py-6">{t('runbook.noParamsNeeded')}</div>
                   )}
                 </div>
 
                 {/* 执行模式选择与总控制 */}
                 <div className="pt-3 border-t border-[#2b2b2b] space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#858585]">执行策略:</span>
+                    <span className="text-[#858585]">{t('runbook.execPolicy')}</span>
                     <div className="flex items-center gap-1 bg-[#1e1e1e] p-0.5 rounded border border-[#3c3c3c]">
                       <button
                         onClick={() => setRunMode('step_by_step')}
                         className={`px-2 py-0.5 rounded text-[11px] ${runMode === 'step_by_step' ? 'bg-[#0078d4] text-white' : 'text-[#858585]'}`}
                       >
-                        逐步确认
+                        {t('runbook.stepByStep')}
                       </button>
                       <button
                         onClick={() => setRunMode('auto_flow')}
                         className={`px-2 py-0.5 rounded text-[11px] ${runMode === 'auto_flow' ? 'bg-[#0078d4] text-white' : 'text-[#858585]'}`}
                       >
-                        自动流水线
+                        {t('runbook.autoFlow')}
                       </button>
                     </div>
                   </div>
@@ -572,7 +574,7 @@ export function RunbookManagerModal({
                       className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded flex items-center justify-center gap-2 text-xs transition-colors disabled:opacity-50"
                     >
                       <FastForward className="w-4 h-4" />
-                      <span>{isExecuting ? '流水线自动执行中...' : '一键自动执行全部步骤'}</span>
+                      <span>{isExecuting ? t('runbook.runningAutoFlow') : t('runbook.runAllSteps')}</span>
                     </button>
                   )}
                 </div>
@@ -582,10 +584,10 @@ export function RunbookManagerModal({
               <div className="flex-1 bg-[#1e1e1e] p-5 overflow-y-auto space-y-4 text-xs">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-bold text-white text-sm">
-                    执行流步骤 ({selectedRunbook.steps.length} 个步骤)
+                    {t('runbook.flowSteps')} ({selectedRunbook.steps.length} {t('runbook.stepsBadge')})
                   </span>
                   <span className="text-[11px] text-[#858585]">
-                    已完成: {Object.keys(stepResults).length} / {selectedRunbook.steps.length}
+                    {t('runbook.completed')} {Object.keys(stepResults).length} / {selectedRunbook.steps.length}
                   </span>
                 </div>
 
@@ -630,7 +632,7 @@ export function RunbookManagerModal({
                           <div className="flex items-center gap-2">
                             {st.continueOnError && (
                               <span className="text-[10px] text-[#cca700] bg-[#cca700]/10 px-1.5 py-0.5 rounded border border-[#cca700]/20">
-                                容错继续
+                                {t('runbook.continueOnError')}
                               </span>
                             )}
                             {runMode === 'step_by_step' && (
@@ -646,7 +648,7 @@ export function RunbookManagerModal({
                                 className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50"
                               >
                                 <Play className="w-3 h-3" />
-                                <span>执行此步骤</span>
+                                <span>{t('runbook.execThisStep')}</span>
                               </button>
                             )}
                           </div>
@@ -658,7 +660,7 @@ export function RunbookManagerModal({
                           <button
                             onClick={() => navigator.clipboard.writeText(resolved)}
                             className="text-[#858585] hover:text-white p-1"
-                            title="复制命令"
+                            title={t('runbook.copyCmd')}
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -683,21 +685,21 @@ export function RunbookManagerModal({
             <div className="p-4 bg-[#1f1f1f] border-b border-[#2b2b2b] flex items-center justify-between">
               <h4 className="font-semibold text-sm text-white flex items-center gap-2">
                 <Edit2 className="w-4 h-4 text-[#0078d4]" />
-                <span>{editingRunbook.id ? '编辑 SOP 运维手册' : '新建 SOP 运维手册'}</span>
+                <span>{editingRunbook.id ? t('runbook.editSop') : t('runbook.newSop')}</span>
               </h4>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('list')}
                   className="px-3 py-1 bg-[#333333] hover:bg-[#444444] text-[#cccccc] rounded text-xs transition-colors"
                 >
-                  取消
+                  {t('common.cancel') || '取消'}
                 </button>
                 <button
                   onClick={handleSaveEdit}
                   className="px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded flex items-center gap-1.5 text-xs transition-colors"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>保存手册</span>
+                  <span>{t('runbook.saveManual')}</span>
                 </button>
               </div>
             </div>
@@ -706,32 +708,32 @@ export function RunbookManagerModal({
               {/* 基本信息 */}
               <div className="grid grid-cols-3 gap-3 bg-[#252526] p-3.5 rounded border border-[#2b2b2b]">
                 <div className="col-span-2">
-                  <label className="text-[#858585] block mb-1">SOP 手册标题:</label>
+                  <label className="text-[#858585] block mb-1">{t('runbook.titleLabel')}</label>
                   <input
                     type="text"
                     value={editingRunbook.name}
                     onChange={e => setEditingRunbook({ ...editingRunbook, name: e.target.value })}
-                    placeholder="如: Nginx 优雅热重载与配置校验"
+                    placeholder={t('runbook.titlePlaceholder')}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-3 py-1.5 text-white outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[#858585] block mb-1">运维分类:</label>
+                  <label className="text-[#858585] block mb-1">{t('runbook.catLabel')}</label>
                   <input
                     type="text"
                     value={editingRunbook.category}
                     onChange={e => setEditingRunbook({ ...editingRunbook, category: e.target.value })}
-                    placeholder="如: 服务发布 / 应急排障"
+                    placeholder={t('runbook.catPlaceholder')}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-3 py-1.5 text-white outline-none"
                   />
                 </div>
                 <div className="col-span-3">
-                  <label className="text-[#858585] block mb-1">手册功能描述:</label>
+                  <label className="text-[#858585] block mb-1">{t('runbook.descLabel')}</label>
                   <textarea
                     rows={2}
                     value={editingRunbook.description}
                     onChange={e => setEditingRunbook({ ...editingRunbook, description: e.target.value })}
-                    placeholder="简要说明此 SOP 执行的前提条件与目标结果"
+                    placeholder={t('runbook.descPlaceholder')}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-3 py-1.5 text-white outline-none resize-none"
                   />
                 </div>
@@ -740,12 +742,12 @@ export function RunbookManagerModal({
               {/* 参数变量设置 */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-white">动态参数定义 (Variables)</span>
+                  <span className="font-semibold text-white">{t('runbook.paramDef')}</span>
                   <button
                     onClick={() => {
                       const newVar: RunbookVariable = {
                         name: `VAR_${Date.now() % 1000}`,
-                        description: '参数说明',
+                        description: 'Variable Description',
                         defaultValue: '',
                         required: true,
                         type: 'text',
@@ -758,7 +760,7 @@ export function RunbookManagerModal({
                     className="px-2.5 py-1 bg-[#252526] hover:bg-[#333333] border border-[#3c3c3c] rounded text-[#cccccc] flex items-center gap-1 text-[11px] transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#0078d4]" />
-                    <span>添加参数</span>
+                    <span>{t('runbook.addParam')}</span>
                   </button>
                 </div>
 
@@ -773,7 +775,7 @@ export function RunbookManagerModal({
                           updated[i].name = e.target.value.toUpperCase();
                           setEditingRunbook({ ...editingRunbook, variables: updated });
                         }}
-                        placeholder="变量名 (如 HOST_IP)"
+                        placeholder={t('runbook.paramNamePlaceholder')}
                         className="w-40 bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2 py-1 font-mono text-[11px] text-[#0078d4]"
                       />
                       <input
@@ -784,7 +786,7 @@ export function RunbookManagerModal({
                           updated[i].description = e.target.value;
                           setEditingRunbook({ ...editingRunbook, variables: updated });
                         }}
-                        placeholder="说明提示"
+                        placeholder={t('runbook.paramDescPlaceholder')}
                         className="flex-1 bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2 py-1 text-[11px]"
                       />
                       <input
@@ -795,7 +797,7 @@ export function RunbookManagerModal({
                           updated[i].defaultValue = e.target.value;
                           setEditingRunbook({ ...editingRunbook, variables: updated });
                         }}
-                        placeholder="默认值"
+                        placeholder={t('runbook.paramDefaultPlaceholder')}
                         className="w-36 bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2 py-1 text-[11px] font-mono"
                       />
                       <button
@@ -804,7 +806,7 @@ export function RunbookManagerModal({
                           setEditingRunbook({ ...editingRunbook, variables: updated });
                         }}
                         className="p-1 text-[#858585] hover:text-rose-400"
-                        title="删除参数"
+                        title={t('common.delete')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -812,7 +814,7 @@ export function RunbookManagerModal({
                   ))}
                   {editingRunbook.variables.length === 0 && (
                     <div className="p-3 text-center text-[#858585] bg-[#252526] rounded border border-[#2b2b2b]">
-                      暂无动态参数，命令将以纯静态执行
+                      {t('runbook.noDynamicParams')}
                     </div>
                   )}
                 </div>
@@ -821,12 +823,12 @@ export function RunbookManagerModal({
               {/* 步骤编排设置 */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-white">执行步骤编排 (Steps)</span>
+                  <span className="font-semibold text-white">{t('runbook.stepOrchestration')}</span>
                   <button
                     onClick={() => {
                       const newStep: RunbookStep = {
                         ID: `step_${Date.now()}`,
-                        name: `步骤 ${editingRunbook.steps.length + 1}`,
+                        name: `Step ${editingRunbook.steps.length + 1}`,
                         description: '',
                         command: 'echo "hello"',
                         timeoutSeconds: 60,
@@ -840,7 +842,7 @@ export function RunbookManagerModal({
                     className="px-2.5 py-1 bg-[#252526] hover:bg-[#333333] border border-[#3c3c3c] rounded text-[#cccccc] flex items-center gap-1 text-[11px] transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#0078d4]" />
-                    <span>添加步骤</span>
+                    <span>{t('runbook.addStep')}</span>
                   </button>
                 </div>
 
@@ -860,7 +862,7 @@ export function RunbookManagerModal({
                               updated[i].name = e.target.value;
                               setEditingRunbook({ ...editingRunbook, steps: updated });
                             }}
-                            placeholder="步骤名称"
+                            placeholder={t('runbook.stepNamePlaceholder')}
                             className="bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2 py-1 text-white font-semibold text-xs"
                           />
                         </div>
@@ -875,7 +877,7 @@ export function RunbookManagerModal({
                               setEditingRunbook({ ...editingRunbook, steps: updated });
                             }}
                             className="p-1 rounded hover:bg-[#333333] text-[#858585] disabled:opacity-30"
-                            title="上移"
+                            title="Move Up"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
@@ -889,7 +891,7 @@ export function RunbookManagerModal({
                               setEditingRunbook({ ...editingRunbook, steps: updated });
                             }}
                             className="p-1 rounded hover:bg-[#333333] text-[#858585] disabled:opacity-30"
-                            title="下移"
+                            title="Move Down"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
@@ -899,7 +901,7 @@ export function RunbookManagerModal({
                               setEditingRunbook({ ...editingRunbook, steps: updated });
                             }}
                             className="p-1 rounded hover:bg-[#333333] text-[#858585] hover:text-rose-400"
-                            title="删除步骤"
+                            title={t('common.delete')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -914,7 +916,7 @@ export function RunbookManagerModal({
                           updated[i].command = e.target.value;
                           setEditingRunbook({ ...editingRunbook, steps: updated });
                         }}
-                        placeholder="待执行的 Shell 命令 (支持 ${VAR_NAME} 占位符)"
+                        placeholder={t('runbook.cmdPlaceholder')}
                         className="w-full bg-[#181818] border border-[#3c3c3c] focus:border-[#0078d4] rounded p-2 text-xs font-mono text-[#89d185] outline-none"
                       />
 
@@ -930,10 +932,10 @@ export function RunbookManagerModal({
                             }}
                             className="rounded bg-[#1e1e1e] border-[#3c3c3c] text-[#0078d4]"
                           />
-                          <span>失败时继续执行后续步骤</span>
+                          <span>{t('runbook.continueOnFail')}</span>
                         </label>
                         <div className="flex items-center gap-1.5">
-                          <span>超时秒数:</span>
+                          <span>{t('runbook.timeoutSec')}</span>
                           <input
                             type="number"
                             value={st.timeoutSeconds || 60}
@@ -960,7 +962,7 @@ export function RunbookManagerModal({
               {/* 分类药丸与搜索 */}
               <div className="p-3 border-b border-[#2b2b2b] space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-white">SOP 运维目录</span>
+                  <span className="font-semibold text-xs text-white">{t('runbook.catalog')}</span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => {
@@ -968,13 +970,13 @@ export function RunbookManagerModal({
                           id: '',
                           name: '',
                           description: '',
-                          category: '常规运维',
+                          category: 'General',
                           tags: [],
                           variables: [],
                           steps: [
                             {
                               id: 'step_1',
-                              name: '步骤 1',
+                              name: 'Step 1',
                               description: '',
                               command: 'echo "hello"',
                               timeoutSeconds: 60,
@@ -988,18 +990,18 @@ export function RunbookManagerModal({
                         setViewMode('edit');
                       }}
                       className="p-1 rounded bg-[#0078d4] text-white hover:bg-[#006cbe] transition-colors"
-                      title="新建 SOP 手册"
+                      title={t('runbook.newSopTitle')}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
-                    <label className="p-1 rounded bg-[#252526] hover:bg-[#333333] text-[#cccccc] cursor-pointer" title="导入 JSON">
+                    <label className="p-1 rounded bg-[#252526] hover:bg-[#333333] text-[#cccccc] cursor-pointer" title={t('runbook.importJson')}>
                       <Upload className="w-3.5 h-3.5" />
                       <input type="file" accept=".json" onChange={handleImport} className="hidden" />
                     </label>
                     <button
                       onClick={handleExport}
                       className="p-1 rounded bg-[#252526] hover:bg-[#333333] text-[#cccccc]"
-                      title="导出 JSON"
+                      title={t('runbook.exportJson')}
                     >
                       <Download className="w-3.5 h-3.5" />
                     </button>
@@ -1025,7 +1027,7 @@ export function RunbookManagerModal({
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="搜索 SOP 手册名称或标签..."
+                  placeholder={t('runbook.searchPlaceholder')}
                   className="w-full bg-[#1e1e1e] border border-[#333333] focus:border-[#0078d4] rounded px-2.5 py-1 text-xs text-white outline-none"
                 />
               </div>
@@ -1043,7 +1045,7 @@ export function RunbookManagerModal({
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-white truncate max-w-[190px]">{rb.name}</span>
                       <span className="text-[10px] text-[#0078d4] bg-[#0078d4]/10 px-1.5 py-0.2 rounded border border-[#0078d4]/20">
-                        {rb.steps?.length || 0} 步
+                        {rb.steps?.length || 0} {t('runbook.stepsBadge')}
                       </span>
                     </div>
                     <p className="text-[11px] text-[#858585] line-clamp-1">{rb.description}</p>
@@ -1058,7 +1060,7 @@ export function RunbookManagerModal({
                   </div>
                 ))}
                 {filteredRunbooks.length === 0 && (
-                  <div className="p-8 text-center text-[#858585] text-xs">未找到匹配的 SOP 运维手册</div>
+                  <div className="p-8 text-center text-[#858585] text-xs">{t('runbook.noMatchingSop')}</div>
                 )}
               </div>
             </div>
@@ -1087,12 +1089,12 @@ export function RunbookManagerModal({
                         className="px-3 py-1.5 bg-[#2d2d2d] hover:bg-[#383838] border border-[#3c3c3c] text-[#cccccc] rounded flex items-center gap-1.5 text-xs transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
-                        <span>编辑手册</span>
+                        <span>{t('runbook.editBtn')}</span>
                       </button>
                       <button
                         onClick={() => handleDeleteRunbook(selectedRunbook.id)}
                         className="p-1.5 bg-[#2d2d2d] hover:bg-[#383838] border border-[#3c3c3c] text-[#858585] hover:text-rose-400 rounded transition-colors"
-                        title="删除"
+                        title={t('common.delete')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1101,7 +1103,7 @@ export function RunbookManagerModal({
                         className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded flex items-center gap-2 text-xs shadow-md transition-colors"
                       >
                         <Play className="w-4 h-4" />
-                        <span>启动执行流</span>
+                        <span>{t('runbook.startFlow')}</span>
                       </button>
                     </div>
                   </div>
@@ -1111,7 +1113,7 @@ export function RunbookManagerModal({
                     <div className="space-y-2">
                       <span className="font-semibold text-white flex items-center gap-1.5">
                         <Tag className="w-3.5 h-3.5 text-[#0078d4]" />
-                        <span>参数化动态变量 ({selectedRunbook.variables?.length || 0})</span>
+                        <span>{t('runbook.variables')} ({selectedRunbook.variables?.length || 0})</span>
                       </span>
                       <div className="grid grid-cols-2 gap-2.5">
                         {selectedRunbook.variables?.map(v => (
@@ -1119,7 +1121,7 @@ export function RunbookManagerModal({
                             <div className="flex items-center justify-between font-mono text-[11px]">
                               <span className="text-[#0078d4] font-bold">${`{${v.name}}`}</span>
                               <span className="text-[#858585] text-[10px] bg-[#1e1e1e] px-1.5 py-0.2 rounded border border-[#333333]">
-                                默认: {v.defaultValue || '空'}
+                                {t('runbook.defaultVal')} {v.defaultValue || t('runbook.empty')}
                               </span>
                             </div>
                             <p className="text-[11px] text-[#858585]">{v.description}</p>
@@ -1127,7 +1129,7 @@ export function RunbookManagerModal({
                         ))}
                         {selectedRunbook.variables?.length === 0 && (
                           <div className="col-span-2 p-3 text-center text-[#858585] bg-[#252526] rounded border border-[#2b2b2b]">
-                            此手册无需动态参数输入
+                            {t('runbook.noParamsNeeded')}
                           </div>
                         )}
                       </div>
@@ -1137,7 +1139,7 @@ export function RunbookManagerModal({
                     <div className="space-y-2">
                       <span className="font-semibold text-white flex items-center gap-1.5">
                         <ListOrdered className="w-3.5 h-3.5 text-[#0078d4]" />
-                        <span>执行计划步骤 ({selectedRunbook.steps?.length || 0})</span>
+                        <span>{t('runbook.execSteps')} ({selectedRunbook.steps?.length || 0})</span>
                       </span>
                       <div className="space-y-2.5">
                         {selectedRunbook.steps?.map((st, i) => (
@@ -1150,8 +1152,8 @@ export function RunbookManagerModal({
                                 <span className="font-semibold text-white text-xs">{st.name}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[10px] text-[#858585]">
-                                {st.continueOnError && <span className="text-[#cca700]">容错继续</span>}
-                                <span>超时: {st.timeoutSeconds}s</span>
+                                {st.continueOnError && <span className="text-[#cca700]">{t('runbook.continueOnError')}</span>}
+                                <span>{t('runbook.timeout')} {st.timeoutSeconds}s</span>
                               </div>
                             </div>
                             {st.description && <p className="text-[11px] text-[#858585]">{st.description}</p>}
@@ -1166,7 +1168,7 @@ export function RunbookManagerModal({
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-[#858585] text-xs">
-                  请在左侧选择一个 SOP 手册查看编排详情
+                  {t('runbook.selectSopHint')}
                 </div>
               )}
             </div>
@@ -1175,9 +1177,9 @@ export function RunbookManagerModal({
 
         {/* Modal Footer */}
         <div className="px-5 py-2.5 bg-[#1f1f1f] border-t border-[#2b2b2b] flex items-center justify-between text-[11px] text-[#858585] shrink-0">
-          <div>OmniTerminal 参数化 SOP 自动化流水线</div>
+          <div>{t('runbook.footerTitle')}</div>
           <button onClick={onClose} className="px-3 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors">
-            关闭
+            {t('common.close')}
           </button>
         </div>
 

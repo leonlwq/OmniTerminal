@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Pin, PinOff, Terminal, ChevronDown, MoveVertical, 
@@ -15,10 +16,12 @@ interface QuakeDropdownTerminalProps {
 export const QuakeDropdownTerminal: React.FC<QuakeDropdownTerminalProps> = ({
   isOpen,
   onClose,
-  title = 'Quake 下拉终端 (Drop-down Shell)',
+  title: userTitle,
   animationDurationMs = 250,
   children,
 }) => {
+  const { t } = useI18n();
+  const title = userTitle || t('quake.title');
   const [heightVh, setHeightVh] = useState<number>(45);
   const [isPinned, setIsPinned] = useState<boolean>(false);
   const [isResizing, setIsResizing] = useState<boolean>(false);
@@ -101,7 +104,7 @@ export const QuakeDropdownTerminal: React.FC<QuakeDropdownTerminalProps> = ({
             <span className="text-xs font-semibold text-[#cccccc] font-mono flex items-center gap-2">
               {title}
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0078d4]/20 text-[#3794ff] border border-[#0078d4]/30 font-sans">
-                F12 / Ctrl+` 呼出
+                {t('quake.hotkeyHint')}
               </span>
             </span>
           </div>
@@ -140,7 +143,7 @@ export const QuakeDropdownTerminal: React.FC<QuakeDropdownTerminalProps> = ({
                   ? 'bg-[#0078d4]/20 text-[#3794ff] border border-[#0078d4]/40' 
                   : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]'
               }`}
-              title={isPinned ? '已钉住 (点击外部不会收起)' : '未钉住 (点击外部自动收起)'}
+              title={isPinned ? t('quake.pinned') : t('quake.unpinned')}
             >
               {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
             </button>
@@ -149,7 +152,7 @@ export const QuakeDropdownTerminal: React.FC<QuakeDropdownTerminalProps> = ({
             <button
               onClick={onClose}
               className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]"
-              title="收起 Quake 终端"
+              title={t('quake.collapse')}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -172,7 +175,7 @@ export const QuakeDropdownTerminal: React.FC<QuakeDropdownTerminalProps> = ({
         <div
           onMouseDown={handleMouseDown}
           className="h-2 w-full bg-[#252526] hover:bg-[#0078d4]/30 border-t border-[#2b2b2b] cursor-row-resize flex items-center justify-center transition-colors group select-none"
-          title="拖拽调节 Quake 终端高度 (20% ~ 85%)"
+          title={t('quake.resizeTooltip')}
         >
           <div className="w-12 h-1 rounded-full bg-[#3c3c3c] group-hover:bg-[#0078d4] transition-colors" />
         </div>

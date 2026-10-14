@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
 import { Bookmark, Sparkles } from 'lucide-react';
 
 interface TerminalContextMenuProps {
@@ -44,6 +45,7 @@ export function TerminalContextMenu({
   isCommandBlockMode,
   onToggleCommandBlockMode,
 }: TerminalContextMenuProps) {
+  const { t } = useI18n();
   if (!contextMenu) return null;
 
   return (
@@ -55,14 +57,14 @@ export function TerminalContextMenu({
         onClick={() => { onCopy(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between"
       >
-        <span>复制选中</span>
+        <span>{t('termMenu.copy') || '复制选中'}</span>
         <span className="text-[11px] text-[#858585] font-mono">⌘C</span>
       </button>
       <button 
         onClick={() => { onPaste(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between"
       >
-        <span>粘贴字符</span>
+        <span>{t('termMenu.paste') || '粘贴字符'}</span>
         <span className="text-[11px] text-[#858585] font-mono">⌘V</span>
       </button>
 
@@ -71,7 +73,7 @@ export function TerminalContextMenu({
         onClick={() => { onSendClipboardToRemote(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between text-[#3794ff]"
       >
-        <span>📤 发送剪贴板到远端</span>
+        <span>📤 {t('termMenu.sendClipboard')}</span>
         <span className="text-[11px] text-[#858585] font-mono">OSC 52</span>
       </button>
 
@@ -82,7 +84,7 @@ export function TerminalContextMenu({
       >
         <span className="flex items-center gap-1.5">
           <Bookmark className="w-3.5 h-3.5 text-amber-400" />
-          <span>在此处添加书签</span>
+          <span>{t('termMenu.addBookmark')}</span>
         </span>
         <span className="text-[11px] text-[#858585] font-mono">⌃⇧M</span>
       </button>
@@ -94,7 +96,7 @@ export function TerminalContextMenu({
       >
         <span className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-[#3794ff]" />
-          <span>{isCommandBlockMode ? '切回传统流式终端' : 'Warp 命令块模式'}</span>
+          <span>{isCommandBlockMode ? 'Stream Terminal' : 'Warp Block Mode'}</span>
         </span>
         <span className="text-[11px] text-[#858585] font-mono">⌘⇧B</span>
       </button>
@@ -115,7 +117,7 @@ export function TerminalContextMenu({
           >
             <span className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-purple-400 group-hover:text-white" />
-              <span>AI 解释选中内容</span>
+              <span>{t('aiDrawer.title') || 'AI 解释选中内容'}</span>
             </span>
             <span className="text-[11px] text-[#858585] group-hover:text-white font-mono">⌘K</span>
           </button>
@@ -128,7 +130,7 @@ export function TerminalContextMenu({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between text-[#3794ff]"
             >
-              <span>在浏览器中打开链接</span>
+              <span>{t('termMenu.openBrowser')}</span>
             </button>
           )}
         </>
@@ -139,25 +141,25 @@ export function TerminalContextMenu({
         onClick={() => { onSelectAll(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors"
       >
-        选择全部文本
+        {t('termMenu.selectAll') || '选择全部文本'}
       </button>
       <button 
         onClick={() => { onClearTerminal(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors"
       >
-        清空当前终端屏幕
+        {t('termMenu.clear') || '清空当前终端屏幕'}
       </button>
       <button 
         onClick={() => { onToggleLiveHex(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors"
       >
-        {showLiveHex ? '关闭' : '打开'} Hex Live 视图
+        {t('termMenu.toggleHex').replace('{action}', showLiveHex ? t('common.close') : t('common.open'))}
       </button>
       <button 
         onClick={() => { onFindFromMenu(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between"
       >
-        <span>查找缓冲区...</span>
+        <span>{t('termMenu.findBuffer')}</span>
         <span className="text-[11px] text-[#858585] font-mono">⌘F</span>
       </button>
       <div className="h-px bg-[#2b2b2b] my-1" />
@@ -165,7 +167,7 @@ export function TerminalContextMenu({
         onClick={() => { onScreenshot(); onClose(); }}
         className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors"
       >
-        一键截取屏幕并保存图片
+        {t('commandPalette.screenshotTitle') || '一键截取屏幕并保存图片'}
       </button>
     </div>
   );

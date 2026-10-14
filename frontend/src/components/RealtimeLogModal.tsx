@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Play, Square, Trash2, Copy, Search, X, Check, RefreshCw, ArrowDownCircle } from 'lucide-react';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
+import { useI18n } from '../i18n/I18nContext';
 
 interface RealtimeLogModalProps {
   isOpen: boolean;
@@ -28,6 +29,18 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
   sessionName,
   theme = 'tokyo-night',
 }) => {
+  const { t } = useI18n();
+
+  const commonLogs = [
+    { label: t('realtimeLog.syslog') || '系统日志 (syslog)', path: '/var/log/syslog' },
+    { label: t('realtimeLog.messages') || '消息日志 (messages)', path: '/var/log/messages' },
+    { label: t('realtimeLog.authLog') || '认证与登录 (auth.log)', path: '/var/log/auth.log' },
+    { label: t('realtimeLog.nginxAccess') || 'Nginx 访问日志', path: '/var/log/nginx/access.log' },
+    { label: t('realtimeLog.nginxError') || 'Nginx 错误日志', path: '/var/log/nginx/error.log' },
+    { label: t('realtimeLog.dmesg') || '内核环形缓冲 (dmesg)', path: '/var/log/dmesg' },
+    { label: t('realtimeLog.dockerLog') || 'Docker 守护进程', path: '/var/log/docker.log' },
+    { label: t('realtimeLog.secureLog') || '安全日志 (secure)', path: '/var/log/secure' },
+  ];
   const [logPath, setLogPath] = useState('/var/log/syslog');
   const [initialLines, setInitialLines] = useState(100);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -59,7 +72,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
 
     const unoffError = EventsOn('remote-log-tail-error', (data: any) => {
       if (data.sessionId === sessionId && data.logPath === logPath) {
-        setErrorMsg(data.error || '日志流异常中断');
+        setErrorMsg(data.error || t('realtimeLog.streamError') || '日志流异常中断');
         setIsStreaming(false);
       }
     });
@@ -144,7 +157,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
             <div className="w-7 h-7 rounded bg-[#2d2d2d] border border-[#3c3c3c] flex items-center justify-center text-[#0078d4]">
               <FileText className="w-3.5 h-3.5" />
             </div>
-            <span className="font-semibold text-sm text-[#e0e0e0]">远程实时日志追踪器 (Realtime Log Tailer)</span>
+            <span className="font-semibold text-sm text-[#e0e0e0]">{t('rtLog.title')}</span>
             {sessionName && (
               <span className="text-[11px] px-2 py-0.5 rounded bg-[#2d2d2d] text-[#0078d4] border border-[#3c3c3c] font-mono">
                 {sessionName}
@@ -153,7 +166,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
             {isStreaming && (
               <span className="flex items-center gap-1.5 text-[11px] text-[#89d185] bg-[#388a34]/20 border border-[#388a34]/40 px-2 py-0.5 rounded">
                 <span className="w-2 h-2 rounded-full bg-[#89d185] animate-pulse" />
-                正在流式接收 (tail -f)
+                {t('rtLog.streaming')}
               </span>
             )}
           </div>
@@ -169,7 +182,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
         <div className="flex flex-wrap items-center gap-3 p-3 bg-[#181818] border-b border-[#2b2b2b] text-xs shrink-0">
           {/* 日志路径选择与输入 */}
           <div className="flex items-center gap-2 flex-1 min-w-[320px]">
-            <span className="text-[#858585] shrink-0">日志路径:</span>
+            <span className="text-[#858585] shrink-0">{t('rtLog.logPath')}</span>
             <input
               type="text"
               value={logPath}
@@ -186,7 +199,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
               className="bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded px-2 py-1 text-[#cccccc] focus:outline-none disabled:opacity-50 text-xs"
               defaultValue=""
             >
-              <option value="" disabled>快速预设...</option>
+              <option value="" disabled>{t('rtLog.presets')}</option>
               {COMMON_LOG_PATHS.map(p => (
                 <option key={p.path} value={p.path}>{p.label}</option>
               ))}
@@ -195,7 +208,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
 
           {/* 初始行数 */}
           <div className="flex items-center gap-2">
-            <span className="text-[#858585] shrink-0">回溯行数:</span>
+            <span className="text-[#858585] shrink-0">{t('rtLog.linesBack')}</span>
             <input
               type="number"
               min="10"
@@ -214,7 +227,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
               className="flex items-center gap-1.5 px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium rounded transition-colors text-xs"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              开始追踪
+              {t('rtLog.startTail')}
             </button>
           ) : (
             <button
@@ -222,7 +235,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
               className="flex items-center gap-1.5 px-3 py-1 bg-[#a1260d] hover:bg-[#b82a0e] text-white font-medium rounded transition-colors text-xs"
             >
               <Square className="w-3.5 h-3.5 fill-current" />
-              停止追踪
+              {t('rtLog.stopTail')}
             </button>
           )}
         </div>
@@ -236,7 +249,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
                 type="text"
                 value={filterText}
                 onChange={e => setFilterText(e.target.value)}
-                placeholder="正则/关键字即时过滤..."
+                placeholder={t('rtLog.filterPlaceholder')}
                 className="w-full bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded pl-8 pr-2 py-1 text-[#cccccc] focus:outline-none text-xs"
               />
             </div>
@@ -254,7 +267,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
 
           <div className="flex items-center gap-3">
             <span className="text-[#858585] text-[11px]">
-              总行数: {logs.length} / 显示: {filteredLogs.length}
+              {t('rtLog.totalLines').replace('{total}', String(logs.length)).replace('{visible}', String(filteredLogs.length))}
             </span>
             <label className="flex items-center gap-1.5 cursor-pointer text-[#858585] hover:text-[#cccccc] select-none text-xs">
               <input
@@ -264,21 +277,21 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
                 className="rounded accent-[#0078d4]"
               />
               <ArrowDownCircle className="w-3.5 h-3.5" />
-              滚屏锁定
+              {t('rtLog.scrollLock')}
             </label>
             <button
               onClick={handleClear}
               className="flex items-center gap-1 px-2 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors text-xs"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              清屏
+              {t('common.clear')}
             </button>
             <button
               onClick={handleCopy}
               className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors text-xs"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-[#89d185]" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? '已复制' : '复制日志'}
+              {copied ? t('common.copied') : t('rtLog.copyLog')}
             </button>
           </div>
         </div>
@@ -286,7 +299,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
         {/* 错误提示 */}
         {errorMsg && (
           <div className="px-4 py-2 bg-[#a1260d]/15 border-b border-[#a1260d]/40 text-[#f48771] text-xs flex items-center justify-between shrink-0">
-            <span>错误: {errorMsg}</span>
+            <span>Error: {errorMsg}</span>
             <button onClick={() => setErrorMsg(null)} className="text-[#f48771] hover:text-white">
               <X className="w-3.5 h-3.5" />
             </button>
@@ -301,7 +314,7 @@ export const RealtimeLogModal: React.FC<RealtimeLogModalProps> = ({
           {filteredLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-[#858585] gap-2">
               <FileText className="w-8 h-8 opacity-40" />
-              <span>{isStreaming ? '等待远程日志输出...' : '点击「开始追踪」以流式监控远程日志'}</span>
+              <span>{isStreaming ? t('rtLog.waitingOutput') : t('rtLog.clickToStart')}</span>
             </div>
           ) : (
             filteredLogs.map((line, idx) => {

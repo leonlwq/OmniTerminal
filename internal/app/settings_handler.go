@@ -35,6 +35,7 @@ func (a *App) GetSettings() (models.AppSettings, error) {
 	path := a.getSettingsPath()
 	defaultSettings := models.AppSettings{
 		ThemeName:                "VS Code Dark Modern",
+		Language:                 "",
 		FontFamily:               "Menlo, Monaco, Consolas, monospace",
 		FontSize:                 13,
 		HasMasterPassword:        false,

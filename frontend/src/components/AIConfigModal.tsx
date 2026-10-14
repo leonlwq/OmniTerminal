@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles, Settings, X, Check, AlertCircle, RefreshCw,
@@ -31,60 +32,60 @@ interface ProviderPreset {
   keyHint?: string;
 }
 
-const PROVIDER_PRESETS: ProviderPreset[] = [
+const getProviderPresets = (t: (key: string) => string): ProviderPreset[] => [
   {
     id: 'deepseek',
-    name: 'DeepSeek (官方超高性价比)',
-    badge: '官方推荐',
+    name: t('aiConfig.deepseekName'),
+    badge: t('aiConfig.badgeOfficial'),
     defaultBaseUrl: 'https://api.deepseek.com/v1',
     defaultModel: 'deepseek-chat',
     models: ['deepseek-chat', 'deepseek-reasoner'],
-    keyHint: '需填入 DeepSeek 官方 API Key (sk-...)',
+    keyHint: t('aiConfig.deepseekHint'),
   },
   {
     id: 'ollama',
-    name: 'Ollama (本地私有化大模型)',
-    badge: '本地免密',
+    name: t('aiConfig.ollamaName'),
+    badge: t('aiConfig.badgeLocal'),
     defaultBaseUrl: 'http://localhost:11434/v1',
     defaultModel: 'llama3',
     models: ['llama3', 'deepseek-r1:8b', 'qwen2.5:7b', 'mistral', 'codellama'],
-    keyHint: '本地 Ollama 默认免鉴权，API Key 可留空',
+    keyHint: t('aiConfig.ollamaHint'),
   },
   {
     id: 'openai',
     name: 'OpenAI (GPT-4o / GPT-4o-mini)',
-    badge: '官方端点',
+    badge: t('aiConfig.badgeOfficialEndpoint'),
     defaultBaseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4o-mini',
     models: ['gpt-4o-mini', 'gpt-4o', 'o1-mini'],
-    keyHint: '需填入 OpenAI 官方 API Key (sk-...)',
+    keyHint: t('aiConfig.openaiHint'),
   },
   {
     id: 'gemini',
-    name: 'Google Gemini (官方兼容端点)',
+    name: t('aiConfig.geminiName'),
     badge: 'Google',
     defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     defaultModel: 'gemini-1.5-flash',
     models: ['gemini-1.5-flash', 'gemini-1.5-pro'],
-    keyHint: '需填入 Google AI Studio API Key',
+    keyHint: t('aiConfig.geminiHint'),
   },
   {
     id: 'claude',
-    name: 'Anthropic Claude (兼容端点)',
+    name: t('aiConfig.claudeName'),
     badge: 'Claude',
     defaultBaseUrl: 'https://api.anthropic.com/v1',
     defaultModel: 'claude-3-5-sonnet-20241022',
     models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-    keyHint: '需填入 Anthropic 或 OneAPI 中转端点密钥',
+    keyHint: t('aiConfig.claudeHint'),
   },
   {
     id: 'custom',
-    name: 'Custom (自定义兼容端点)',
-    badge: '自定义',
+    name: t('aiConfig.customName'),
+    badge: t('aiConfig.badgeCustom'),
     defaultBaseUrl: '',
     defaultModel: '',
     models: [],
-    keyHint: '支持任意兼容 OpenAI Chat Completions 的服务端点',
+    keyHint: t('aiConfig.customHint'),
   },
 ];
 
@@ -94,6 +95,8 @@ export function AIConfigModal({
   aiConfig,
   onSaveAIConfig,
 }: AIConfigModalProps) {
+  const { t } = useI18n();
+  const PROVIDER_PRESETS = getProviderPresets(t);
   const [formData, setFormData] = useState<models.AIConfig>(() => {
     return new models.AIConfig({
       provider: aiConfig?.provider || 'deepseek',
@@ -165,22 +168,22 @@ export function AIConfigModal({
       const ok = await AITestConnection(testConfig);
       if (ok) {
         setTestStatus('success');
-        setTestResultMsg('连接成功！模型响应正常，可以开始智能运维交互。');
+        setTestResultMsg(t('aiConfig.testSuccess'));
       } else {
         setTestStatus('error');
-        setTestResultMsg('连接未完成或返回空响应，请检查服务端点与模型状态。');
+        setTestResultMsg(t('aiConfig.testEmpty'));
       }
     } catch (err: any) {
       setTestStatus('error');
       const errStr = err?.message || String(err);
       if (formData.provider === 'ollama' && (errStr.includes('404') || errStr.includes('not found'))) {
-        setTestResultMsg(`Ollama 返回 404：本地未找到模型 "${formData.model}"。请在终端执行 'ollama pull ${formData.model}'，或换用已安装的模型名。`);
+        setTestResultMsg(t('aiConfig.ollama404').replace('{model}', formData.model));
       } else if (formData.provider === 'ollama' && (errStr.includes('connection refused') || errStr.includes('dial tcp'))) {
-        setTestResultMsg(`无法连接到 Ollama 服务（${formData.baseUrl}）。请确认本地 Ollama 是否已启动运行（ollama serve）。`);
+        setTestResultMsg(t('aiConfig.ollamaConnErr').replace('{url}', formData.baseUrl));
       } else if (errStr.includes('401') || errStr.includes('Unauthorized')) {
-        setTestResultMsg('鉴权失败（HTTP 401）：API Key 无效或已过期，请核对密钥。');
+        setTestResultMsg(t('aiConfig.auth401'));
       } else {
-        setTestResultMsg(`通信测试失败：${errStr}`);
+        setTestResultMsg(t('aiConfig.testFailed').replace('{err}', errStr));
       }
     }
   };
@@ -226,13 +229,13 @@ export function AIConfigModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm text-[#e0e0e0]">大模型接入设置 (LLM Provider Config)</h3>
+                <h3 className="font-semibold text-sm text-[#e0e0e0]">{t('aiConfig.title')}</h3>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-[#2d2d2d] border border-[#3c3c3c] text-[#0078d4] font-mono">
                   {formData.provider}
                 </span>
               </div>
               <p className="text-[11px] text-[#858585] mt-0.5">
-                支持 OpenAI / DeepSeek / Ollama 本地私有 / Google Gemini / Claude
+                {t('aiConfig.desc')}
               </p>
             </div>
           </div>
@@ -240,7 +243,7 @@ export function AIConfigModal({
             type="button"
             onClick={onClose}
             className="p-1.5 rounded text-[#858585] hover:text-[#e0e0e0] hover:bg-[#333333] transition-colors"
-            title="关闭 (Esc)"
+            title={t('aiConfig.closeEsc')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -252,7 +255,7 @@ export function AIConfigModal({
           <div>
             <label className="text-xs font-semibold text-[#cccccc] flex items-center gap-1.5 mb-1.5">
               <Server className="w-3.5 h-3.5 text-[#0078d4]" />
-              <span>服务商 Provider</span>
+              <span>{t('aiConfig.provider')}</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {PROVIDER_PRESETS.map(preset => {
@@ -290,9 +293,9 @@ export function AIConfigModal({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-[#cccccc] flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5 text-[#0078d4]" />
-                <span>模型名称 Model Name</span>
+                <span>{t('aiConfig.modelName')}</span>
               </label>
-              <span className="text-[10px] text-[#858585]">支持直接输入或点击下方快速填入</span>
+              <span className="text-[10px] text-[#858585]">{t('aiConfig.modelHint')}</span>
             </div>
             <input
               type="text"
@@ -307,7 +310,7 @@ export function AIConfigModal({
             {/* Quick Model Tags */}
             {currentPreset.models.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                <span className="text-[10px] text-[#858585] mr-0.5">常用模型:</span>
+                <span className="text-[10px] text-[#858585] mr-0.5">{t('aiConfig.commonModels')}</span>
                 {currentPreset.models.map(m => (
                   <button
                     key={m}
@@ -334,7 +337,7 @@ export function AIConfigModal({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-[#cccccc] flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#0078d4]" />
-                <span>Base URL 服务端点</span>
+                <span>{t('aiConfig.baseUrl')}</span>
               </label>
               {currentPreset.defaultBaseUrl && (
                 <button
@@ -342,7 +345,7 @@ export function AIConfigModal({
                   onClick={() => setFormData(prev => new models.AIConfig({ ...prev, baseUrl: currentPreset.defaultBaseUrl }))}
                   className="text-[10px] text-[#0078d4] hover:underline"
                 >
-                  恢复默认端点
+                  {t('aiConfig.resetDefault')}
                 </button>
               )}
             </div>
@@ -359,7 +362,7 @@ export function AIConfigModal({
             {formData.provider === 'ollama' && (
               <p className="text-[10px] text-[#cca700] mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3 shrink-0" />
-                <span>本地 Ollama 默认端口为 11434，端点格式必须为 http://localhost:11434/v1</span>
+                <span>{t('aiConfig.ollamaHint')}</span>
               </p>
             )}
           </div>
@@ -369,10 +372,10 @@ export function AIConfigModal({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-[#cccccc] flex items-center gap-1.5">
                 <Key className="w-3.5 h-3.5 text-[#cca700]" />
-                <span>API Key 密钥</span>
+                <span>{t('aiConfig.apiKey')}</span>
               </label>
               <span className="text-[10px] text-[#858585]">
-                {currentPreset.keyHint || '本地高强度加密存储'}
+                {currentPreset.keyHint || t('aiConfig.encryptedHint')}
               </span>
             </div>
             <div className="relative">
@@ -383,14 +386,14 @@ export function AIConfigModal({
                   setFormData(prev => new models.AIConfig({ ...prev, apiKey: e.target.value }));
                   setTestStatus('idle');
                 }}
-                placeholder={formData.provider === 'ollama' ? '本地 Ollama 可留空 (可选)' : 'sk-...'}
+                placeholder={formData.provider === 'ollama' ? t('aiConfig.ollamaKeyPlaceholder') : 'sk-...'}
                 className="w-full pl-3 pr-9 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] placeholder-[#858585] font-mono outline-none transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowApiKey(!showApiKey)}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#858585] hover:text-[#cccccc] transition-colors"
-                title={showApiKey ? '隐藏密钥' : '显示密钥'}
+                title={showApiKey ? t('aiConfig.hideKey') : t('aiConfig.showKey')}
               >
                 {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -406,7 +409,7 @@ export function AIConfigModal({
             >
               <span className="flex items-center gap-1.5 font-medium">
                 <Sliders className="w-3.5 h-3.5 text-[#0078d4]" />
-                <span>高级生成参数 (Temperature / Tokens / System Prompt)</span>
+                <span>{t('aiConfig.advancedParams')}</span>
               </span>
               <span className="text-[10px] text-[#0078d4]">{showAdvanced ? '收起 ▲' : '展开 ▼'}</span>
             </button>
@@ -415,8 +418,8 @@ export function AIConfigModal({
               <div className="mt-3 p-3 bg-[#252526] border border-[#2b2b2b] rounded space-y-3 animate-in slide-in-from-top-1 duration-150 text-xs">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[#858585] text-[11px]">采样温度 Temperature: <span className="text-[#e0e0e0] font-mono">{formData.temperature}</span></label>
-                    <span className="text-[10px] text-[#858585]">0.0 (更确定/精准) ~ 1.0 (更发散/丰富)</span>
+                    <label className="text-[#858585] text-[11px]">{t('aiConfig.tempLabel')} <span className="text-[#e0e0e0] font-mono">{formData.temperature}</span></label>
+                    <span className="text-[10px] text-[#858585]">{t('aiConfig.tempHint')}</span>
                   </div>
                   <input
                     type="range"
@@ -430,7 +433,7 @@ export function AIConfigModal({
                 </div>
 
                 <div>
-                  <label className="text-[#858585] text-[11px] block mb-1">最大生成 Token 数 (Max Tokens):</label>
+                  <label className="text-[#858585] text-[11px] block mb-1">{t('aiConfig.maxTokens')}</label>
                   <input
                     type="number"
                     value={formData.maxTokens || 2048}
@@ -440,12 +443,12 @@ export function AIConfigModal({
                 </div>
 
                 <div>
-                  <label className="text-[#858585] text-[11px] block mb-1">自定义系统提示词 (System Prompt):</label>
+                  <label className="text-[#858585] text-[11px] block mb-1">{t('aiConfig.sysPrompt')}</label>
                   <textarea
                     rows={2}
                     value={formData.systemPrompt}
                     onChange={e => setFormData(prev => new models.AIConfig({ ...prev, systemPrompt: e.target.value }))}
-                    placeholder="留空则使用内置的资深 DevOps / SRE 架构师系统人设..."
+                    placeholder={t("aiConfig.sysPromptPlaceholder")}
                     className="w-full px-2.5 py-1.5 bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] placeholder-[#858585] outline-none resize-none font-mono"
                   />
                 </div>
@@ -457,7 +460,7 @@ export function AIConfigModal({
           {testStatus === 'testing' && (
             <div className="p-3 rounded bg-[#0078d4]/15 border border-[#0078d4]/40 text-[#75beff] text-xs flex items-center gap-2 animate-pulse">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0078d4] shrink-0" />
-              <span>正在测试与大模型服务（{formData.provider} / {formData.model}）的连通性，请稍候...</span>
+              <span>{t('aiConfig.testingConn').replace('{provider}', formData.provider).replace('{model}', formData.model)}</span>
             </div>
           )}
           {testStatus === 'success' && (
@@ -483,7 +486,7 @@ export function AIConfigModal({
             className="px-3 py-1 rounded border border-[#3c3c3c] bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${testStatus === 'testing' ? 'animate-spin text-[#0078d4]' : 'text-[#858585]'}`} />
-            <span>测试连接</span>
+            <span>{t('aiConfig.testBtn')}</span>
           </button>
 
           <div className="flex items-center space-x-2">
@@ -492,7 +495,7 @@ export function AIConfigModal({
               onClick={onClose}
               className="px-3.5 py-1 rounded text-xs text-[#cccccc] hover:text-white hover:bg-[#333333] transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -506,10 +509,10 @@ export function AIConfigModal({
               {isSavedRecently ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-white" />
-                  <span>已保存</span>
+                  <span>{t('common.saved')}</span>
                 </>
               ) : (
-                <span>保存配置</span>
+                <span>{t('common.save')}</span>
               )}
             </button>
           </div>

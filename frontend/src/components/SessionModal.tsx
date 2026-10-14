@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React from 'react';
 import { 
   X, Server, Terminal, Key, Palette, FileText, Share2, Sparkles, Folder
@@ -39,6 +40,7 @@ export function SessionModal({
   getColorLabelClass,
   customThemes = [],
 }: SessionModalProps) {
+  const { t } = useI18n();
   if (!isModalOpen) return null;
 
   return (
@@ -54,8 +56,8 @@ export function SessionModal({
             <div>
               <h3 className="text-xs font-semibold text-[#e0e0e0] leading-tight">
                 {modalMode === 'create'
-                  ? (formData.isFolder ? '新建分类目录' : '新建主机会话')
-                  : (formData.isFolder ? '重命名分类目录' : '修改会话配置')}
+                  ? (formData.isFolder ? t('sessionModal.newFolder') : t('sessionModal.newSession'))
+                  : (formData.isFolder ? t('sessionModal.renameFolder') : t('sessionModal.editSession'))}
               </h3>
               <span className="text-[11px] text-[#858585] font-normal">
                 {formData.isFolder ? 'Folder Organization' : 'Session Properties & Parameters'}
@@ -77,14 +79,14 @@ export function SessionModal({
               <div className="bg-[#252526] border border-[#2b2b2b] rounded-lg p-5 space-y-4 shadow-sm">
                 <h4 className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-2 border-b border-[#2b2b2b] pb-2.5">
                   <Folder className="w-3.5 h-3.5 text-[#0078d4]" />
-                  目录基本信息 (Folder Info)
+                  {t('sessionModal.folderBasicInfo')}
                 </h4>
                 <div className="grid grid-cols-2 gap-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">目录名称 *</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.folderName')}</label>
                     <input
                       type="text"
-                      placeholder="如: 生产集群 / 阿里云华东"
+                      placeholder={t('sessionModal.folderNamePlaceholder')}
                       value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       autoCapitalize="none"
@@ -97,13 +99,13 @@ export function SessionModal({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">所属父级目录</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.parentFolder')}</label>
                     <select
                       value={formData.parentId || ''}
                       onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none transition-colors"
                     >
-                      <option value="">[ 根目录 - Root ]</option>
+                      <option value="">{t('sessionModal.rootFolder')}</option>
                       {foldersOnly.map(f => (
                         f.id !== formData.id && (
                           <option key={f.id} value={f.id}>{f.name}</option>
@@ -119,19 +121,19 @@ export function SessionModal({
                 <div className="border-b border-[#2b2b2b] pb-2.5">
                   <h4 className="text-xs font-semibold text-[#e0e0e0] flex items-center gap-2">
                     <Sparkles className="w-3.5 h-3.5 text-[#0078d4]" />
-                    级联默认配置模板 (Cascading Inheritance Defaults)
+                    {t('sessionModal.cascadeDefaults')}
                   </h4>
                   <p className="text-[10px] text-[#858585] pt-1">
-                    在此目录下所有未单独指定配置的子会话，将自动继承以下默认参数（对标 Xshell 8 Folder Inheritance）：
+                    {t('sessionModal.cascadeDesc')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认登录用户 (User)</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultUserLabel') || '默认登录用户 (User)'}</label>
                     <input
                       type="text"
-                      placeholder="如: root / ubuntu (留空不预设)"
+                      placeholder={t('sessionModal.defaultUserPlaceholder') || '如: root / ubuntu (留空不预设)'}
                       value={formData.user || ''}
                       onChange={(e) => setFormData({ ...formData, user: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
@@ -139,7 +141,7 @@ export function SessionModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认端口 (Port)</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultPortLabel') || '默认端口 (Port)'}</label>
                     <input
                       type="number"
                       placeholder="22"
@@ -150,13 +152,13 @@ export function SessionModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认跳板机代理 (Jump Host)</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultJumpHost')}</label>
                     <select
                       value={formData.jumpHostSessionId || ''}
                       onChange={(e) => setFormData({ ...formData, jumpHostSessionId: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                     >
-                      <option value="">[ 直连 - 无默认跳板机 ]</option>
+                      <option value="">{t('sessionModal.directNoJump')}</option>
                       {sessions.filter(s => !s.isFolder && s.id !== formData.id).map(s => (
                         <option key={s.id} value={s.id}>{s.name} ({s.host}:{s.port})</option>
                       ))}
@@ -164,57 +166,57 @@ export function SessionModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认字符编码 (Encoding)</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultEncoding')}</label>
                     <select
                       value={formData.encoding || 'utf-8'}
                       onChange={(e) => setFormData({ ...formData, encoding: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                     >
-                      <option value="utf-8">UTF-8 (Unicode 标准)</option>
-                      <option value="gbk">GBK (简体中文)</option>
-                      <option value="gb2312">GB2312 (国标简中)</option>
-                      <option value="big5">Big5 (繁体中文)</option>
-                      <option value="euc-kr">EUC-KR (韩文)</option>
-                      <option value="shift-jis">Shift-JIS (日文)</option>
+                      <option value="utf-8">{t('sessionModal.charsetUtf8') || 'UTF-8 (Unicode 标准)'}</option>
+                      <option value="gbk">{t('sessionModal.charsetGbk') || 'GBK (简体中文)'}</option>
+                      <option value="gb2312">{t('sessionModal.charsetGb2312') || 'GB2312 (国标简中)'}</option>
+                      <option value="big5">{t('sessionModal.charsetBig5') || 'Big5 (繁体中文)'}</option>
+                      <option value="euc-kr">{t('sessionModal.charsetEucKr') || 'EUC-KR (韩文)'}</option>
+                      <option value="shift-jis">{t('sessionModal.charsetShiftJis') || 'Shift-JIS (日文)'}</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认配色主题</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultTheme')}</label>
                     <select
                       value={formData.overrideTheme || ''}
                       onChange={(e) => setFormData({ ...formData, overrideTheme: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                     >
-                      <option value="">[ 跟随全局偏好设置 ]</option>
+                      <option value="">{t('sessionModal.followGlobal')}</option>
                       {customThemes && customThemes.length > 0 && (
-                        <optgroup label="🎨 自定义配色方案 (Custom Themes)">
+                        <optgroup label={t('sessionModal.customThemesGroup') || '🎨 自定义配色方案 (Custom Themes)'}>
                           {customThemes.map((t: any) => (
                             <option key={t.name} value={t.name}>{t.name}</option>
                           ))}
                         </optgroup>
                       )}
-                      <optgroup label="🌙 暗黑极客主题 (Dark Themes)">
-                        <option value="VS Code Dark Modern">VS Code Dark Modern (官方默认)</option>
-                        <option value="Classic Dark">Classic Dark (极客暗黑)</option>
-                        <option value="Tokyo Night">Tokyo Night (东京暗夜)</option>
-                        <option value="Catppuccin Mocha">Catppuccin Mocha (摩卡柔和)</option>
-                        <option value="Nord">Nord (北欧极光)</option>
-                        <option value="One Dark Pro">One Dark Pro (经典 Atom)</option>
-                        <option value="Dracula">Dracula (德拉库拉)</option>
-                        <option value="Monokai">Monokai (复古原野)</option>
+                      <optgroup label={t('sessionModal.darkThemesGroup') || '🌙 暗黑极客主题 (Dark Themes)'}>
+                        <option value="VS Code Dark Modern">{t('sessionModal.themeVsCode') || 'VS Code Dark Modern (官方默认)'}</option>
+                        <option value="Classic Dark">{t('sessionModal.themeClassicDark') || 'Classic Dark (极客暗黑)'}</option>
+                        <option value="Tokyo Night">{t('sessionModal.themeTokyoNight') || 'Tokyo Night (东京暗夜)'}</option>
+                        <option value="Catppuccin Mocha">{t('sessionModal.themeCatppuccin') || 'Catppuccin Mocha (摩卡柔和)'}</option>
+                        <option value="Nord">{t('sessionModal.themeNord') || 'Nord (北欧极光)'}</option>
+                        <option value="One Dark Pro">{t('sessionModal.themeOneDark') || 'One Dark Pro (经典 Atom)'}</option>
+                        <option value="Dracula">{t('sessionModal.themeDracula') || 'Dracula (德拉库拉)'}</option>
+                        <option value="Monokai">{t('sessionModal.themeMonokai') || 'Monokai (复古原野)'}</option>
                       </optgroup>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-[#858585]">默认仿真终端类型</label>
+                    <label className="text-[11px] font-medium text-[#858585]">{t('sessionModal.defaultTermType')}</label>
                     <select
                       value={formData.termType || 'xterm-256color'}
                       onChange={(e) => setFormData({ ...formData, termType: e.target.value })}
                       className="w-full px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                     >
-                      <option value="xterm-256color">xterm-256color (推荐)</option>
+                      <option value="xterm-256color">{t('sessionModal.termTypeRecommended') || 'xterm-256color (推荐)'}</option>
                       <option value="xterm">xterm</option>
                       <option value="vt100">vt100</option>
                       <option value="linux">linux</option>
@@ -239,7 +241,7 @@ export function SessionModal({
                   }`}
                 >
                   <Server className="w-3.5 h-3.5 shrink-0" />
-                  <span>连接配置</span>
+                  <span>{t('sessionModal.tabConnection')}</span>
                 </button>
                 
                 {(!formData.protocol || formData.protocol === 'ssh') && (
@@ -253,7 +255,7 @@ export function SessionModal({
                     }`}
                   >
                     <Key className="w-3.5 h-3.5 shrink-0" />
-                    <span>身份认证</span>
+                    <span>{t('sessionModal.tabAuth')}</span>
                   </button>
                 )}
 
@@ -267,7 +269,7 @@ export function SessionModal({
                   }`}
                 >
                   <Terminal className="w-3.5 h-3.5 shrink-0" />
-                  <span>终端属性</span>
+                  <span>{t('sessionModal.tabTerminal')}</span>
                 </button>
 
                 <button 
@@ -280,7 +282,7 @@ export function SessionModal({
                   }`}
                 >
                   <Palette className="w-3.5 h-3.5 shrink-0" />
-                  <span>外观配色</span>
+                  <span>{t('sessionModal.tabAppearance')}</span>
                 </button>
 
                 {(!formData.protocol || formData.protocol === 'ssh') && (
@@ -294,7 +296,7 @@ export function SessionModal({
                     }`}
                   >
                     <Share2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>网络隧道</span>
+                    <span>{t('sessionModal.tabTunnel')}</span>
                   </button>
                 )}
 
@@ -308,7 +310,7 @@ export function SessionModal({
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5 shrink-0" />
-                  <span>审计与安全</span>
+                  <span>{t('sessionModal.tabAudit')}</span>
                 </button>
               </div>
 
@@ -378,13 +380,13 @@ export function SessionModal({
               onClick={() => setIsModalOpen(false)}
               className="px-4 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-xs font-medium rounded text-[#cccccc] transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] active:scale-[0.99] text-xs font-semibold rounded text-white transition-colors"
             >
-              保存会话
+              {t('sessionModal.save')}
             </button>
           </div>
         </form>

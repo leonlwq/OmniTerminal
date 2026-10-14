@@ -3,6 +3,7 @@ import { X, Play, Pause, RotateCcw, FastForward, Upload, Copy, Check, Film, Cloc
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { ClipboardSetText } from '../../wailsjs/runtime/runtime';
+import { useI18n } from '../i18n/I18nContext';
 
 interface CastHeader {
   version: number;
@@ -30,8 +31,9 @@ export function SessionCastPlayerModal({
   isOpen,
   onClose,
   initialCastContent,
-  initialTitle = '终端会话录像回放 (Session Cast Player)'
+  initialTitle
 }: SessionCastPlayerModalProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -59,7 +61,7 @@ export function SessionCastPlayerModal({
     try {
       const lines = content.trim().split('\n');
       if (lines.length < 2) {
-        alert('无效的 .cast 录像文件 (行数过少)');
+        alert(t('sessionCast.invalidFile') || '无效的 .cast 录像文件 (行数过少)');
         return;
       }
 
@@ -94,10 +96,10 @@ export function SessionCastPlayerModal({
 
       if (termRef.current) {
         termRef.current.reset();
-        termRef.current.write('\x1b[32m[录像加载完成，点击播放开始回放]\x1b[0m\r\n');
+        termRef.current.write(`\x1b[32m${t('sessionCast.loadComplete') || '[录像加载完成，点击播放开始回放]'}\x1b[0m\r\n`);
       }
     } catch (err: any) {
-      alert('解析 .cast 文件失败: ' + String(err));
+      alert((t('sessionCast.parseError') || '解析 .cast 文件失败: ') + String(err));
     }
   };
 
@@ -135,7 +137,7 @@ export function SessionCastPlayerModal({
     fitAddonRef.current = fitAddon;
 
     if (!initialCastContent && events.length === 0) {
-      term.write('\x1b[36m请点击上方“打开 .cast 录像”或直接将录像文件载入\x1b[0m\r\n');
+      term.write(`\x1b[36m${t('sessionCast.emptyHint') || '请点击上方“打开 .cast 录像”或直接将录像文件载入'}\x1b[0m\r\n`);
     }
 
     const handleResize = () => fitAddon.fit();
@@ -347,22 +349,22 @@ ${textElements}
             </div>
             <div>
               <h3 className="text-sm font-semibold text-[#e0e0e0] leading-tight flex items-center gap-2">
-                <span>{initialTitle}</span>
+                <span>{initialTitle || t('sessionCast.title')}</span>
                 {header && (
                   <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#04395e]/40 text-[#0078d4] border border-[#0078d4]/30">
-                    {header.width} × {header.height} | {events.length} 事件
+                    {header.width} × {header.height} | {events.length}
                   </span>
                 )}
               </h3>
               <span className="text-[11px] text-[#858585] font-normal">
-                Asciinema v2 兼容格式终端回放器
+                Asciinema v2 Cast Player
               </span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <label className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] cursor-pointer transition-colors flex items-center space-x-1.5">
               <Upload className="w-3.5 h-3.5 text-[#0078d4]" />
-              <span>打开 .cast 录像</span>
+              <span>{t('sessionCast.openCast')}</span>
               <input type="file" accept=".cast,.json,.txt" onChange={handleFileUpload} className="hidden" />
             </label>
             {rawCastText && (
@@ -370,36 +372,36 @@ ${textElements}
                 <button
                   onClick={handleExportCast}
                   className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors flex items-center space-x-1.5"
-                  title="导出为本地 .cast 文件"
+                  title=".cast"
                 >
                   <Download className="w-3.5 h-3.5 text-[#4ec9b0]" />
-                  <span>.cast 导出</span>
+                  <span>{t('sessionCast.exportCast')}</span>
                 </button>
                 <button
                   onClick={handleExportSVG}
                   className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors flex items-center space-x-1.5"
-                  title="导出为矢量动态 SVG 动画"
+                  title="SVG"
                 >
                   <Download className="w-3.5 h-3.5 text-[#0078d4]" />
-                  <span>动态 SVG</span>
+                  <span>{t('sessionCast.exportSvg')}</span>
                 </button>
                 <button
                   onClick={handleExportSnapshot}
                   className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors flex items-center space-x-1.5"
-                  title="截图当前终端快照为 PNG"
+                  title="PNG"
                 >
                   <Download className="w-3.5 h-3.5 text-[#0078d4]" />
-                  <span>快照 PNG</span>
+                  <span>{t('sessionCast.snapshotPng')}</span>
                 </button>
               </>
             )}
             <button
               onClick={handleCopyTranscript}
               className="px-2.5 py-1 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors flex items-center space-x-1.5"
-              title="一键复制纯文本内容"
+              title="Copy"
             >
               {copyNotice ? <Check className="w-3.5 h-3.5 text-[#4ec9b0]" /> : <Copy className="w-3.5 h-3.5 text-[#cca700]" />}
-              <span>{copyNotice ? '已复制' : '复制文本'}</span>
+              <span>{copyNotice ? t('common.copied', '已复制') : t('sessionCast.copyText')}</span>
             </button>
             <button
               onClick={onClose}
@@ -445,14 +447,14 @@ ${textElements}
                 className="px-3.5 py-1 rounded bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium flex items-center space-x-1.5 transition-colors disabled:opacity-50"
               >
                 {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                <span>{isPlaying ? '暂停' : '播放'}</span>
+                <span>{isPlaying ? t('sessionCast.pause') : t('sessionCast.play')}</span>
               </button>
 
               <button
                 onClick={() => handleSeek(0)}
                 disabled={events.length === 0}
                 className="p-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] transition-colors disabled:opacity-50"
-                title="重新开始"
+                title={t('sessionCast.restart') || '重新开始'}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
@@ -462,7 +464,7 @@ ${textElements}
             <div className="flex items-center space-x-1 bg-[#181818] p-0.5 rounded border border-[#2b2b2b]">
               <span className="text-[10px] text-[#858585] px-1.5 flex items-center gap-1">
                 <FastForward className="w-3 h-3 text-[#0078d4]" />
-                倍速:
+                {t('sessionCast.speed') || '倍速:'}
               </span>
               {[0.5, 1.0, 1.5, 2.0, 4.0].map((spd) => (
                 <button

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { app, models } from '../../wailsjs/go/models';
 import { WriteSSH, SaveSettings } from '../../wailsjs/go/app/App';
 import { TerminalInstance, terminalBuffers } from './TerminalInstance';
@@ -280,6 +281,7 @@ export const AppModalsContainer: React.FC<AppModalsContainerProps> = ({
   onConfirmCloseApp,
   onCancelCloseApp,
 }) => {
+  const { t } = useI18n();
   return (
     <>
       {/* 标签页关闭二次确认弹窗 */}
@@ -493,7 +495,7 @@ export const AppModalsContainer: React.FC<AppModalsContainerProps> = ({
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 font-mono text-xs">
-              <span>按 F12 / Ctrl+` 激活 Quake 下拉终端</span>
+              <span>{t('quake.activateHint')}</span>
             </div>
           )}
         </div>
@@ -624,7 +626,7 @@ export const AppModalsContainer: React.FC<AppModalsContainerProps> = ({
               id: 'default',
               parentId: '',
               isFolder: false,
-              setName: '默认快捷命令',
+              setName: t('quickCmd.defaultSetName'),
               commands: [{ label, cmd }]
             })];
           } else {

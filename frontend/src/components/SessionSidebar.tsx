@@ -3,6 +3,7 @@ import { Search, ChevronRight, Columns, Lock, X, Terminal as TermIcon, Activity,
 import { app } from '../../wailsjs/go/models';
 import { SessionTree } from './SessionTree';
 import { HostStatusResult } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface SessionSidebarProps {
   searchQuery: string;
@@ -100,6 +101,7 @@ export function SessionSidebar({
   getColorLabelClass,
   customTabNames = {},
 }: SessionSidebarProps) {
+  const { t } = useI18n();
   const availableTags = React.useMemo(() => {
     const set = new Set<string>();
     sessions.forEach(s => {
@@ -121,7 +123,7 @@ export function SessionSidebar({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-app-text-muted" />
           <input 
             type="text" 
-            placeholder="搜索会话 (tag:prod, ip:192...)"
+            placeholder={t('sidebar.searchPlaceholder') || "搜索会话 (tag:prod, ip:192...)"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoCapitalize="none"
@@ -155,7 +157,7 @@ export function SessionSidebar({
                 : 'bg-app-input text-app-text-muted hover:text-app-text border border-app-border'
             }`}
           >
-            全部
+            {t('sidebar.allTags') || '全部'}
           </button>
           {availableTags.map(tag => {
             const isSelected = searchQuery === `tag:${tag}` || searchQuery === tag;
@@ -204,7 +206,7 @@ export function SessionSidebar({
       >
         <div className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-app-text-muted uppercase tracking-wider select-none">
           <div className="flex items-center space-x-1.5">
-            <span>会话导航</span>
+            <span>{t('sidebar.sessionNav') || '会话导航'}</span>
             <span className="text-[10px] px-1.5 py-0.2 bg-app-surface border border-app-border rounded text-app-text-muted">
               {sessions.filter(s => !s.isFolder).length}
             </span>
@@ -215,7 +217,7 @@ export function SessionSidebar({
                 type="button"
                 onClick={onNewSession}
                 className="p-1 text-app-text-muted hover:text-app-text hover:bg-app-hover rounded transition-colors active:scale-95"
-                title="新建主机会话 (Ctrl+N)"
+                title={t('sidebar.newSessionTooltip') || "新建主机会话 (Ctrl+N)"}
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -225,7 +227,7 @@ export function SessionSidebar({
                 type="button"
                 onClick={onNewFolder}
                 className="p-1 text-app-text-muted hover:text-app-text hover:bg-app-hover rounded transition-colors active:scale-95"
-                title="新建分类目录"
+                title={t('sidebar.newFolderTooltip') || "新建分类目录"}
               >
                 <FolderPlus className="w-3.5 h-3.5" />
               </button>
@@ -236,10 +238,10 @@ export function SessionSidebar({
                 onClick={onProbeReachability}
                 disabled={isProbingReachability}
                 className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 bg-app-surface hover:bg-app-hover text-app-accent border border-app-border rounded transition-colors active:scale-95"
-                title="一键探测所有主机的在线连通性与网络延迟"
+                title={t('sidebar.probeTooltip') || "一键探测所有主机的在线连通性与网络延迟"}
               >
                 <Activity className={`w-3 h-3 ${isProbingReachability ? 'animate-spin' : ''}`} />
-                <span>{isProbingReachability ? '探测中' : '探测'}</span>
+                <span>{isProbingReachability ? (t('sidebar.probing') || '探测中') : (t('sidebar.probe') || '探测')}</span>
               </button>
             )}
           </div>
@@ -297,7 +299,7 @@ export function SessionSidebar({
         <div className="flex items-center justify-between px-3 py-2 shrink-0 border-b border-app-border">
            <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-app-text-muted uppercase tracking-wider">
              <Columns className="h-3 w-3" />
-             <span>活动标签 ({openTabs.length})</span>
+             <span>{t('sidebar.activeTabs') || '活动标签'} ({openTabs.length})</span>
            </div>
            {openTabs.length > 0 && (
              <button 
@@ -308,15 +310,15 @@ export function SessionSidebar({
                   setOpenSftpTabs(openSftpTabs.filter(id => remaining.some(r => r.id === id)));
                }}
                className="text-[10px] font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded-full transition-colors active:scale-95"
-               title="关闭所有未锁定的标签"
+               title={t('sidebar.closeAllTooltip') || "关闭所有未锁定的标签"}
              >
-               全部关闭
+               {t('sidebar.closeAll') || '全部关闭'}
              </button>
            )}
         </div>
         <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
           {openTabs.length === 0 ? (
-            <div className="text-center text-[11px] text-app-text-muted/60 py-3">无活动的标签页</div>
+            <div className="text-center text-[11px] text-app-text-muted/60 py-3">{t('sidebar.noActiveTabs') || '无活动的标签页'}</div>
           ) : (
             openTabs.map(tab => {
               let dotClass = 'bg-app-text-muted';

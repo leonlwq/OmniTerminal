@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React from 'react';
 import { app, models } from '../../wailsjs/go/models';
 
@@ -85,7 +86,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
             {selectedSessionIds.length > 1 && selectedSessionIds.includes(sessionContextMenu.session.id) ? (
               <>
                 <div className="px-3 py-1 text-[10px] text-blue-400 font-bold border-b border-app-border">
-                  已选中 {selectedSessionIds.length} 个会话
+                  {t('sessionTreeContext.selectedCount').replace('{count}', String(selectedSessionIds.length))}
                 </div>
                 <button
                   onClick={() => {
@@ -95,7 +96,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors font-bold text-blue-400"
                 >
-                  ⚡ 批量连接 ({selectedSessionIds.length})
+                  {t('sessionTreeContext.batchConnect').replace('{count}', String(selectedSessionIds.length))}
                 </button>
                 <button
                   onClick={() => {
@@ -104,12 +105,12 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors font-bold text-yellow-400"
                 >
-                  📝 批量编辑属性...
+                  {t('sessionTreeContext.batchEdit')}
                 </button>
                 <div className="h-px bg-[#2d2d30] mx-2 my-1" />
                 <button
                   onClick={() => {
-                    if (confirm(`确认批量删除选中的 ${selectedSessionIds.length} 个会话？`)) {
+                    if (confirm(t('sessionTreeContext.batchDeleteConfirm').replace('{count}', String(selectedSessionIds.length)))) {
                       selectedSessionIds.forEach(id => handleDeleteSession(id));
                       setSelectedSessionIds([]);
                     }
@@ -117,7 +118,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-red-400 transition-colors"
                 >
-                  ❌ 批量删除 ({selectedSessionIds.length})
+                  {t('sessionTreeContext.batchDelete').replace('{count}', String(selectedSessionIds.length))}
                 </button>
               </>
             ) : !sessionContextMenu.session.isFolder ? (
@@ -138,7 +139,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors"
                 >
-                  👥 克隆会话配置副本
+                  {t('treeMenu.clone') || '👥 克隆会话配置副本'}
                 </button>
                 <button
                   onClick={(e) => {
@@ -147,7 +148,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors"
                 >
-                  ✏️ 修改会话属性...
+                  {t('treeMenu.edit') || '✏️ 修改会话属性...'}
                 </button>
                 <div className="h-px bg-[#2d2d30] mx-2 my-1" />
                 <button
@@ -157,7 +158,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-red-400 transition-colors"
                 >
-                  ❌ 删除此会话配置
+                  {t('treeMenu.delete') || '❌ 删除此会话配置'}
                 </button>
                 <button
                   onClick={() => {
@@ -178,7 +179,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors font-bold text-blue-400 flex items-center space-x-2"
                 >
-                  <span>⚡ 分组批量连接 (并发)</span>
+                  <span>{t('sessionTreeContext.groupBatchConnect')}</span>
                 </button>
                 <div className="h-px bg-app-border mx-2 my-1" />
                 <button
@@ -190,7 +191,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
                 >
-                  <span>➕ 在此目录下新建会话...</span>
+                  <span>{t('sessionTreeContext.newSessionInFolder')}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -201,7 +202,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
                 >
-                  <span>📁 在此目录下新建子目录...</span>
+                  <span>{t('treeMenu.newSubfolder') || '📁 在此目录下新建子目录...'}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -210,7 +211,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
                 >
-                  <span>{expandedFolders.includes(sessionContextMenu.session.id) ? '📂 折叠此目录' : '📂 展开此目录'}</span>
+                  <span>{expandedFolders.includes(sessionContextMenu.session.id) ? t('sessionTreeContext.collapseFolder') : t('sessionTreeContext.expandFolder')}</span>
                 </button>
                 <div className="h-px bg-app-border mx-2 my-1" />
                 <button
@@ -220,7 +221,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
                 >
-                  <span>✏️ 重命名 / 级联模板...</span>
+                  <span>{t('sessionTreeContext.renameCascade')}</span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -229,7 +230,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-red-400 transition-colors flex items-center space-x-2"
                 >
-                  <span>❌ 删除分类目录</span>
+                  <span>{t('treeMenu.deleteFolder') || '❌ 删除分类目录'}</span>
                 </button>
               </>
             )}
@@ -262,7 +263,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
             }}
           >
             <div className="px-3 py-1 text-[10px] text-app-text-muted font-semibold border-b border-app-border">
-              会话导航操作
+              {t('sessionTreeContext.navActions')}
             </div>
             <button
               onClick={() => {
@@ -273,7 +274,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
             >
-              <span>➕ 新建根会话...</span>
+              <span>➕ {t('commandPalette.newSessionTitle') || '新建根会话...'}</span>
             </button>
             <button
               onClick={() => {
@@ -284,7 +285,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
             >
-              <span>📁 新建根目录...</span>
+              <span>📁 {t('treeMenu.newSubfolder') || '新建根目录...'}</span>
             </button>
             <div className="h-px bg-app-border mx-2 my-1" />
             <button
@@ -294,7 +295,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
             >
-              <span>📂 展开所有目录</span>
+              <span>{t('sessionTreeContext.expandAll')}</span>
             </button>
             <button
               onClick={() => {
@@ -303,7 +304,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
             >
-              <span>📁 折叠所有目录</span>
+              <span>{t('sessionTreeContext.collapseAll')}</span>
             </button>
             <div className="h-px bg-app-border mx-2 my-1" />
             <button
@@ -313,7 +314,7 @@ export const SessionTreeContextMenu: React.FC<SessionTreeContextMenuProps> = ({
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-app-hover hover:text-white transition-colors flex items-center space-x-2"
             >
-              <span>🔄 探测所有主机连通性</span>
+              <span>🔄 {t('activity.probe') || '探测所有主机连通性'}</span>
             </button>
           </div>
         </>

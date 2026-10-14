@@ -4,6 +4,7 @@ import {
   RefreshCw, X, Play, Pause, AlertCircle 
 } from 'lucide-react';
 import { HostResourceMetrics } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface HostMonitorDrawerProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
   activeSessionId,
   sessionName,
 }) => {
+  const { t } = useI18n();
   const [metrics, setMetrics] = useState<HostResourceMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -107,7 +109,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
           </div>
           <div>
             <h3 className="text-xs font-semibold text-white leading-tight flex items-center gap-1.5">
-              主机状态监控
+              {t('hostMonitor.title')}
               <span className="text-[10px] px-1.5 py-0.5 bg-[#0078d4]/10 text-[#3794ff] border border-[#0078d4]/20 rounded font-mono font-normal">
                 {sessionName || 'Active Session'}
               </span>
@@ -121,7 +123,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
             className={`p-1.5 rounded transition-colors text-xs ${
               autoRefresh ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-[#858585] hover:bg-white/10'
             }`}
-            title={autoRefresh ? '暂停自动刷新' : '开启自动刷新'}
+            title={autoRefresh ? 'Pause Auto Refresh' : 'Resume Auto Refresh'}
           >
             {autoRefresh ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
           </button>
@@ -129,14 +131,14 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
             onClick={fetchMetrics}
             disabled={loading}
             className="p-1.5 text-[#858585] hover:text-white rounded hover:bg-white/10 transition-colors disabled:opacity-50"
-            title="手动刷新"
+            title={t('common.refresh')}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={onClose}
             className="p-1.5 text-[#858585] hover:text-white rounded hover:bg-white/10 transition-colors"
-            title="关闭监控"
+            title={t('common.close')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -159,7 +161,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-[#858585] flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5 text-[#3794ff]" />
-                CPU 使用率
+                {t('hostMonitor.cpuUsage')}
               </span>
               <span className="text-xs font-bold font-mono text-white">
                 {metrics?.cpuUsage !== undefined ? `${metrics.cpuUsage}%` : '--'}
@@ -184,7 +186,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-[#858585] flex items-center gap-1.5">
                 <Database className="w-3.5 h-3.5 text-emerald-400" />
-                内存占用
+                {t('hostMonitor.memUsage')}
               </span>
               <span className="text-xs font-bold font-mono text-white">
                 {metrics?.memUsage !== undefined ? `${metrics.memUsage}%` : '--'}
@@ -215,7 +217,7 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium text-[#858585] flex items-center gap-1.5">
               <HardDrive className="w-3.5 h-3.5 text-purple-400" />
-              根分区磁盘使用 (/)
+              {t('hostMonitor.diskUsage')}
             </span>
             <span className="text-xs font-bold font-mono text-white">
               {metrics?.diskUsage !== undefined ? `${metrics.diskUsage}%` : '--'}
@@ -231,8 +233,8 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
           </div>
           {metrics?.diskTotalGB ? (
             <div className="flex justify-between items-center text-[10px] text-[#858585] mt-1 font-mono">
-              <span>已用: {metrics.diskUsedGB} GB</span>
-              <span>总量: {metrics.diskTotalGB} GB</span>
+              <span>{(t('hostMonitor.diskUsed') || '已用: {used} GB').replace('{used}', String(metrics.diskUsedGB))}</span>
+              <span>{(t('hostMonitor.diskTotal') || '总量: {total} GB').replace('{total}', String(metrics.diskTotalGB))}</span>
             </div>
           ) : null}
         </div>
@@ -241,9 +243,9 @@ export const HostMonitorDrawer: React.FC<HostMonitorDrawerProps> = ({
         <div className="bg-[#252526] border border-[#2b2b2b] rounded-md p-2.5 flex items-center justify-between text-xs text-[#858585]">
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-[#858585]" />
-            <span className="text-[11px]">系统运行时间:</span>
+            <span className="text-[11px]">{t('hostMonitor.uptime')}</span>
           </div>
-          <span className="text-[#cccccc] font-mono text-[11px]">{metrics?.uptimeStr || '未知'}</span>
+          <span className="text-[#cccccc] font-mono text-[11px]">{metrics?.uptimeStr || t('common.unknown') || '未知'}</span>
         </div>
       </div>
     </div>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, RefreshCcw, FileText, Trash2, HardDrive, Download, Shield } from 'lucide-react';
 import { ListLogFiles, ReadLogContent, DeleteLogFile } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 interface LogViewerModalProps {
   onClose: () => void;
 }
 
 export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
+  const { t } = useI18n();
   const [files, setFiles] = useState<any[]>([]);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [content, setContent] = useState<string>('');
@@ -33,18 +35,18 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
 
   const handleSelect = async (file: any) => {
     setSelectedFile(file);
-    setContent('加载中...');
+    setContent(t('common.loading') + '...');
     try {
       const data = await ReadLogContent(file.path);
       setContent(data);
     } catch (e) {
-      setContent('读取失败: ' + String(e));
+      setContent(t('logViewer.readFailed') + String(e));
     }
   };
 
   const handleDelete = async (e: React.MouseEvent, file: any) => {
     e.stopPropagation();
-    if (!confirm('确定要删除日志文件 ' + file.name + ' 吗？')) return;
+    if (!confirm(t('logViewer.deleteConfirm').replace('{name}', file.name))) return;
     try {
       await DeleteLogFile(file.path);
       if (selectedFile?.path === file.path) {
@@ -53,7 +55,7 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
       }
       fetchFiles();
     } catch (err) {
-      alert('删除失败: ' + err);
+      alert(t('logViewer.deleteFailed') + err);
     }
   };
 
@@ -83,7 +85,7 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
               <FileText className="h-3.5 w-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">会话日志与审计中心</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('logViewer.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Audit Trail & Terminal Session Log Viewer</span>
             </div>
           </div>
@@ -91,7 +93,7 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
             <button 
               onClick={fetchFiles}
               className="p-1 text-[#858585] hover:text-[#e0e0e0] hover:bg-[#333333] rounded transition-colors"
-              title="刷新列表"
+              title={t('common.refresh')}
             >
               <RefreshCcw className="h-3.5 w-3.5" />
             </button>
@@ -109,13 +111,13 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
           {/* Sidebar - File List */}
           <div className="w-64 border-r border-[#2b2b2b] bg-[#181818] flex flex-col shrink-0 p-3 space-y-2">
             <div className="px-2 py-1 text-xs font-semibold text-[#858585] uppercase tracking-wider">
-              本地审计日志
+              {t('logViewer.localAudit')}
             </div>
             <div className="flex-1 overflow-y-auto space-y-0.5 pr-1">
               {loading && files.length === 0 ? (
-                <div className="text-center text-xs text-[#858585] py-6">正在加载...</div>
+                <div className="text-center text-xs text-[#858585] py-6">{t('logViewer.loading')}</div>
               ) : files.length === 0 ? (
-                <div className="text-center text-xs text-[#858585] py-6">暂无审计日志</div>
+                <div className="text-center text-xs text-[#858585] py-6">{t('logViewer.noLogs')}</div>
               ) : (
                 files.map(f => (
                   <div 
@@ -163,7 +165,7 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
                         onChange={e => setHexView(e.target.checked)} 
                         className="rounded border-[#3c3c3c] bg-[#1e1e1e] text-[#0078d4] focus:ring-0 w-3.5 h-3.5"
                       />
-                      <span>Hex 进制视图</span>
+                      <span>{t('logViewer.hexView')}</span>
                     </label>
                   </div>
                 </div>
@@ -182,7 +184,7 @@ export const LogViewerModal: React.FC<LogViewerModalProps> = ({ onClose }) => {
                 <div className="w-10 h-10 rounded bg-[#2d2d2d] border border-[#3c3c3c] flex items-center justify-center text-[#0078d4] mb-3">
                   <FileText className="w-5 h-5" />
                 </div>
-                <p>请在左侧选择要审查的日志文件</p>
+                <p>{t('logViewer.selectPrompt')}</p>
               </div>
             )}
           </div>

@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React, { useRef, useCallback } from 'react';
 
 interface TerminalSearchMinimapProps {
@@ -19,6 +20,7 @@ export function TerminalSearchMinimap({
   onScrollToLine,
   currentMatchIndex = -1,
 }: TerminalSearchMinimapProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 点击迷你地图任意位置或色块进行跳转
@@ -67,7 +69,7 @@ export function TerminalSearchMinimap({
     <div
       ref={containerRef}
       onClick={handleClick}
-      title="搜索结果迷你地图 (点击定位)"
+      title={t('minimap.tooltip')}
       className="absolute top-0 right-0 bottom-0 w-3 bg-[#181818]/75 hover:bg-[#181818]/95 border-l border-[#2b2b2b] z-30 transition-all select-none cursor-pointer group"
     >
       {/* 视口高亮区域 */}
@@ -91,7 +93,7 @@ export function TerminalSearchMinimap({
               e.stopPropagation();
               onScrollToLine(line);
             }}
-            title={`第 ${line + 1} 行匹配项 (点击跳转)`}
+            title={t('minimap.jumpLine').replace('{line}', String(line + 1))}
             className={`absolute left-0.5 right-0.5 rounded-full transition-transform cursor-pointer ${
               isCurrent
                 ? 'h-[4px] bg-amber-300 ring-2 ring-amber-400/80 shadow-[0_0_8px_rgba(251,191,36,1)] z-10 scale-125'
@@ -107,7 +109,7 @@ export function TerminalSearchMinimap({
       {/* 底部匹配总数指示气泡（鼠标悬浮时展开） */}
       {matchLines.length > 0 && (
         <div className="opacity-0 group-hover:opacity-100 absolute bottom-2 right-4 pointer-events-none bg-[#252526] border border-[#2b2b2b] text-[10px] text-amber-300 px-2 py-0.5 rounded shadow-lg whitespace-nowrap transition-opacity">
-          共 {matchLines.length} 处匹配
+          {t('minimap.totalMatches').replace('{count}', String(matchLines.length))}
         </div>
       )}
     </div>

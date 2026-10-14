@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React, { useState } from 'react';
 import { 
   Copy, Check, ChevronDown, ChevronRight, Bookmark, 
@@ -32,6 +33,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
   onExplainWithAI,
   onJumpToBlock,
 }) => {
+  const { t } = useI18n();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyText = (text: string, id: string) => {
@@ -47,9 +49,9 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
           <Terminal className="w-6 h-6" />
         </div>
         <div className="text-center space-y-1">
-          <p className="text-xs font-semibold text-slate-200">暂无捕获到的命令块</p>
+          <p className="text-xs font-semibold text-slate-200">{t('cmdBlock.emptyTitle') || '暂无捕获到的命令块'}</p>
           <p className="text-[11px] text-slate-500 max-w-sm leading-relaxed">
-            在终端中执行 Shell 命令后，命令与其输出流将自动解析为结构化块在此展示，支持块级单独复制、折叠与 AI 诊断。
+            {t('cmdBlock.emptyDesc') || '在终端中执行 Shell 命令后，命令与其输出流将自动解析为结构化块在此展示，支持块级单独复制、折叠与 AI 诊断。'}
           </p>
         </div>
       </div>
@@ -82,7 +84,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                 <button
                   onClick={() => onToggleCollapse(block.id)}
                   className="p-0.5 rounded text-[#858585] hover:text-[#cccccc]"
-                  title={block.isCollapsed ? '展开输出' : '折叠输出'}
+                  title={block.isCollapsed ? (t('cmdBlock.expandOutput') || '展开输出') : (t('cmdBlock.collapseOutput') || '折叠输出')}
                 >
                   {block.isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
@@ -129,7 +131,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                       className={`p-1 rounded transition-colors ${
                         block.isBookmarked ? 'text-amber-400' : 'text-[#858585] hover:text-[#cccccc]'
                       }`}
-                      title={block.isBookmarked ? '移除书签标记' : '标记为书签 (Bookmark)'}
+                      title={block.isBookmarked ? (t('cmdBlock.removeBookmark') || '移除书签标记') : (t('cmdBlock.addBookmark') || '标记为书签 (Bookmark)')}
                     >
                       <Bookmark className="w-3.5 h-3.5" fill={block.isBookmarked ? 'currentColor' : 'none'} />
                     </button>
@@ -139,7 +141,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                   <button
                     onClick={() => copyText(block.command, `${block.id}_cmd`)}
                     className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]"
-                    title="复制命令"
+                    title={t('cmdBlock.copyCommand') || '复制命令'}
                   >
                     {copiedId === `${block.id}_cmd` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -148,7 +150,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                   <button
                     onClick={() => copyText(block.output, `${block.id}_out`)}
                     className="p-1 rounded text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]"
-                    title="复制输出结果"
+                    title={t('cmdBlock.copyOutput') || '复制输出结果'}
                   >
                     <FileText className="w-3.5 h-3.5" />
                   </button>
@@ -158,10 +160,10 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                     <button
                       onClick={() => onExplainWithAI(block)}
                       className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-700/60 text-[10px]"
-                      title="使用 OmniAI Copilot 智能诊断错误栈"
+                      title={t('cmdBlock.aiDiagnoseTooltip') || '使用 OmniAI Copilot 智能诊断错误栈'}
                     >
                       <Sparkles className="w-3 h-3 text-purple-300" />
-                      <span>AI 诊断</span>
+                      <span>{t('cmdBlock.aiDiagnose') || 'AI 诊断'}</span>
                     </button>
                   )}
                 </div>
@@ -174,9 +176,9 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                 {block.output ? (
                   block.output
                 ) : isRunning ? (
-                  <span className="text-slate-500 italic">命令运行中...</span>
+                  <span className="text-slate-500 italic">{t('cmdBlock.running') || '命令运行中...'}</span>
                 ) : (
-                  <span className="text-slate-600 italic">&lt;无输出&gt;</span>
+                  <span className="text-slate-600 italic">{t('cmdBlock.noOutput') || '<无输出>'}</span>
                 )}
 
                 {/* Auto fold hint if > 50 lines */}
@@ -186,7 +188,7 @@ export const CommandBlockOverlay: React.FC<CommandBlockOverlayProps> = ({
                       onClick={() => onToggleCollapse(block.id)}
                       className="px-2 py-0.5 rounded bg-[#1f242e] hover:bg-[#282e3b] text-slate-400 text-[10px] border border-[#2b313d]"
                     >
-                      折叠长输出 ({lines.length} 行)
+                      {(t('cmdBlock.collapseLongOutput') || '折叠长输出 ({count} 行)').replace('{count}', String(lines.length))}
                     </button>
                   </div>
                 )}

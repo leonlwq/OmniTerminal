@@ -3,6 +3,7 @@ import {
   X, RefreshCw, Search, Play, Pause, Trash2, Copy, Download,
   Maximize2, Minimize2, Box, Layers, AlertCircle, FileText
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ContainerTarget {
   id: string;
@@ -26,6 +27,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
   selectedContainers,
   selectedHost,
 }) => {
+  const { t } = useI18n();
   const [logs, setLogs] = useState<Record<string, string>>({});
   const [isPaused, setIsPaused] = useState(false);
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
@@ -117,13 +119,13 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
             </div>
             <div>
               <h3 className="font-semibold text-xs text-white flex items-center gap-2">
-                多容器实时日志流矩阵 (Multi-Container Log Matrix)
+                {t('multiLog.title')}
                 <span className="text-[10px] bg-[#0078d4]/20 text-[#3794ff] px-1.5 py-0.2 rounded font-normal">
-                  {selectedContainers.length} 个容器同屏跟踪
+                  {t('multiLog.trackingCount').replace('{count}', String(selectedContainers.length))}
                 </span>
               </h3>
               <p className="text-[10px] text-[#858585]">
-                宿主: {selectedHost === 'local' ? '本地 (Local Host)' : selectedHost} | 自动刷新间隔: 2.5s
+                {t('multiLog.hostLabel').replace('{host}', selectedHost === 'local' ? 'Local Host' : selectedHost)}
               </p>
             </div>
           </div>
@@ -138,12 +140,12 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
               }`}
             >
               {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
-              <span>{isPaused ? '继续流式跟踪' : '暂停流式跟踪'}</span>
+              <span>{isPaused ? t('multiLog.resumeStream') : t('multiLog.pauseStream')}</span>
             </button>
             <button
               onClick={fetchLogs}
               className="p-1.5 rounded hover:bg-[#333333] text-[#858585] hover:text-white transition-colors"
-              title="立即刷新"
+              title={t('common.refresh')}
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -159,7 +161,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
         {/* Matrix Grid Panels */}
         <div className={`flex-1 p-3 grid ${gridColsClass} gap-3 overflow-hidden bg-[#141414]`}>
           {displayList.map(c => {
-            const rawLog = logs[c.id] || '等待捕获容器日志流...';
+            const rawLog = logs[c.id] || 'Waiting for container log stream...';
             const term = (searchTerms[c.id] || '').toLowerCase();
             const logLines = rawLog.split('\n');
             const filteredLines = term
@@ -191,7 +193,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
                         type="text"
                         value={searchTerms[c.id] || ''}
                         onChange={e => setSearchTerms({ ...searchTerms, [c.id]: e.target.value })}
-                        placeholder="过滤行..."
+                        placeholder={t('multiLog.filterLines')}
                         className="bg-transparent text-[10px] text-[#cccccc] placeholder-[#666666] outline-none w-16 focus:w-28 transition-all font-mono"
                       />
                     </div>
@@ -205,15 +207,15 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
                           ? 'bg-[#0078d4]/20 border-[#0078d4]/40 text-[#3794ff]'
                           : 'bg-[#252526] border-[#3c3c3c] text-[#858585]'
                       }`}
-                      title="自动滚屏到底部"
+                      title="Auto scroll"
                     >
-                      滚屏
+                      {t('multiLog.autoScroll')}
                     </button>
 
                     <button
                       onClick={() => navigator.clipboard.writeText(rawLog)}
                       className="p-1 text-[#858585] hover:text-white hover:bg-[#333333] rounded transition-colors"
-                      title="复制全部日志"
+                      title={t('multiLog.copyAll')}
                     >
                       <Copy className="w-3 h-3" />
                     </button>
@@ -221,7 +223,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
                     <button
                       onClick={() => setLogs(prev => ({ ...prev, [c.id]: '' }))}
                       className="p-1 text-[#858585] hover:text-rose-400 hover:bg-[#333333] rounded transition-colors"
-                      title="清屏"
+                      title={t('common.clear')}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -229,7 +231,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
                     <button
                       onClick={() => setMaximizedId(maximizedId === c.id ? null : c.id)}
                       className="p-1 text-[#858585] hover:text-white hover:bg-[#333333] rounded transition-colors"
-                      title={maximizedId === c.id ? '还原网格' : '最大化此视口'}
+                      title="Toggle Maximize"
                     >
                       {maximizedId === c.id ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
                     </button>
@@ -258,7 +260,7 @@ export const MultiLogMatrixModal: React.FC<MultiLogMatrixModalProps> = ({
                     );
                   })}
                   {filteredLines.length === 0 && (
-                    <div className="text-center py-10 text-[#666666]">无匹配的日志行</div>
+                    <div className="text-center py-10 text-[#666666]">{t('multiLog.noMatching')}</div>
                   )}
                 </div>
               </div>

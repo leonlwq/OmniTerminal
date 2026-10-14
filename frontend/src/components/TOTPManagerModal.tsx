@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import {
   ShieldCheck,
   Plus,
@@ -48,6 +49,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
   onClose,
   onSelectCode
 }) => {
+  const { t } = useI18n();
   const [entries, setEntries] = useState<TOTPEntry[]>([]);
   const [codes, setCodes] = useState<{ [id: string]: TOTPCodeResult }>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,7 +148,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
   const handleAddManual = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!label.trim() || !secret.trim()) {
-      setErrorMsg('请填写令牌标签与密钥 (Secret)');
+      setErrorMsg(t('totp.requireFields'));
       return;
     }
     setLoading(true);
@@ -176,7 +178,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
   const handleImportUri = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpUri.trim()) {
-      setErrorMsg('请输入有效的 otpauth:// URI');
+      setErrorMsg(t('totp.invalidUri'));
       return;
     }
     setLoading(true);
@@ -196,14 +198,14 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除该 TOTP 令牌吗？删除后将无法恢复。')) return;
+    if (!window.confirm(t('totp.deleteConfirm'))) return;
     try {
       if ((window as any).go?.app?.App?.DeleteTOTPEntry) {
         await (window as any).go.app.App.DeleteTOTPEntry(id);
         await loadEntries();
       }
     } catch (err: any) {
-      alert('删除失败: ' + (err?.message || String(err)));
+      alert('Delete failed: ' + (err?.message || String(err)));
     }
   };
 
@@ -217,7 +219,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
         await loadEntries();
       }
     } catch (err: any) {
-      alert('更新失败: ' + (err?.message || String(err)));
+      alert('Update failed: ' + (err?.message || String(err)));
     }
   };
 
@@ -251,8 +253,8 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] tracking-wide">TOTP / MFA 令牌管理器</h2>
-              <p className="text-xs text-[#858585]">两步验证动态口令中心 · 支持 SSH 认证自动嗅探与填充</p>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] tracking-wide">{t('totp.modalTitle')}</h2>
+              <p className="text-xs text-[#858585]">{t('totp.modalSubtitle')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -264,7 +266,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
               className="flex items-center space-x-1.5 px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>{isAdding ? '返回列表' : '添加令牌'}</span>
+              <span>{isAdding ? t('totp.backToList') : t('totp.addTokenBtn')}</span>
             </button>
             <button
               onClick={onClose}
@@ -299,7 +301,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                   }`}
                 >
                   <Key className="w-3.5 h-3.5" />
-                  <span>手动录入密钥</span>
+                  <span>{t('totp.tabManual')}</span>
                 </button>
                 <button
                   type="button"
@@ -311,7 +313,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                   }`}
                 >
                   <Link className="w-3.5 h-3.5" />
-                  <span>导入 otpauth:// 链接</span>
+                  <span>{t('totp.tabUri')}</span>
                 </button>
               </div>
 
@@ -320,11 +322,11 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[#e0e0e0] mb-1">
-                        令牌标签 / 名称 <span className="text-[#f14c4c]">*</span>
+                        {t('totp.labelTag')} <span className="text-[#f14c4c]">*</span>
                       </label>
                       <input
                         type="text"
-                        placeholder="例如: 生产堡垒机跳板机"
+                        placeholder={t('totp.tagPlaceholder')}
                         value={label}
                         onChange={e => setLabel(e.target.value)}
                         className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#0078d4]"
@@ -333,11 +335,11 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-[#e0e0e0] mb-1">
-                        签发机构 (Issuer)
+                        {t('totp.issuer')}
                       </label>
                       <input
                         type="text"
-                        placeholder="例如: AWS / JumpServer / Google"
+                        placeholder={t('totp.issuerPlaceholder')}
                         value={issuer}
                         onChange={e => setIssuer(e.target.value)}
                         className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#0078d4]"
@@ -348,11 +350,11 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[#e0e0e0] mb-1">
-                        账户名 / 邮箱
+                        {t('totp.account')}
                       </label>
                       <input
                         type="text"
-                        placeholder="例如: ops_admin@company.com"
+                        placeholder={t('totp.accountPlaceholder')}
                         value={accountName}
                         onChange={e => setAccountName(e.target.value)}
                         className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#0078d4]"
@@ -360,7 +362,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-[#e0e0e0] mb-1">
-                        密钥 (Base32 Secret) <span className="text-[#f14c4c]">*</span>
+                        {t('totp.secretKey')} <span className="text-[#f14c4c]">*</span>
                       </label>
                       <input
                         type="text"
@@ -375,30 +377,30 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">加密算法</label>
+                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.algorithm')}</label>
                       <select
                         value={algorithm}
                         onChange={e => setAlgorithm(e.target.value)}
                         className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] focus:outline-none focus:border-[#0078d4]"
                       >
-                        <option value="SHA1">SHA1 (标准兼容)</option>
+                        <option value="SHA1">SHA1</option>
                         <option value="SHA256">SHA256</option>
                         <option value="SHA512">SHA512</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">验证码位数</label>
+                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.digits')}</label>
                       <select
                         value={digits}
                         onChange={e => setDigits(Number(e.target.value))}
                         className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded px-3 py-1.5 text-xs text-[#cccccc] focus:outline-none focus:border-[#0078d4]"
                       >
-                        <option value={6}>6 位 (标准)</option>
-                        <option value={8}>8 位</option>
+                        <option value={6}>6</option>
+                        <option value={8}>8</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">刷新周期 (秒)</label>
+                      <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.period')}</label>
                       <input
                         type="number"
                         min={10}
@@ -416,14 +418,14 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                       onClick={() => setIsAdding(false)}
                       className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
                     >
-                      取消
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
                       className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors disabled:opacity-50"
                     >
-                      {loading ? '正在保存...' : '保存令牌'}
+                      {loading ? t('totp.saving') : t('totp.saveToken')}
                     </button>
                   </div>
                 </form>
@@ -431,7 +433,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                 <form onSubmit={handleImportUri} className="space-y-3.5">
                   <div>
                     <label className="block text-xs font-medium text-[#e0e0e0] mb-1">
-                      otpauth:// 链接
+                      otpauth:// URI
                     </label>
                     <textarea
                       rows={3}
@@ -442,7 +444,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                       required
                     />
                     <p className="mt-1 text-[11px] text-[#858585]">
-                      支持从 Google Authenticator、1Password 或二维码扫描结果解析导入
+                      {t('totp.uriDesc')}
                     </p>
                   </div>
 
@@ -452,14 +454,14 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                       onClick={() => setIsAdding(false)}
                       className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
                     >
-                      取消
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
                       className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors disabled:opacity-50"
                     >
-                      {loading ? '正在导入...' : '解析并导入'}
+                      {loading ? t('totp.importing') : t('totp.importBtn')}
                     </button>
                   </div>
                 </form>
@@ -473,7 +475,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                   <Search className="w-3.5 h-3.5 text-[#858585] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="按标签、机构或账户搜索令牌..."
+                    placeholder={t('totp.searchPlaceholder')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="w-full bg-[#1e1e1e] border border-[#3c3c3c] rounded pl-8 pr-3 py-1.5 text-xs text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#0078d4]"
@@ -482,7 +484,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                 <button
                   onClick={() => refreshCodes(entries)}
                   className="p-1.5 bg-[#252526] border border-[#2b2b2b] hover:bg-[#2a2d2e] text-[#cccccc] rounded transition-colors"
-                  title="立即刷新"
+                  title={t('common.refresh')}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
@@ -491,15 +493,15 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
               {filteredEntries.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-[#2b2b2b] rounded">
                   <Key className="w-10 h-10 text-[#858585] mx-auto mb-3 stroke-[1.5]" />
-                  <h3 className="text-xs font-semibold text-[#e0e0e0] mb-1">暂无 TOTP 令牌</h3>
+                  <h3 className="text-xs font-semibold text-[#e0e0e0] mb-1">{t('totp.emptyTitle')}</h3>
                   <p className="text-xs text-[#858585] mb-4 max-w-sm mx-auto">
-                    添加你的跳板机或服务器两步验证密钥，OmniTerminal 将自动计算并注入验证码
+                    {t('totp.emptyDesc')}
                   </p>
                   <button
                     onClick={() => setIsAdding(true)}
                     className="px-3 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors"
                   >
-                    添加第一个令牌
+                    {t('totp.addFirst')}
                   </button>
                 </div>
               ) : (
@@ -531,21 +533,21 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                             </h4>
                             <p className="text-[11px] text-[#858585] truncate">
                               {entry.issuer ? `${entry.issuer} · ` : ''}
-                              {entry.accountName || '无账户名'}
+                              {entry.accountName || t('totp.noAccount')}
                             </p>
                           </div>
                           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => setEditingEntry(entry)}
                               className="p-1 text-[#858585] hover:text-[#cccccc] rounded hover:bg-[#333333]"
-                              title="编辑"
+                              title={t('common.edit')}
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDelete(entry.id)}
                               className="p-1 text-[#858585] hover:text-[#f14c4c] rounded hover:bg-[#333333]"
-                              title="删除"
+                              title={t('common.delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -594,7 +596,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                             <button
                               onClick={() => handleCopyCode(entry.id, codeStr)}
                               className="p-1 bg-[#252526] hover:bg-[#0078d4] text-[#cccccc] hover:text-white rounded border border-[#2b2b2b] transition-colors"
-                              title="复制验证码"
+                              title={t('totp.copyCode')}
                             >
                               {copiedId === entry.id ? (
                                 <Check className="w-3.5 h-3.5 text-[#4ec9b0]" />
@@ -607,8 +609,8 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
 
                         {/* 底部元信息 */}
                         <div className="flex items-center justify-between text-[11px] text-[#858585] pt-1">
-                          <span>{entry.algorithm} · {entry.digits} 位</span>
-                          <span>{entry.period}s 周期</span>
+                          <span>{entry.algorithm} · {entry.digits}</span>
+                          <span>{entry.period}s</span>
                         </div>
                       </div>
                     );
@@ -622,10 +624,10 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
           {editingEntry && (
             <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
               <div className="bg-[#252526] border border-[#2b2b2b] rounded-lg p-4 w-full max-w-md space-y-3.5 shadow-2xl">
-                <h3 className="text-xs font-semibold text-[#e0e0e0]">编辑 TOTP 标签信息</h3>
+                <h3 className="text-xs font-semibold text-[#e0e0e0]">{t('totp.editLabel')}</h3>
                 <form onSubmit={handleUpdate} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">标签</label>
+                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.labelTag')}</label>
                     <input
                       type="text"
                       value={editingEntry.label}
@@ -635,7 +637,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">机构 (Issuer)</label>
+                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.issuer')}</label>
                     <input
                       type="text"
                       value={editingEntry.issuer}
@@ -644,7 +646,7 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">账户名</label>
+                    <label className="block text-xs font-medium text-[#e0e0e0] mb-1">{t('totp.account')}</label>
                     <input
                       type="text"
                       value={editingEntry.accountName}
@@ -658,13 +660,13 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
                       onClick={() => setEditingEntry(null)}
                       className="px-2.5 py-1 text-xs text-[#858585] hover:text-[#cccccc]"
                     >
-                      取消
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="px-3.5 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium"
                     >
-                      保存更新
+                      {t('totp.saveUpdate')}
                     </button>
                   </div>
                 </form>
@@ -677,13 +679,13 @@ export const TOTPManagerModal: React.FC<TOTPManagerModalProps> = ({
         <div className="px-5 py-3 border-t border-[#2b2b2b] bg-[#1f1f1f] flex items-center justify-between text-xs text-[#858585]">
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-[#4ec9b0]"></span>
-            <span>已保存 {entries.length} 个令牌 · AES-256 安全隔离存盘</span>
+            <span>{t('totp.footerInfo').replace('{count}', String(entries.length))}</span>
           </div>
           <button
             onClick={onClose}
             className="px-3.5 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium transition-colors"
           >
-            完成
+            {t('common.close')}
           </button>
         </div>
       </div>

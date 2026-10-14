@@ -27,6 +27,7 @@ import { TerminalSearchMinimap } from './terminal/TerminalSearchMinimap';
 import { InlineAICopilotPopover } from './terminal/InlineAICopilotPopover';
 import { MiniServerTelemetryWidget } from './terminal/MiniServerTelemetryWidget';
 import { getContextAwareSuggestion } from '../constants/commandCompletionDb';
+import { useI18n } from '../i18n/I18nContext';
 
 const COMMON_COMMANDS = [
   'docker ps', 'docker ps -a', 'docker compose up -d', 'docker compose down', 'docker compose logs -f',
@@ -384,6 +385,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
   onToggleRemoteOps,
   onToggleRealtimeLog,
 }) => {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -634,11 +636,11 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     const newBm = {
       id: `bm_${Date.now()}`,
       line: currentLine,
-      previewText: text.slice(0, 80) || `第 ${currentLine + 1} 行`,
+      previewText: text.slice(0, 80) || t('globalSearch.lineAt').replace('{line}', String(currentLine + 1)),
       createdAt: Date.now(),
     };
     setBookmarks(prev => [...prev.filter(b => b.line !== currentLine), newBm].sort((a, b) => a.line - b.line));
-    setBookmarkToast(`🚩 书签已添加 (第 ${currentLine + 1} 行)`);
+    setBookmarkToast(t('terminal.bookmarkAdded').replace('{line}', String(currentLine + 1)));
     setTimeout(() => setBookmarkToast(null), 2000);
   };
 
@@ -656,7 +658,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
 
     if (target) {
       termRef.current.scrollToLine(target.line);
-      setBookmarkToast(`🎯 跳转至书签: 第 ${target.line + 1} 行`);
+      setBookmarkToast(t('terminal.jumpToBookmark').replace('{line}', String(target.line + 1)));
       setTimeout(() => setBookmarkToast(null), 1500);
     }
   };
@@ -942,11 +944,11 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
 
     setSearchMatchLines(lines);
     if (lines.length > 0) {
-      setSearchResultCount(`共 ${lines.length} 处匹配`);
+      setSearchResultCount(t('terminal.matchesCount').replace('{count}', String(lines.length)));
     } else {
-      setSearchResultCount('无结果');
+      setSearchResultCount(t('termSearch.noResult'));
     }
-  }, [isSearchOpen, searchText, searchIsRegex, searchCaseSensitive, searchWholeWord]);
+  }, [isSearchOpen, searchText, searchIsRegex, searchCaseSensitive, searchWholeWord, t]);
 
   // 辅助函数：将 Base64 转为 Uint8Array
   const base64ToBytes = (b64: string): Uint8Array => {
@@ -995,7 +997,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     if (isRetry) {
       setReconnecting(true);
       onStatusChange?.(sessionId, 'reconnecting');
-      term.write(`\r\n\x1b[33m正在发起自动重连 (第 ${retryCount + 1}/5 次)... \x1b[0m\r\n`);
+      term.write(`\r\n\x1b[33m${t('terminal.reconnecting').replace('{retry}', String(retryCount + 1))} \x1b[0m\r\n`);
     } else {
       setConnecting(true);
       onStatusChange?.(sessionId, 'connecting');
@@ -1107,19 +1109,19 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         setCountdown(null);
         onStatusChange?.(sessionId, 'connected');
         if (proto === 'serial') {
-          term.write(`\r\n\x1b[32m*** 串口连接已建立 (Serial Connected: ${serialConfig?.port || host}) ***\x1b[0m\r\n\r\n`);
+          term.write(`\r\n\x1b[32m*** Serial Connected: ${serialConfig?.port || host} ***\x1b[0m\r\n\r\n`);
         } else if (proto === 'telnet') {
-          term.write(`\r\n\x1b[32m*** Telnet 连接已建立 (Connected: ${host}:${port || 23}) ***\x1b[0m\r\n\r\n`);
+          term.write(`\r\n\x1b[32m*** Telnet Connected: ${host}:${port || 23} ***\x1b[0m\r\n\r\n`);
         } else if (proto === 'rlogin') {
-          term.write(`\r\n\x1b[32m*** Rlogin 连接已建立 (Connected: ${host}:${port || 513}) ***\x1b[0m\r\n\r\n`);
+          term.write(`\r\n\x1b[32m*** Rlogin Connected: ${host}:${port || 513} ***\x1b[0m\r\n\r\n`);
         } else if (proto === 'mosh') {
-          term.write(`\r\n\x1b[32m*** Mosh (Mobile Shell) 连接已建立 (UDP Roaming Active: ${host}) ***\x1b[0m\r\n\r\n`);
+          term.write(`\r\n\x1b[32m*** Mosh Connected (UDP Roaming Active: ${host}) ***\x1b[0m\r\n\r\n`);
         } else if (proto === 'raw_tcp') {
-          term.write(`\r\n\x1b[32m*** Raw TCP 连接已建立 (Connected: ${host}:${port || 8080}) ***\x1b[0m\r\n\r\n`);
+          term.write(`\r\n\x1b[32m*** Raw TCP Connected: ${host}:${port || 8080} ***\x1b[0m\r\n\r\n`);
         } else if (proto === 'local') {
-          term.write('\r\n\x1b[32m*** 本地 Shell / WSL 启动成功 (Local Shell Ready) ***\x1b[0m\r\n\r\n');
+          term.write('\r\n\x1b[32m*** Local Shell / WSL Ready ***\x1b[0m\r\n\r\n');
         } else {
-          term.write('\r\n\x1b[32m*** 连接建立成功 (Connection Established) ***\x1b[0m\r\n\r\n');
+          term.write('\r\n\x1b[32m*** Connection Established ***\x1b[0m\r\n\r\n');
         }
 
         const currentCols = term.cols > 0 ? term.cols : 80;
@@ -1136,7 +1138,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         setReconnecting(false);
         const errMsg = typeof err === 'string' ? err : err.message || JSON.stringify(err);
         setErrorMsg(errMsg);
-        term.write(`\r\n\x1b[31m连接失败: ${errMsg}\x1b[0m\r\n`);
+        term.write(`\r\n\x1b[31m${t('terminal.connFailed')}${errMsg}\x1b[0m\r\n`);
         onStatusChange?.(sessionId, 'disconnected');
 
         // 如果是自动重连期间报错，则触发下一个重试周期
@@ -1152,11 +1154,11 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       const backoffSec = Math.min(16, Math.max(1, Math.pow(2, retryCount)));
       setCountdown(backoffSec);
       if (termRef.current) {
-        termRef.current.write(`\r\n\x1b[33m⏳ 正在进行第 ${retryCount + 1}/5 次自动重连 (指数退避等待 ${backoffSec} 秒，按任意键可立即重试)...\x1b[0m\r\n`);
+        termRef.current.write(`\r\n\x1b[33m${t('terminal.reconnectBackoff').replace('{retry}', String(retryCount + 1)).replace('{sec}', String(backoffSec))}\x1b[0m\r\n`);
       }
     } else {
       if (termRef.current) {
-        termRef.current.write('\r\n\x1b[31m⚠ 自动重连已达 5 次上限，停止重试。按任意键或在 Tab 右键点击“连接”可手动重新连接。\x1b[0m\r\n');
+        termRef.current.write(`\r\n\x1b[31m${t('terminal.reconnectMaxReached')}\x1b[0m\r\n`);
       }
       setCountdown(null);
       setReconnecting(false);
@@ -1395,7 +1397,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
             const decoded = decodeURIComponent(escape(atob(pd)));
             ClipboardSetText(decoded).then(() => {
               if (osc52ShowToast) {
-                setOscToast(`📋 远程剪贴板已同步 (${decoded.length} 字符)`);
+                setOscToast(t('terminal.oscSynced').replace('{count}', String(decoded.length)));
                 if (oscToastTimerRef.current) clearTimeout(oscToastTimerRef.current);
                 oscToastTimerRef.current = setTimeout(() => setOscToast(null), 2500);
               }
@@ -1403,7 +1405,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
               if (navigator.clipboard?.writeText) {
                 navigator.clipboard.writeText(decoded).then(() => {
                   if (osc52ShowToast) {
-                    setOscToast(`📋 远程剪贴板已同步 (${decoded.length} 字符)`);
+                    setOscToast(t('terminal.oscSynced').replace('{count}', String(decoded.length)));
                     if (oscToastTimerRef.current) clearTimeout(oscToastTimerRef.current);
                     oscToastTimerRef.current = setTimeout(() => setOscToast(null), 2500);
                   }
@@ -1545,7 +1547,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     }
 
     if (currentProto === 'local') {
-      term.write('\x1b[36m正在启动本地终端 (Starting Local Shell)...\x1b[0m\r\n');
+      term.write('\x1b[36mStarting Local Shell...\x1b[0m\r\n');
     } else {
       term.write('Connecting to ' + host + ':' + port + '...\r\n');
     }
@@ -2141,15 +2143,15 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       if (data && data.id === sessionId) {
         const isLoc = isLocal || protocol === 'local';
         const msg = isLoc 
-          ? `\r\n\x1b[33m本地终端进程已退出。 ${data.error || ''}\x1b[0m\r\n`
+          ? `\r\n\x1b[33m${t('terminal.localProcessExited')} ${data.error || ''}\x1b[0m\r\n`
           : `\r\n\x1b[33mConnection closed by remote host. ${data.error || ''}\x1b[0m\r\n`;
         term.write(msg);
         onStatusChange?.(sessionId, 'disconnected');
         
         if (Notification.permission === "granted") {
-          new Notification("会话已断开", { body: `会话 [${name}] 已从远程主机断开。` });
+          new Notification(t('terminal.sessionDisconnected'), { body: t('terminal.sessionDisconnectedBody').replace('{name}', name || '') });
         } else if (Notification.permission !== "denied") {
-          Notification.requestPermission().then(p => p === "granted" && new Notification("会话已断开", { body: `会话 [${name}] 已从远程主机断开。` }));
+          Notification.requestPermission().then(p => p === "granted" && new Notification(t('terminal.sessionDisconnected'), { body: t('terminal.sessionDisconnectedBody').replace('{name}', name || '') }));
         }
       }
     };
@@ -2157,13 +2159,13 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
 
     const handleDisconnected = (data: any) => {
       if (data && data.id === sessionId) {
-        term.write(`\r\n\x1b[31m⚠ 检查到异常掉线: ${data.error || 'Keep-Alive 超时'}\x1b[0m\r\n`);
+        term.write(`\r\n\x1b[31m⚠ ${data.error || 'Keep-Alive timeout'}\x1b[0m\r\n`);
         onStatusChange?.(sessionId, 'disconnected');
         
         if (Notification.permission === "granted") {
-          new Notification("网络异常掉线", { body: `会话 [${name}] 心跳保活超时，准备重连...` });
+          new Notification(t('terminal.networkDropped'), { body: t('terminal.networkDroppedBody').replace('{name}', name || '') });
         } else if (Notification.permission !== "denied") {
-          Notification.requestPermission().then(p => p === "granted" && new Notification("网络异常掉线", { body: `会话 [${name}] 心跳保活超时，准备重连...` }));
+          Notification.requestPermission().then(p => p === "granted" && new Notification(t('terminal.networkDropped'), { body: t('terminal.networkDroppedBody').replace('{name}', name || '') }));
         }
         
         triggerAutoReconnect();
@@ -2487,7 +2489,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         const idx = searchMatchLines.findIndex(l => Math.abs(l - curY) <= (termRef.current?.rows || 24));
         if (idx >= 0) setCurrentMatchIndex(idx);
       }
-      setSearchResultCount(found ? (searchMatchLines.length > 0 ? `共 ${searchMatchLines.length} 处匹配` : '匹配中...') : '无结果');
+      setSearchResultCount(found ? (searchMatchLines.length > 0 ? t('terminal.matchesCount').replace('{count}', String(searchMatchLines.length)) : t('termSearch.matching')) : t('termSearch.noResult'));
     }
   };
 
@@ -2504,7 +2506,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         const idx = searchMatchLines.findIndex(l => Math.abs(l - curY) <= (termRef.current?.rows || 24));
         if (idx >= 0) setCurrentMatchIndex(idx);
       }
-      setSearchResultCount(found ? (searchMatchLines.length > 0 ? `共 ${searchMatchLines.length} 处匹配` : '匹配中...') : '无结果');
+      setSearchResultCount(found ? (searchMatchLines.length > 0 ? t('terminal.matchesCount').replace('{count}', String(searchMatchLines.length)) : t('termSearch.matching')) : t('termSearch.noResult'));
     }
   };
 
@@ -2572,7 +2574,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       if (text) {
         const b64 = btoa(unescape(encodeURIComponent(text)));
         await WriteSSH(sessionId, `\x1b]52;c;${b64}\x07`);
-        setOscToast(`📤 剪贴板已推送至远端 (${text.length} 字符)`);
+        setOscToast(t('terminal.oscPushed').replace('{count}', String(text.length)));
         if (oscToastTimerRef.current) clearTimeout(oscToastTimerRef.current);
         oscToastTimerRef.current = setTimeout(() => setOscToast(null), 2500);
       }
@@ -2611,7 +2613,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       a.click();
     } catch (e) {
       console.error('Screenshot failed:', e);
-      alert('截图失败: ' + String(e));
+      alert(t('terminal.screenshotFailed') + String(e));
     }
   };
 
@@ -2879,10 +2881,10 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
             setStructuredOverlayOpen(true);
           }}
           className="absolute top-3 right-4 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#252526] hover:bg-[#0078d4] border border-[#2b2b2b] hover:border-[#0078d4] text-xs font-medium text-[#cccccc] hover:text-white shadow-lg transition-all animate-in fade-in"
-          title="将终端输出解析为可排序表格或交互式 JSON 树"
+          title={t('terminal.structuredOutputTitle')}
         >
           <Table className="w-3.5 h-3.5 text-[#3794ff]" />
-          <span>结构化解析</span>
+          <span>{t('terminal.structuredOutput')}</span>
         </button>
       )}
 
@@ -2904,7 +2906,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         onClose={() => setIsBookmarkDrawerOpen(false)}
         onJumpTo={(line) => {
           termRef.current?.scrollToLine(line);
-          setBookmarkToast(`🎯 已跳转至第 ${line + 1} 行`);
+          setBookmarkToast(t('terminal.jumpToBookmark').replace('{line}', String(line + 1)));
           setTimeout(() => setBookmarkToast(null), 1500);
         }}
         onDelete={(id) => {

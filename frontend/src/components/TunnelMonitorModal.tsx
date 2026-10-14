@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { Network, RefreshCw, X, Square, AlertCircle, Plus, Copy, Check, ExternalLink } from 'lucide-react';
 
 export interface TunnelStatusInfo {
@@ -26,6 +27,7 @@ export function TunnelMonitorModal({
   activeSessionId,
   openTabs = [],
 }: TunnelMonitorModalProps) {
+  const { t: translate } = useI18n();
   const [tunnels, setTunnels] = useState<TunnelStatusInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function TunnelMonitorModal({
         fetchTunnels();
       })
       .catch((err: any) => {
-        alert("关闭隧道失败: " + err);
+        alert("Error: " + err);
       });
   };
 
@@ -106,14 +108,14 @@ export function TunnelMonitorModal({
       setIsAdding(false);
       fetchTunnels();
     } catch (err: any) {
-      alert("添加隧道失败: " + (err?.message || err));
+      alert("Error: " + (err?.message || err));
     }
   };
 
-  const handleCopyAddr = (t: TunnelStatusInfo) => {
-    const text = t.type === 'dynamic' ? `socks5://${t.localAddr}` : `http://${t.localAddr}`;
+  const handleCopyAddr = (tun: TunnelStatusInfo) => {
+    const text = tun.type === 'dynamic' ? `socks5://${tun.localAddr}` : `http://${tun.localAddr}`;
     navigator.clipboard.writeText(text);
-    setCopiedId(t.id);
+    setCopiedId(tun.id);
     setTimeout(() => setCopiedId(null), 1500);
   };
 
@@ -129,7 +131,7 @@ export function TunnelMonitorModal({
               <Network className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xs font-semibold text-[#e0e0e0] leading-tight">SSH 端口转发与隧道监控增强</h2>
+              <h2 className="text-xs font-semibold text-[#e0e0e0] leading-tight">{translate('tunnels.modalTitle') || 'SSH 端口转发与隧道监控增强'}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Active Port Forwarding, Dynamic SOCKS5 & Runtime Tunnel Manager</span>
             </div>
           </div>
@@ -139,12 +141,12 @@ export function TunnelMonitorModal({
               className="flex items-center gap-1 px-3 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>动态添加隧道</span>
+              <span>{translate('tunnels.addBtn') || '动态添加隧道'}</span>
             </button>
             <button
               onClick={fetchTunnels}
               className="p-1 text-[#858585] hover:text-white hover:bg-[#333333] rounded transition-colors"
-              title="立即刷新"
+              title={translate('common.refresh') || '立即刷新'}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -161,12 +163,12 @@ export function TunnelMonitorModal({
         {isAdding && (
           <form onSubmit={handleAddTunnel} className="p-4 bg-[#252526] border-b border-[#2b2b2b] space-y-3 animate-in slide-in-from-top-2 duration-150">
             <div className="text-xs font-semibold text-[#e0e0e0] flex items-center justify-between">
-              <span>➕ 运行时动态创建端口转发 (无需断开重连)</span>
+              <span>{translate('tunnels.createHeader') || '➕ 运行时动态创建端口转发 (无需断开重连)'}</span>
               <button type="button" onClick={() => setIsAdding(false)} className="text-[#858585] hover:text-white">✕</button>
             </div>
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <label className="text-[10px] text-[#858585] block mb-1">目标会话</label>
+                <label className="text-[10px] text-[#858585] block mb-1">{translate('tunnels.targetSession') || '目标会话'}</label>
                 <select
                   value={targetSessionId}
                   onChange={e => setTargetSessionId(e.target.value)}
@@ -176,25 +178,25 @@ export function TunnelMonitorModal({
                   {openTabs.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
-                  {openTabs.length === 0 && <option value="">无活动会话 (请先连接)</option>}
+                  {openTabs.length === 0 && <option value="">{translate('tunnels.noActiveSession') || '无活动会话 (请先连接)'}</option>}
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] text-[#858585] block mb-1">转发类型</label>
+                <label className="text-[10px] text-[#858585] block mb-1">{translate('tunnels.forwardType') || '转发类型'}</label>
                 <select
                   value={newTunnelType}
                   onChange={e => setNewTunnelType(e.target.value as any)}
                   className="w-full px-2.5 py-1.5 bg-[#1e1e1e] hover:bg-[#252526] border border-[#3c3c3c] focus:border-[#0078d4] rounded text-xs text-[#cccccc] outline-none"
                 >
-                  <option value="local">本地转发 (Local → Remote)</option>
-                  <option value="remote">远程转发 (Remote → Local)</option>
-                  <option value="dynamic">动态代理 (Dynamic SOCKS5)</option>
+                  <option value="local">{translate('tunnels.typeLocal') || '本地转发 (Local → Remote)'}</option>
+                  <option value="remote">{translate('tunnels.typeRemote') || '远程转发 (Remote → Local)'}</option>
+                  <option value="dynamic">{translate('tunnels.typeDynamic') || '动态代理 (Dynamic SOCKS5)'}</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] text-[#858585] block mb-1">本地监听端口</label>
+                <label className="text-[10px] text-[#858585] block mb-1">{translate('tunnels.localPort') || '本地监听端口'}</label>
                 <input
                   type="number"
                   value={newLocalPort}
@@ -207,7 +209,7 @@ export function TunnelMonitorModal({
 
               {newTunnelType !== 'dynamic' ? (
                 <div>
-                  <label className="text-[10px] text-[#858585] block mb-1">目标地址与端口</label>
+                  <label className="text-[10px] text-[#858585] block mb-1">{translate('tunnels.targetAddrPort') || '目标地址与端口'}</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
@@ -230,7 +232,7 @@ export function TunnelMonitorModal({
               ) : (
                 <div className="flex items-end">
                   <div className="text-[11px] text-[#3794ff] bg-[#0078d4]/10 border border-[#0078d4]/30 px-3 py-1.5 rounded w-full">
-                    SOCKS5 代理监听 127.0.0.1:{newLocalPort}
+                    SOCKS5 127.0.0.1:{newLocalPort}
                   </div>
                 </div>
               )}
@@ -242,13 +244,13 @@ export function TunnelMonitorModal({
                 onClick={() => setIsAdding(false)}
                 className="px-3 py-1 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded text-xs transition-colors"
               >
-                取消
+                {translate('common.cancel') || '取消'}
               </button>
               <button
                 type="submit"
                 className="px-4 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white rounded text-xs font-medium transition-colors"
               >
-                启动隧道
+                {translate('tunnels.startTunnel') || '启动隧道'}
               </button>
             </div>
           </form>
@@ -269,21 +271,21 @@ export function TunnelMonitorModal({
               <div className="w-12 h-12 rounded-lg bg-[#252526] border border-[#2b2b2b] flex items-center justify-center text-[#0078d4] mx-auto mb-2">
                 <Network className="w-6 h-6" />
               </div>
-              <p className="text-xs text-[#cccccc] font-medium">当前无运行中的端口转发或 SOCKS5 代理隧道</p>
-              <p className="text-[11px] text-[#858585] max-w-md mx-auto">点击右上角「动态添加隧道」可立即向已连接的 SSH 会话挂载端口转发规则，无需断开重连。</p>
+              <p className="text-xs text-[#cccccc] font-medium">{translate('tunnels.emptyTitle') || '当前无运行中的端口转发或 SOCKS5 代理隧道'}</p>
+              <p className="text-[11px] text-[#858585] max-w-md mx-auto">{translate('tunnels.emptyDesc') || '点击右上角「动态添加隧道」可立即向已连接的 SSH 会话挂载端口转发规则，无需断开重连。'}</p>
             </div>
           ) : (
             <div className="border border-[#2b2b2b] rounded overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-[#1f1f1f] border-b border-[#2b2b2b] text-[#858585] text-[11px] font-medium">
-                    <th className="py-2 px-3">所属会话</th>
-                    <th className="py-2 px-3">转发类型</th>
-                    <th className="py-2 px-3">本地监听地址</th>
-                    <th className="py-2 px-3">远端目标地址</th>
-                    <th className="py-2 px-3">状态</th>
-                    <th className="py-2 px-3">创建时间</th>
-                    <th className="py-2 px-3 text-right">操作</th>
+                    <th className="py-2 px-3">{translate('tunnels.colSession') || '所属会话'}</th>
+                    <th className="py-2 px-3">{translate('tunnels.colType') || '转发类型'}</th>
+                    <th className="py-2 px-3">{translate('tunnels.colLocal') || '本地监听地址'}</th>
+                    <th className="py-2 px-3">{translate('tunnels.colTarget') || '远端目标地址'}</th>
+                    <th className="py-2 px-3">{translate('tunnels.colStatus') || '状态'}</th>
+                    <th className="py-2 px-3">{translate('tunnels.colCreated') || '创建时间'}</th>
+                    <th className="py-2 px-3 text-right">{translate('tunnels.colActions') || '操作'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] bg-[#252526]">
@@ -295,7 +297,7 @@ export function TunnelMonitorModal({
                           t.type === 'dynamic' ? 'bg-[#0078d4]/10 text-[#3794ff] border-[#0078d4]/30' :
                           t.type === 'remote' ? 'bg-amber-950/40 text-amber-300 border-amber-500/30' : 'bg-[#0078d4]/10 text-[#3794ff] border-[#0078d4]/30'
                         }`}>
-                          {t.type === 'dynamic' ? 'Dynamic (SOCKS5)' : (t.type === 'remote' ? 'Remote (远程)' : 'Local (本地)')}
+                          {t.type === 'dynamic' ? 'Dynamic (SOCKS5)' : (t.type === 'remote' ? 'Remote' : 'Local')}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-emerald-400 font-mono font-medium flex items-center gap-1.5">
@@ -303,7 +305,7 @@ export function TunnelMonitorModal({
                         <button
                           onClick={() => handleCopyAddr(t)}
                           className="p-0.5 text-[#858585] hover:text-emerald-300 transition-colors"
-                          title="复制访问链接"
+                          title={translate('common.copy') || '复制'}
                         >
                           {copiedId === t.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                         </button>
@@ -312,7 +314,7 @@ export function TunnelMonitorModal({
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center gap-1.5 text-emerald-400 text-[11px] font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                          活跃中
+                          {translate('tunnels.statusActive') || '活跃中'}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[#858585] font-mono text-[11px]">{t.createdAt}</td>
@@ -320,10 +322,10 @@ export function TunnelMonitorModal({
                         <button
                           onClick={() => handleStopTunnel(t.sessionId, t.localAddr)}
                           className="px-2 py-0.5 bg-[#a1260d] hover:bg-[#b82d0f] text-white rounded text-[11px] font-medium transition-colors inline-flex items-center gap-1"
-                          title="停止此隧道"
+                          title={translate('tunnels.stopBtn') || '停止'}
                         >
                           <Square className="w-2.5 h-2.5 fill-current" />
-                          <span>停止</span>
+                          <span>{translate('tunnels.stopBtn') || '停止'}</span>
                         </button>
                       </td>
                     </tr>
@@ -336,12 +338,12 @@ export function TunnelMonitorModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 bg-[#1f1f1f] border-t border-[#2b2b2b] text-xs text-[#858585]">
-          <span>活动隧道总数: <strong className="text-[#e0e0e0]">{tunnels.length}</strong> 条</span>
+          <span>{(translate('tunnels.totalCount') || '活动隧道总数: {count} 条').replace('{count}', String(tunnels.length))}</span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] font-medium rounded transition-colors"
           >
-            关闭
+            {translate('common.close') || '关闭'}
           </button>
         </div>
       </div>

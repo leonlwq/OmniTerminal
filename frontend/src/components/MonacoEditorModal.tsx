@@ -5,6 +5,7 @@ import {
   Lock, Unlock, SplitSquareVertical, Search, Copy, Download,
   CornerDownLeft, FileText, ChevronRight
 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface EditorTab {
   id: string;
@@ -87,6 +88,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
   initialFile,
   diffData
 }) => {
+  const { t } = useI18n();
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -144,7 +146,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
       setTabs(prev => [...prev, newTab]);
       setActiveTabId(newTab.id);
     } catch (err: any) {
-      setErrorMessage(`读取文件失败: ${err?.message || err}`);
+      setErrorMessage(t('monaco.readFailed').replace('{err}', err?.message || err));
     } finally {
       setIsLoading(false);
     }
@@ -206,7 +208,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
         );
       } else if (appRpc?.SftpUploadPaths) {
         // fallback
-        setErrorMessage('当前环境缺少保存接口');
+        setErrorMessage(t('monaco.noSaveInterface'));
         return;
       }
 
@@ -227,14 +229,14 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
       } : t));
 
       setConflictModal({ isOpen: false, tabId: '', errorText: '' });
-      setSaveSuccessNotice('文件已成功安全保存至远程');
+      setSaveSuccessNotice(t('monaco.saveSuccess'));
       setTimeout(() => setSaveSuccessNotice(''), 2500);
     } catch (err: any) {
       const errMsg = err?.message || String(err);
       if (errMsg.includes('FILE_CONFLICT')) {
         setConflictModal({ isOpen: true, tabId: activeTab.id, errorText: errMsg });
       } else {
-        setErrorMessage(`保存失败: ${errMsg}`);
+        setErrorMessage(t('monaco.saveFailed').replace('{err}', errMsg));
       }
     } finally {
       setIsLoading(false);
@@ -259,7 +261,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
     e.stopPropagation();
     const tabToClose = tabs.find(t => t.id === id);
     if (tabToClose?.isDirty) {
-      if (!confirm(`文件 "${tabToClose.fileName}" 有未保存的更改，确认关闭吗？`)) {
+      if (!confirm(t('monaco.unsavedConfirm').replace('{file}', tabToClose.fileName))) {
         return;
       }
     }
@@ -322,12 +324,12 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
                   <FileCode className={`w-3.5 h-3.5 ${isActive ? 'text-[#0078d4]' : 'text-[#858585]'}`} />
                   <span className="truncate max-w-[160px]">{tab.fileName}</span>
                   {tab.isDirty && (
-                    <span className="w-2 h-2 rounded-full bg-[#cca700] animate-pulse" title="未保存修改" />
+                    <span className="w-2 h-2 rounded-full bg-[#cca700] animate-pulse" title={t('monaco.unsavedChanges')} />
                   )}
                   <button
                     onClick={(e) => closeTab(tab.id, e)}
                     className="opacity-0 group-hover:opacity-100 hover:bg-[#444444] rounded p-0.5 text-[#858585] hover:text-white transition-opacity"
-                    title="关闭标签页"
+                    title={t('monaco.closeTab')}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -353,10 +355,10 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
                   ? 'bg-[#04395e] border-[#0078d4] text-white' 
                   : 'bg-[#3c3c3c] border-[#3c3c3c] text-[#cccccc] hover:bg-[#484848]'
               }`}
-              title="切换原版与当前版本的 Diff 对比视口"
+              title={t('monaco.diffToggle')}
             >
               <SplitSquareVertical className="w-3.5 h-3.5" />
-              <span>{isDiffMode ? '单文件编辑' : 'Diff 对比'}</span>
+              <span>{isDiffMode ? t('monaco.singleFileMode') : t('monaco.diffMode')}</span>
             </button>
 
             {/* Save Button */}
@@ -368,17 +370,17 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
                   ? 'bg-[#0078d4] hover:bg-[#006cbe] text-white shadow-sm'
                   : 'bg-[#3c3c3c]/50 text-[#666666] cursor-not-allowed'
               }`}
-              title="保存文件至远程 (Ctrl+S / Cmd+S)"
+              title={t('monaco.saveTip')}
             >
               <Save className="w-3.5 h-3.5" />
-              <span>保存</span>
+              <span>{t('common.save')}</span>
             </button>
 
             {/* Close Modal */}
             <button
               onClick={onClose}
               className="p-1 rounded text-[#858585] hover:text-white hover:bg-[#333333] transition-colors ml-1"
-              title="关闭编辑器"
+              title={t('common.close')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -389,12 +391,12 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
         {activeTab && (
           <div className="flex items-center justify-between px-3 py-1 bg-[#181818] border-b border-[#2b2b2b] text-[11px] text-[#858585] shrink-0">
             <div className="flex items-center gap-1 truncate max-w-[80%]">
-              <span className="text-[#858585]">远程路径:</span>
+              <span className="text-[#858585]">{t('monaco.remotePath')}</span>
               <span className="text-[#cccccc] font-mono select-all truncate">{activeTab.filePath}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span>语言: <strong className="text-[#0078d4] uppercase">{currentLang}</strong></span>
-              <span>大小: <strong className="text-[#cccccc]">{totalChars} 字符</strong></span>
+              <span>{t('monaco.lang')} <strong className="text-[#0078d4] uppercase">{currentLang}</strong></span>
+              <span>{t('monaco.size')} <strong className="text-[#cccccc]">{t('monaco.chars').replace('{count}', String(totalChars))}</strong></span>
             </div>
           </div>
         )}
@@ -413,7 +415,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
               <div className="flex items-center gap-2 bg-[#252526] border border-[#2b2b2b] px-4 py-2 rounded text-[#cccccc] text-xs shadow-xl">
                 <RefreshCw className="w-4 h-4 animate-spin text-[#0078d4]" />
-                <span>正在同步远程文件...</span>
+                <span>{t('monaco.syncingRemote')}</span>
               </div>
             </div>
           )}
@@ -457,7 +459,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-[#858585] gap-2">
               <FileText className="w-10 h-10 opacity-30" />
-              <p className="text-sm">没有打开的文件</p>
+              <p className="text-sm">{t('monaco.noOpenFile')}</p>
             </div>
           )}
         </div>
@@ -471,17 +473,17 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
               className={`flex items-center gap-1 hover:text-[#cccccc] transition-colors ${
                 activeTab?.isReadOnly ? 'text-[#cca700]' : 'text-[#858585]'
               }`}
-              title="切换文件只读/可编辑保护锁"
+              title="Toggle Read-only Protection"
             >
               {activeTab?.isReadOnly ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-              <span>{activeTab?.isReadOnly ? '只读保护' : '可编辑'}</span>
+              <span>{activeTab?.isReadOnly ? t('monaco.readOnly') : t('monaco.editable')}</span>
             </button>
 
             {/* Line Ending LF/CRLF */}
             <button
               onClick={toggleLineEnding}
               className="hover:text-[#0078d4] transition-colors font-mono"
-              title="点击切换 LF / CRLF 换行符"
+              title="Toggle LF / CRLF"
             >
               {activeTab?.lineEnding || 'LF'}
             </button>
@@ -496,7 +498,7 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
           </div>
 
           <div className="flex items-center gap-4 font-mono text-[#858585]">
-            <span>总计: {totalLines} 行</span>
+            <span>{t('monaco.totalLines').replace('{count}', String(totalLines))}</span>
             <span className="text-[#555555]">|</span>
             <span>OmniTerminal Monaco Pro</span>
           </div>
@@ -509,28 +511,19 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
           <div className="w-full max-w-lg bg-[#252526] border border-[#cca700] rounded-lg p-5 shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5 text-[#cca700] font-medium">
               <AlertCircle className="w-5 h-5 shrink-0" />
-              <h3 className="text-base text-[#e0e0e0]">检测到并发修改冲突 (File Conflict)</h3>
+              <h3 className="text-base text-[#e0e0e0]">{t('monaco.conflictTitle')}</h3>
             </div>
             
             <p className="text-xs text-[#cccccc] leading-relaxed">
-              {conflictModal.errorText || '远程文件在您编辑期间已被其他进程或外部人员更新。直接覆盖可能导致他人修改丢失。'}
+              {conflictModal.errorText || t('monaco.conflictDesc')}
             </p>
-
-            <div className="bg-[#1e1e1e] p-3 rounded border border-[#2b2b2b] text-xs text-[#858585] space-y-1">
-              <p>建议方案：</p>
-              <ul className="list-disc list-inside space-y-0.5 text-[#cccccc]">
-                <li>切换至 <strong>Diff 对比模式</strong> 核对两者代码差异</li>
-                <li>确认无误后点击下方 <strong>「强制覆盖」</strong></li>
-                <li>或取消保存先重新加载远程版本</li>
-              </ul>
-            </div>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 onClick={() => setConflictModal({ isOpen: false, tabId: '', errorText: '' })}
                 className="px-3 py-1 rounded text-xs bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc]"
               >
-                取消并不覆盖
+                {t('monaco.cancelConflict')}
               </button>
               <button
                 onClick={() => {
@@ -539,13 +532,13 @@ export const MonacoEditorModal: React.FC<MonacoEditorModalProps> = ({
                 }}
                 className="px-3 py-1 rounded text-xs bg-[#04395e] border border-[#0078d4] text-white hover:bg-[#006cbe]"
               >
-                进入 Diff 模式核对
+                {t('monaco.enterDiff')}
               </button>
               <button
                 onClick={() => handleSave(true)}
                 className="px-3 py-1 rounded text-xs bg-[#a1260d] hover:bg-[#b82a0e] text-white font-medium"
               >
-                强制覆盖保存
+                {t('monaco.forceOverwrite')}
               </button>
             </div>
           </div>

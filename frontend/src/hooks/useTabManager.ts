@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { app } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 export type SplitMode = 'none' | 'vertical' | 'horizontal' | 'grid2x2' | 'grid1plus2';
 
 export function useTabManager() {
+  const { t } = useI18n();
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [splitMode, setSplitMode] = useState<SplitMode>('none');
   const [secondaryTabId, setSecondaryTabId] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function useTabManager() {
 
       if (needConfirmConnected || needConfirmAny) {
         const tab = openTabs.find(t => t.id === id);
-        const name = customTabNames[id] || tab?.name || '终端会话';
+        const name = customTabNames[id] || tab?.name || t('terminal.tabDefaultName');
         setTabPendingClose({
           id,
           name,
@@ -72,7 +74,7 @@ export function useTabManager() {
     }
 
     executeCloseTab(id);
-  }, [lockedTabs, tabStatus, openTabs, customTabNames, executeCloseTab]);
+  }, [lockedTabs, tabStatus, openTabs, customTabNames, executeCloseTab, t]);
 
   const confirmCloseTab = useCallback((doNotAskAgain?: boolean, onDoNotAskAgain?: () => void) => {
     if (tabPendingClose) {
@@ -132,7 +134,7 @@ export function useTabManager() {
     
     setTabContextMenu(null);
 
-    const isLocal = Boolean(tab.isLocal || tab.protocol === 'local' || tab.name?.includes('本地 Shell') || tab.name === 'Local Shell');
+    const isLocal = Boolean(tab.isLocal || tab.protocol === 'local' || tab.name?.includes('本地 Shell') || tab.name === 'Local Shell' || tab.name === t('quickConnect.localShell'));
     const sessionName = tab.name || '';
 
     const appRpc = (window as any).go?.app?.App;
@@ -143,7 +145,7 @@ export function useTabManager() {
         })
         .catch((err: any) => {
           console.error("DetachToNewWindow error:", err);
-          alert("拆离独立窗口失败: " + err);
+          alert(t('tab.detachFailed') + err);
         });
     } else {
       const url = `${window.location.origin}${window.location.pathname}?detached=true&sessionId=${encodeURIComponent(tabId)}&name=${encodeURIComponent(tab.name)}`;
@@ -156,10 +158,10 @@ export function useTabManager() {
       if (popup) {
         handleCloseTab(tabId);
       } else {
-        alert("无法打开独立子窗口，请检查系统的弹窗拦截设置！");
+        alert(t('tab.detachPopupBlocked'));
       }
     }
-  }, [openTabs, handleCloseTab]);
+  }, [openTabs, handleCloseTab, t]);
 
   const handleTabContextMenu = useCallback((e: React.MouseEvent, tabId: string) => {
     e.preventDefault();

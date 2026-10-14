@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import React from 'react';
 import { Circle, Link, X, Plus, Terminal, Server, Folder, Monitor, Radio } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
@@ -72,6 +73,7 @@ export function TabBar({
   sharedSessionIds,
   onOpenShareModal,
 }: TabBarProps) {
+  const { t: translate } = useI18n();
   return (
     <div 
       onDoubleClick={handleTabAreaDoubleClick}
@@ -156,7 +158,7 @@ export function TabBar({
                     t.colorLabel === 'purple' ? 'bg-purple-500' :
                     t.colorLabel === 'pink' ? 'bg-pink-400' : 'bg-slate-400'
                   }`}
-                  title={`颜色标签: ${t.colorLabel}`}
+                  title={translate('tabBar.colorLabelTooltip').replace('{label}', t.colorLabel || '')}
                 />
               )}
             </div>
@@ -167,7 +169,7 @@ export function TabBar({
             <span className="truncate max-w-[160px] leading-tight font-medium">{displayName}</span>
 
             {linkedTabIds.includes(t.id) && (
-              <span title="此会话已加入同步输入组">
+              <span title={translate("tabBar.syncGroupTooltip")}>
                 <Link className="h-3.5 w-3.5 text-blue-400 shrink-0" />
               </span>
             )}
@@ -183,7 +185,7 @@ export function TabBar({
                   onOpenShareModal?.(t.id);
                 }}
                 className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono shrink-0 hover:bg-emerald-500/30 transition-colors"
-                title={`此终端正在实时共享中 (${sharedSessionIds[t.id].viewerCount}人观看)，点击查看详情`}
+                title={translate('tabBar.sharedViewerTooltip').replace('{count}', String(sharedSessionIds[t.id].viewerCount))}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>📡 {sharedSessionIds[t.id].viewerCount}</span>
@@ -196,7 +198,7 @@ export function TabBar({
               className={`w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 dark:hover:bg-white/10 text-app-text-muted hover:text-white transition-all ml-1 active:scale-95 shrink-0 ${
                 isActive ? 'opacity-80 hover:opacity-100' : 'opacity-0 group-hover:opacity-75 group-hover:hover:opacity-100'
               }`}
-              title="关闭标签页"
+              title={translate('tabBar.closeTabTooltip')}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -212,7 +214,7 @@ export function TabBar({
           setModalMode('create');
           setIsModalOpen(true);
         }}
-        title="新建会话标签"
+        title={translate('tabBar.newTabTooltip')}
       >
         <Plus className="h-4 w-4" />
       </button>

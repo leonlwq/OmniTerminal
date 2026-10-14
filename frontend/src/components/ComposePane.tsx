@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { Columns, X, Send, Radio, Gauge, Clock, Zap, Loader2 } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
 import { WriteSSH } from '../../wailsjs/go/app/App';
@@ -30,6 +31,7 @@ export function ComposePane({
   handleSendQuickCmd,
   customTabNames = {},
 }: ComposePaneProps) {
+  const { t } = useI18n();
   const [enableFlowControl, setEnableFlowControl] = useState(false);
   const [charDelayMs, setCharDelayMs] = useState(5);
   const [lineDelayMs, setLineDelayMs] = useState(100);
@@ -102,7 +104,7 @@ export function ComposePane({
         <div className="flex items-center space-x-3">
           <span className="text-xs font-semibold text-[#cccccc] flex items-center space-x-2">
             <Columns className="h-3.5 w-3.5 text-[#0078d4]" />
-            <span>多行指令撰写板 (Compose Pane)</span>
+            <span>{t('compose.title')}</span>
           </span>
 
           {/* SecureCRT 延时流控开关 */}
@@ -115,7 +117,7 @@ export function ComposePane({
             />
             <span className="flex items-center gap-1 text-purple-300 font-medium">
               <Gauge className="w-3 h-3 text-purple-400" />
-              防丢包延时流控
+              {t('compose.flowControl')}
             </span>
           </label>
 
@@ -123,7 +125,7 @@ export function ComposePane({
             <div className="flex items-center space-x-2 text-[10px] text-[#858585] font-mono">
               <span className="flex items-center gap-1">
                 <Clock className="w-2.5 h-2.5 text-[#3794ff]" />
-                字延:
+                {t('compose.charDelay')}
                 <input
                   type="number"
                   min={0}
@@ -136,7 +138,7 @@ export function ComposePane({
               </span>
               <span className="flex items-center gap-1">
                 <Zap className="w-2.5 h-2.5 text-amber-400" />
-                行延:
+                {t('compose.lineDelay')}
                 <input
                   type="number"
                   min={0}
@@ -155,7 +157,7 @@ export function ComposePane({
         <button
           onClick={() => setIsComposeOpen(false)}
           className="text-[#858585] hover:text-[#cccccc] p-1 rounded hover:bg-[#2a2d2e] transition-colors"
-          title="隐藏撰写栏"
+          title={t('compose.hideTip')}
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -166,7 +168,7 @@ export function ComposePane({
           <textarea
             value={composeText}
             onChange={(e) => setComposeText(e.target.value)}
-            placeholder="在此撰写多行复杂命令或脚本，支持换行编辑，按 Ctrl+Enter 快速投递..."
+            placeholder={t('compose.placeholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey && !sending) {
                 e.preventDefault();
@@ -188,10 +190,10 @@ export function ComposePane({
               {sending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
               <span>
                 {sending
-                  ? '发送中...'
+                  ? t('compose.sending')
                   : composeTargetTabs.length > 0
-                  ? `投递至 ${composeTargetTabs.length} 个目标`
-                  : '投递到当前'}
+                  ? `${t('compose.sendToTargets')} (${composeTargetTabs.length})`
+                  : t('compose.sendToCurrent')}
               </span>
             </button>
             <button
@@ -200,14 +202,14 @@ export function ComposePane({
               className="px-3.5 py-1.5 bg-[#5a1d1d]/40 hover:bg-[#5a1d1d]/80 border border-[#be1100]/40 active:scale-[0.99] disabled:opacity-40 text-xs font-medium rounded text-[#f48771] shadow-sm transition-all flex items-center justify-center gap-1.5"
             >
               <Radio className="w-3 h-3" />
-              <span>全员广播 ({openTabs.length})</span>
+              <span>{t('compose.broadcast')} ({openTabs.length})</span>
             </button>
           </div>
         </div>
 
         {openTabs.length > 0 && (
           <div className="flex items-center space-x-2 overflow-x-auto pb-0.5 scrollbar-hide">
-            <span className="text-[11px] font-medium text-[#858585] shrink-0">定向投递至:</span>
+            <span className="text-[11px] font-medium text-[#858585] shrink-0">{t('compose.targetLabel')}</span>
             <div className="flex items-center space-x-2">
               {openTabs.map((tab) => (
                 <label

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Server, Box, HardDrive, Network, KeyRound, ArrowDown, FileText, Lock, Settings, Sparkles } from 'lucide-react';
 import { SftpTask } from './TaskQueueDrawer';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface ActivityBarProps {
   activeDockPanel: 'sessions' | 'containers' | 'sftp' | 'none';
@@ -37,6 +38,8 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   isAIChatDrawerOpen,
   setIsAIChatDrawerOpen,
 }) => {
+  const { t } = useI18n();
+
   return (
     <div className="w-12 bg-app-surface border-r border-app-border flex flex-col items-center py-2 shrink-0 z-10 justify-between select-none">
       {/* 上半部分：主工作区导航 */}
@@ -48,7 +51,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
               ? 'text-app-text'
               : 'text-app-text-muted hover:text-app-text'
           }`}
-          title="会话管理器 (Ctrl+Alt+S)"
+          title={t('activity.sessions') || "会话管理器 (Ctrl+Alt+S)"}
         >
           <Server className="h-5 w-5" />
           {activeDockPanel === 'sessions' && (
@@ -63,7 +66,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
               ? 'text-app-text'
               : 'text-app-text-muted hover:text-app-text'
           }`}
-          title="Docker / K8s 容器资源管理器 (Ctrl+Shift+C)"
+          title={t('activity.containers') || "Docker / K8s 容器资源管理器 (Ctrl+Shift+C)"}
         >
           <Box className="h-5 w-5" />
           {activeDockPanel === 'containers' && (
@@ -78,7 +81,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
               ? 'text-app-text'
               : 'text-app-text-muted hover:text-app-text'
           }`}
-          title="SFTP 文件传输面板"
+          title={t('activity.sftp') || "SFTP 文件传输面板"}
         >
           <HardDrive className="h-5 w-5" />
           {activeTabId && openSftpTabs.includes(activeTabId) && (
@@ -89,7 +92,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={() => setIsTunnelMonitorOpen(true)}
           className="flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-app-text transition-colors"
-          title="SSH 隧道与端口转发监控"
+          title={t('activity.tunnels') || "SSH 隧道与端口转发监控"}
         >
           <Network className="h-5 w-5" />
         </button>
@@ -97,7 +100,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={() => setIsKeyManagerOpen(true)}
           className="flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-app-text transition-colors"
-          title="SSH 密钥与凭据管理器"
+          title={t('activity.keys') || "SSH 密钥与凭据管理器"}
         >
           <KeyRound className="h-5 w-5" />
         </button>
@@ -105,7 +108,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={() => setIsTasksOpen(!isTasksOpen)}
           className="relative flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-app-text transition-colors"
-          title="传输任务队列"
+          title={t('activity.tasks') || "传输任务队列"}
         >
           <ArrowDown className="h-5 w-5" />
           {sftpTasks.filter((t: SftpTask) => t.status === 'transferring' || t.status === 'started').length > 0 && (
@@ -116,7 +119,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={() => setIsLogViewerOpen(true)}
           className="flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-app-text transition-colors"
-          title="审计日志查看器"
+          title={t('activity.logs') || "审计日志查看器"}
         >
           <FileText className="h-5 w-5" />
         </button>
@@ -129,7 +132,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
                 ? 'text-purple-400'
                 : 'text-app-text-muted hover:text-purple-400'
             }`}
-            title="OmniAI 智能运维对话 (Cmd+L / Ctrl+L)"
+            title={t('activity.copilot') || "OmniAI 智能运维对话 (Cmd+L / Ctrl+L)"}
           >
             <Sparkles className="h-5 w-5" />
             {isAIChatDrawerOpen && (
@@ -144,7 +147,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={handleLockWorkspace}
           className="flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-amber-500 transition-colors"
-          title="立即锁定工作区"
+          title={t('activity.lock') || "立即锁定工作区"}
         >
           <Lock className="h-5 w-5" />
         </button>
@@ -152,7 +155,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="flex items-center justify-center w-10 h-10 text-app-text-muted hover:text-app-text transition-colors"
-          title="偏好设置 (Alt+O)"
+          title={t('activity.settings') || "偏好设置 (Alt+O)"}
         >
           <Settings className="h-5 w-5" />
         </button>

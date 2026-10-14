@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Check, FolderInput, FileCode, CheckSquare, Square, RefreshCw } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
 import { ImportExternalSessions, ScanLocalSSHConfig, SaveSessionsBatch } from '../../wailsjs/go/app/App';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ImportSessionsModalProps {
   isOpen: boolean;
@@ -11,12 +12,12 @@ interface ImportSessionsModalProps {
 }
 
 const IMPORT_SOURCES = [
-  { id: 'ssh_config', name: 'OpenSSH (~/.ssh/config)', desc: '本机或远端 OpenSSH 配置文件' },
-  { id: 'xshell', name: 'Xshell (.xsh)', desc: 'Xshell 会话文件' },
-  { id: 'securecrt', name: 'SecureCRT (XML / .ini)', desc: 'SecureCRT 导出的 XML 或会话文件' },
-  { id: 'mobaxterm', name: 'MobaXterm (.mxtpro)', desc: 'MobaXterm 导出的会话配置' },
-  { id: 'putty', name: 'PuTTY (.reg)', desc: 'Windows 注册表导出的 PuTTY 会话' },
-  { id: 'termius', name: 'Termius (JSON)', desc: 'Termius 导出的 JSON 会话文件' },
+  { id: 'ssh_config', name: 'OpenSSH (~/.ssh/config)', desc: 'OpenSSH Config' },
+  { id: 'xshell', name: 'Xshell (.xsh)', desc: 'Xshell Session' },
+  { id: 'securecrt', name: 'SecureCRT (XML / .ini)', desc: 'SecureCRT XML/INI' },
+  { id: 'mobaxterm', name: 'MobaXterm (.mxtpro)', desc: 'MobaXterm Session' },
+  { id: 'putty', name: 'PuTTY (.reg)', desc: 'PuTTY Registry Reg' },
+  { id: 'termius', name: 'Termius (JSON)', desc: 'Termius JSON Export' },
 ];
 
 export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
@@ -25,6 +26,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
   onImportSuccess,
   onImportComplete,
 }) => {
+  const { t } = useI18n();
   const [selectedFormat, setSelectedFormat] = useState('ssh_config');
   const [rawText, setRawText] = useState('');
   const [parsedSessions, setParsedSessions] = useState<app.SessionConfig[]>([]);
@@ -46,9 +48,9 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
         const sel: Record<number, boolean> = {};
         results.forEach((_: app.SessionConfig, i: number) => (sel[i] = true));
         setSelectedIndices(sel);
-        setSuccessMsg(`成功扫描到 ${results.length} 个本地 SSH 配置！`);
+        setSuccessMsg(t('importSessions.scannedCount').replace('{count}', String(results.length)));
       } else {
-        setErrorMsg('未在 ~/.ssh/config 发现任何有效 Host 配置');
+        setErrorMsg(t('importSessions.noConfigFound'));
       }
     } catch (err: any) {
       setErrorMsg(err.message || String(err));
@@ -59,7 +61,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
 
   const handleParseContent = async () => {
     if (!rawText.trim()) {
-      setErrorMsg('请先粘贴配置文本或拖入文件内容');
+      setErrorMsg(t('importSessions.pasteRequired'));
       return;
     }
     setLoading(true);
@@ -72,9 +74,9 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
         const sel: Record<number, boolean> = {};
         results.forEach((_: app.SessionConfig, i: number) => (sel[i] = true));
         setSelectedIndices(sel);
-        setSuccessMsg(`成功解析出 ${results.length} 个会话！`);
+        setSuccessMsg(t('importSessions.parsedCount').replace('{count}', String(results.length)));
       } else {
-        setErrorMsg('未能从文本中解析出任何有效会话');
+        setErrorMsg(t('importSessions.noSessionsParsed'));
       }
     } catch (err: any) {
       setErrorMsg(err.message || String(err));
@@ -97,7 +99,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
   const handleSaveImported = async () => {
     const toImport = parsedSessions.filter((_, idx) => selectedIndices[idx]);
     if (toImport.length === 0) {
-      setErrorMsg('请至少选择一个会话以导入');
+      setErrorMsg(t('importSessions.selectAtLeastOne'));
       return;
     }
 
@@ -124,7 +126,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
               <FolderInput className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">第三方客户端会话导入向导</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('importSessions.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Cross-Client Session Migration & Import Wizard</span>
             </div>
           </div>
@@ -141,7 +143,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
           {/* Format selection */}
           <div className="space-y-2">
             <label className="block font-semibold text-xs text-[#e0e0e0]">
-              1. 选择源客户端格式
+              {t('importSessions.step1')}
             </label>
             <div className="grid grid-cols-3 gap-2.5">
               {IMPORT_SOURCES.map((src) => (
@@ -168,7 +170,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-xs text-[#e0e0e0]">
-                2. 提供源数据文件或文本
+                {t('importSessions.step2')}
               </label>
               {selectedFormat === 'ssh_config' && (
                 <button
@@ -177,7 +179,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
                   className="px-2.5 py-1 bg-[#0078d4] hover:bg-[#006cbe] text-white text-xs rounded flex items-center space-x-1.5 transition-colors"
                 >
                   <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                  <span>自动扫描本地 ~/.ssh/config</span>
+                  <span>{t('importSessions.scanSshConfig')}</span>
                 </button>
               )}
             </div>
@@ -185,17 +187,17 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
             <div className="flex items-center space-x-2.5">
               <label className="px-3 py-1.5 bg-[#3c3c3c] border border-[#3c3c3c] hover:bg-[#484848] cursor-pointer text-xs rounded transition-colors flex items-center space-x-2 text-[#cccccc] font-medium">
                 <Upload className="w-3.5 h-3.5 text-[#0078d4]" />
-                <span>选择本地配置文件...</span>
+                <span>{t('importSessions.chooseFile')}</span>
                 <input type="file" onChange={handleFileUpload} className="hidden" />
               </label>
-              <span className="text-xs text-[#858585]">或直接粘贴配置文本到下方：</span>
+              <span className="text-xs text-[#858585]">{t('importSessions.orPaste')}</span>
             </div>
 
             <textarea
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
               rows={4}
-              placeholder="请在此粘贴源配置文件内容..."
+              placeholder="Host server1&#10;  HostName 192.168.1.10..."
               className="w-full bg-[#1e1e1e] font-mono text-xs p-3 border border-[#3c3c3c] hover:border-[#484848] focus:border-[#0078d4] rounded outline-none text-[#cccccc] resize-none leading-relaxed"
             />
 
@@ -205,7 +207,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
                 disabled={loading || !rawText.trim()}
                 className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] disabled:opacity-40 text-xs rounded text-[#cccccc] font-medium transition-colors"
               >
-                解析配置内容
+                {t('importSessions.parseContent')}
               </button>
             </div>
           </div>
@@ -226,7 +228,7 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
           {parsedSessions.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-[#e0e0e0] font-semibold">
-                <span>3. 勾选需要导入的会话 ({parsedSessions.filter((_, i) => selectedIndices[i]).length}/{parsedSessions.length})</span>
+                <span>{t('importSessions.step3').replace('{selected}', String(parsedSessions.filter((_, i) => selectedIndices[i]).length)).replace('{total}', String(parsedSessions.length))}</span>
                 <div className="space-x-3 text-xs">
                   <button 
                     onClick={() => {
@@ -236,13 +238,13 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
                     }}
                     className="text-[#0078d4] hover:underline"
                   >
-                    全选
+                    {t('common.selectAll')}
                   </button>
                   <button 
                     onClick={() => setSelectedIndices({})}
                     className="text-[#858585] hover:text-[#cccccc]"
                   >
-                    全不选
+                    {t('common.deselectAll', '全不选')}
                   </button>
                 </div>
               </div>
@@ -271,14 +273,14 @@ export const ImportSessionsModal: React.FC<ImportSessionsModalProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium transition-colors"
           >
-            取消
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSaveImported}
             disabled={loading || parsedSessions.filter((_, i) => selectedIndices[i]).length === 0}
             className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] disabled:opacity-40 text-white font-medium rounded transition-colors"
           >
-            立即导入所选 ({parsedSessions.filter((_, i) => selectedIndices[i]).length} 项)
+            {t('importSessions.importBtn').replace('{count}', String(parsedSessions.filter((_, i) => selectedIndices[i]).length))}
           </button>
         </div>
       </div>

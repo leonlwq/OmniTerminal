@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Play, X, Sliders } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ParamTemplateModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function ParamTemplateModal({
   rawTemplate,
   onExecute,
 }: ParamTemplateModalProps) {
+  const { t } = useI18n();
   const [paramValues, setParamValues] = useState<{ [key: string]: string }>({});
   const [params, setParams] = useState<TemplateParam[]>([]);
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +44,9 @@ export function ParamTemplateModal({
         extracted.push({
           name,
           defaultValue: defVal,
-          placeholder: defVal ? `默认: ${defVal}` : `请输入 ${name}`,
+          placeholder: defVal
+            ? t('paramTemplate.defaultPrefix').replace('{val}', defVal)
+            : t('paramTemplate.inputPrefix').replace('{name}', name),
         });
         initialVals[name] = defVal;
       }
@@ -55,7 +59,7 @@ export function ParamTemplateModal({
       firstInputRef.current?.focus();
       firstInputRef.current?.select();
     }, 50);
-  }, [isOpen, rawTemplate]);
+  }, [isOpen, rawTemplate, t]);
 
   // 计算渲染后的最终命令
   const computeFinalCommand = () => {
@@ -91,7 +95,7 @@ export function ParamTemplateModal({
               <Sliders className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">参数化指令填参执行</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('paramTemplate.title')}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Parametric Command Template Runner</span>
             </div>
           </div>
@@ -106,7 +110,7 @@ export function ParamTemplateModal({
         {/* Form Body */}
         <form onSubmit={handleFormSubmit} className="p-4 space-y-3.5 bg-[#1e1e1e]">
           <div className="text-xs text-[#858585]">
-            该命令包含动态变量参数，请确认或修改以下变量取值：
+            {t('paramTemplate.subtitle')}
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
@@ -131,7 +135,7 @@ export function ParamTemplateModal({
           <div className="space-y-1.5 pt-2 border-t border-[#2b2b2b]">
             <div className="text-[11px] text-[#858585] font-medium flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-[#0078d4]" />
-              <span>最终执行命令实时预览:</span>
+              <span>{t('paramTemplate.preview')}</span>
             </div>
             <div className="p-2.5 bg-[#181818] border border-[#2b2b2b] rounded font-mono text-xs text-[#4ec9b0] break-all select-text leading-relaxed">
               {finalCmd}
@@ -145,14 +149,14 @@ export function ParamTemplateModal({
               onClick={onClose}
               className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] font-medium text-xs rounded transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-3.5 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] text-white font-medium text-xs rounded flex items-center space-x-1.5 transition-colors"
             >
               <Play className="w-3 h-3 fill-current" />
-              <span>立即投递执行 (Enter)</span>
+              <span>{t('paramTemplate.execute')}</span>
             </button>
           </div>
         </form>

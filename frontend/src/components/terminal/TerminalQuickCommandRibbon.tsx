@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React from 'react';
 import { Sparkles, Filter, ChevronUp } from 'lucide-react';
 import { models } from '../../../wailsjs/go/models';
@@ -21,6 +22,7 @@ export const TerminalQuickCommandRibbon: React.FC<TerminalQuickCommandRibbonProp
   onSendCommand,
   onOpenQuickCommandManager,
 }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   const defaultCmds: Array<{ label: string; cmd: string }> = [
@@ -39,7 +41,7 @@ export const TerminalQuickCommandRibbon: React.FC<TerminalQuickCommandRibbonProp
       <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar flex-1 py-0.5">
         <span className="text-[10px] font-semibold text-[#858585] uppercase tracking-wider pl-1 pr-1.5 flex items-center gap-1 select-none">
           <Sparkles className="w-3 h-3 text-amber-400" />
-          快捷命令:
+          {t('ribbon.label')}
         </span>
         {commands.map((cmd, idx) => (
           <button
@@ -47,7 +49,7 @@ export const TerminalQuickCommandRibbon: React.FC<TerminalQuickCommandRibbonProp
             type="button"
             onClick={() => onSendCommand(cmd.cmd)}
             className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-[#252526] hover:bg-[#0078d4] hover:text-white text-[#cccccc] border border-[#2b2b2b] hover:border-[#0078d4] transition-all shrink-0 active:scale-95 shadow-sm"
-            title={`点击发送: ${cmd.cmd}`}
+            title={t('ribbon.sendTooltip').replace('{cmd}', cmd.cmd)}
           >
             {cmd.label || cmd.cmd}
           </button>
@@ -56,9 +58,9 @@ export const TerminalQuickCommandRibbon: React.FC<TerminalQuickCommandRibbonProp
           type="button"
           onClick={() => onOpenQuickCommandManager?.()}
           className="px-2 py-0.5 rounded text-[11px] text-[#858585] hover:text-[#cccccc] border border-dashed border-[#3c3c3c] hover:border-[#505050] hover:bg-[#2a2d2e] transition-all shrink-0"
-          title="管理快捷命令集"
+          title={t('ribbon.manage')}
         >
-          + 新增
+          {t('ribbon.addNew')}
         </button>
       </div>
 
@@ -69,16 +71,16 @@ export const TerminalQuickCommandRibbon: React.FC<TerminalQuickCommandRibbonProp
           className={`px-2 py-0.5 rounded text-[11px] flex items-center gap-1 transition-colors ${
             isFilterOpen ? 'bg-[#0078d4] text-white shadow-sm' : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]'
           }`}
-          title="实时日志过滤器 (Cmd+Shift+F / Ctrl+Shift+F)"
+          title={t('ribbon.liveFilter')}
         >
           <Filter className="w-3 h-3" />
-          <span className="text-[10px]">实时过滤</span>
+          <span className="text-[10px]">{t("ribbon.filterText")}</span>
         </button>
         <button
           type="button"
           onClick={onClose}
           className="p-1 text-[#858585] hover:text-[#cccccc] rounded hover:bg-[#2a2d2e]"
-          title="收起快捷命令带"
+          title={t('ribbon.collapse')}
         >
           <ChevronUp className="w-3.5 h-3.5" />
         </button>

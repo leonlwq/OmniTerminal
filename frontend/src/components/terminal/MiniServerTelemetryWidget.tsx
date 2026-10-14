@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Cpu, 
@@ -31,6 +32,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
   intervalSec = 3,
   onOpenFullMonitor,
 }) => {
+  const { t } = useI18n();
   const [metrics, setMetrics] = useState<HostResourceMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -156,17 +158,17 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
   const cpu = metrics?.cpuUsage ?? 0;
   const mem = metrics?.memUsage ?? 0;
   let healthColor = 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]';
-  let healthTitle = '系统运行平稳健康';
+  let healthTitle = t('telemetry.healthy');
 
   if (cpu >= 90 || mem >= 92) {
     healthColor = 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse';
-    healthTitle = '高负荷预警 (CPU/RAM > 90%)';
+    healthTitle = t('telemetry.highLoad');
   } else if (cpu >= 70 || mem >= 80) {
     healthColor = 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]';
-    healthTitle = '中度负载 (CPU > 70% 或 RAM > 80%)';
+    healthTitle = t('telemetry.midLoad');
   } else if (!metrics) {
     healthColor = 'bg-[#858585]';
-    healthTitle = '连接就绪，等待指标采集';
+    healthTitle = t('telemetry.ready');
   }
 
   // 简易 SVG 趋势线
@@ -206,7 +208,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
             ? 'bg-[#252526] border-[#0078d4] text-white shadow-[#0078d4]/10'
             : 'bg-[#181818]/80 hover:bg-[#1f1f1f]/95 border-[#2e2e2e] hover:border-[#3c3c3c] text-[#cccccc] hover:text-white'
         }`}
-        title={`服务器实时硬件遥测 (${sessionName}) - 点击查看详情`}
+        title={t('telemetry.widgetTooltip').replace('{name}', sessionName || '')}
       >
         {/* 健康呼吸灯 */}
         <span className={`w-2 h-2 rounded-full shrink-0 transition-colors ${healthColor}`} title={healthTitle} />
@@ -249,7 +251,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               <div className="truncate">
                 <div className="text-xs font-semibold text-white truncate">{sessionName || 'Remote Host'}</div>
                 <div className="text-[10px] text-[#858585] font-mono">
-                  采样: {metrics?.sampledAt || '刚刚'}
+                  {t('telemetry.sampledAt').replace('{time}', metrics?.sampledAt || t('telemetry.justNow'))}
                 </div>
               </div>
             </div>
@@ -262,7 +264,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
                 }}
                 disabled={loading}
                 className="p-1 rounded text-[#858585] hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
-                title="立即刷新指标"
+                title={t('telemetry.refresh')}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#3794ff]' : ''}`} />
               </button>
@@ -309,7 +311,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-[#858585] flex items-center gap-1">
                   <Database className="w-3 h-3 text-emerald-400" />
-                  内存
+                  {t('telemetry.memory')}
                 </span>
                 <span className="text-xs font-bold font-mono text-white">
                   {metrics ? `${metrics.memUsage.toFixed(1)}%` : '--'}
@@ -342,7 +344,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               <div className="flex items-center justify-between text-[11px] mb-1">
                 <span className="text-[#858585] flex items-center gap-1">
                   <HardDrive className="w-3 h-3 text-purple-400" />
-                  根分区 (/)
+                  {t('telemetry.rootDisk')}
                 </span>
                 <span className="font-mono text-white">
                   {metrics?.diskUsage !== undefined ? `${metrics.diskUsage}%` : '--'}
@@ -358,8 +360,8 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               </div>
               {metrics?.diskTotalGB ? (
                 <div className="flex justify-between text-[9px] text-[#858585] font-mono mt-1">
-                  <span>已用: {metrics.diskUsedGB} GB</span>
-                  <span>总量: {metrics.diskTotalGB} GB</span>
+                  <span>{t('telemetry.used').replace('{val}', String(metrics.diskUsedGB))}</span>
+                  <span>{t('telemetry.total').replace('{val}', String(metrics.diskTotalGB))}</span>
                 </div>
               ) : null}
             </div>
@@ -368,12 +370,12 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
             <div className="bg-[#252526] border border-[#2e2e2e] rounded-lg p-2 flex items-center justify-between font-mono text-[11px]">
               <div className="flex items-center gap-1.5">
                 <ArrowDown className="w-3 h-3 text-sky-400" />
-                <span className="text-[#858585]">下行:</span>
+                <span className="text-[#858585]">{t("telemetry.down")}</span>
                 <span className="text-white font-medium">{formatNetRate(metrics?.netRxRateKBps)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <ArrowUp className="w-3 h-3 text-emerald-400" />
-                <span className="text-[#858585]">上行:</span>
+                <span className="text-[#858585]">{t("telemetry.up")}</span>
                 <span className="text-white font-medium">{formatNetRate(metrics?.netTxRateKBps)}</span>
               </div>
             </div>
@@ -383,7 +385,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               <div className="flex items-center justify-between px-1 text-[10px] text-[#858585] font-mono">
                 <span className="flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
-                  系统运行时间:
+                  {t('telemetry.uptime')}
                 </span>
                 <span className="text-[#cccccc]">{metrics.uptimeStr}</span>
               </div>
@@ -392,7 +394,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
 
           {/* 底部直达按钮 */}
           <div className="pt-2 border-t border-[#2b2b2b] flex items-center justify-between">
-            <span className="text-[10px] text-[#666666]">采样周期: {intervalSec}s</span>
+            <span className="text-[10px] text-[#666666]">{t("telemetry.interval").replace("{sec}", String(intervalSec))}</span>
             <button
               onClick={() => {
                 setIsPopoverOpen(false);
@@ -400,7 +402,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
               }}
               className="px-2.5 py-1 bg-[#0078d4] hover:bg-[#0078d4]/85 text-white rounded text-[11px] font-medium flex items-center gap-1 transition-colors shadow-sm"
             >
-              <span>打开完整监控中心</span>
+              <span>{t('telemetry.openFull')}</span>
               <ChevronRight className="w-3 h-3" />
             </button>
           </div>

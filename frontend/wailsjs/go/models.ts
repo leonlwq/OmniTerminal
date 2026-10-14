@@ -660,6 +660,7 @@ export namespace models {
 	}
 	export class AppSettings {
 	    themeName: string;
+	    language: string;
 	    customThemes: CustomThemeConfig[];
 	    fontFamily: string;
 	    nonAsciiFontFamily: string;
@@ -770,6 +771,7 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.themeName = source["themeName"];
+	        this.language = source["language"];
 	        this.customThemes = this.convertValues(source["customThemes"], CustomThemeConfig);
 	        this.fontFamily = source["fontFamily"];
 	        this.nonAsciiFontFamily = source["nonAsciiFontFamily"];

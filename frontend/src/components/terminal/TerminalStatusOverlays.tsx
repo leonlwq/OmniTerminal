@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import React from 'react';
 import { Sparkles, X, Clock, Lightbulb } from 'lucide-react';
 
@@ -54,6 +55,7 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
   onCloseLiveHex,
   hexContent,
 }) => {
+  const { t } = useI18n();
   return (
     <>
       {/* 正在连接遮罩 */}
@@ -65,7 +67,7 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             <span className="text-xs font-semibold text-[#cccccc] tracking-wider">
-              {isLocal ? '正在启动本地 Shell 终端环境...' : '正在建立安全 SSH 通道并挂载 PTY 终端设备...'}
+              {isLocal ? t('statusOverlay.connectingLocal') : t('statusOverlay.connectingSSH')}
             </span>
           </div>
         </div>
@@ -80,10 +82,10 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             <span className="text-xs font-semibold text-[#cccccc] tracking-wide">
-              检测到意外网络断开，正在进行第 {retryCount}/5 次自动重连...
+              {t('statusOverlay.reconnecting').replace('{retry}', String(retryCount))}
             </span>
             {countdown !== null && (
-              <span className="text-xs text-amber-300/80">将在 {countdown} 秒后重新拨号建立连接</span>
+              <span className="text-xs text-amber-300/80">{t("statusOverlay.countdown").replace("{sec}", String(countdown))}</span>
             )}
           </div>
         </div>
@@ -93,13 +95,13 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
       {errorMsg && !reconnecting && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs text-[#f48771] p-4 z-30">
           <div className="text-center max-w-sm space-y-3 bg-[#252526] border border-[#be1100]/40 p-5 rounded-md shadow-2xl">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#f48771]">安全连接失败 (SSH Connect Error)</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#f48771]">{t('statusOverlay.errorTitle')}</p>
             <p className="text-xs text-[#cccccc] font-mono bg-[#1e1e1e] p-2.5 rounded border border-[#3c3c3c] break-all">{errorMsg}</p>
             <button
               onClick={onRetrySSH}
               className="mt-2 px-4 py-1.5 bg-[#0078d4] hover:bg-[#006cbe] active:scale-[0.99] rounded text-xs font-medium text-white tracking-wide transition-all shadow-sm"
             >
-              点击手动重试
+              {t('statusOverlay.retryBtn')}
             </button>
           </div>
         </div>
@@ -109,16 +111,16 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
       {pacingProgress?.isActive && (
         <div className="absolute top-10 left-1/2 -translate-x-1/2 z-40 bg-[#252526] border border-purple-500/40 text-[#cccccc] px-3.5 py-1.5 rounded-md shadow-2xl flex items-center space-x-3 text-xs animate-in fade-in zoom-in-95">
           <div className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-          <span className="font-semibold text-purple-300">🐢 防吞字延时发送中:</span>
+          <span className="font-semibold text-purple-300">{t("statusOverlay.pacingSending")}</span>
           <span className="font-mono text-[#3794ff]">
-            {pacingProgress.currentLine} / {pacingProgress.totalLines} 行 ({Math.round((pacingProgress.currentChar / Math.max(1, pacingProgress.totalChars)) * 100)}%)
+            {pacingProgress.currentLine} / {pacingProgress.totalLines} ({Math.round((pacingProgress.currentChar / Math.max(1, pacingProgress.totalChars)) * 100)}%)
           </span>
           {onAbortPacing && (
             <button
               onClick={onAbortPacing}
               className="px-2 py-0.5 rounded bg-[#5a1d1d] hover:bg-[#7a2828] text-white font-medium text-[11px] transition-colors shadow-sm"
             >
-              终止发送
+              {t('statusOverlay.stopSending')}
             </button>
           )}
         </div>
@@ -128,7 +130,7 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
       {ghostSuggestion && isActive && (
         <div className="absolute bottom-10 right-6 z-20 flex items-center gap-2 px-3 py-1.5 rounded bg-[#252526] border border-[#0078d4]/40 text-xs text-[#cccccc] shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 select-none">
           <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-          <span className="text-[#858585]">智能建议:</span>
+          <span className="text-[#858585]">{t("statusOverlay.aiAdvice")}</span>
           <span className="font-mono text-[#3794ff] font-medium">{currentInputBuffer}<span className="text-[#858585] font-normal">{ghostSuggestion}</span></span>
           <span className="ml-1 px-1.5 py-0.5 rounded bg-[#0078d4]/30 text-[#3794ff] border border-[#0078d4]/40 text-[10px] font-mono font-semibold">Tab / →</span>
         </div>
@@ -144,10 +146,10 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
             onClearDetectedError();
           }}
           className="absolute top-3 right-5 z-30 flex items-center gap-1.5 bg-[#252526] hover:bg-[#2a2d2e] border border-purple-500/50 shadow-xl px-3 py-1 rounded text-purple-200 text-xs font-medium cursor-pointer animate-in fade-in slide-in-from-top-2 duration-200 transition-all select-none"
-          title="点击由 OmniAI 智能分析报错原因并生成修复命令"
+          title={t('statusOverlay.aiDiagnoseTooltip')}
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-spin-slow" />
-          <span>💡 捕获到报错 · 点击 AI 智能诊断</span>
+          <span>{t('statusOverlay.aiDiagnose')}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -180,7 +182,7 @@ export const TerminalStatusOverlays: React.FC<TerminalStatusOverlaysProps> = ({
       {showLiveHex && (
         <div className="w-80 h-full border-l border-[#2b2b2b] bg-[#181818] flex flex-col shrink-0 animate-in slide-in-from-right-8 duration-200">
           <div className="px-4 py-2.5 bg-[#1f1f1f] border-b border-[#2b2b2b] text-xs font-semibold text-[#cccccc] flex items-center justify-between">
-            <span>实时十六进制数据流 (Live Hex)</span>
+            <span>{t('statusOverlay.liveHex')}</span>
             <button
               onClick={onCloseLiveHex}
               className="text-[#858585] hover:text-[#cccccc] p-1 rounded hover:bg-[#2a2d2e] transition-colors"

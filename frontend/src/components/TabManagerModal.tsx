@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Layers, Lock, Unlock, Trash2 } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
+import { useI18n } from '../i18n/I18nContext';
 
 interface TabManagerModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function TabManagerModal({
   tabStatus,
   customTabNames = {}
 }: TabManagerModalProps) {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -39,7 +41,7 @@ export function TabManagerModal({
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">活动选项卡管理器</h2>
+              <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('tabManager.modalTitle') || '活动选项卡管理器'}</h2>
               <span className="text-[11px] text-[#858585] font-normal">Active Session Tabs Management & Grouping</span>
             </div>
           </div>
@@ -54,16 +56,16 @@ export function TabManagerModal({
         {/* Content */}
         <div className="p-4 overflow-y-auto flex-1 bg-[#1e1e1e] custom-scrollbar">
           {openTabs.length === 0 ? (
-             <div className="p-8 text-center text-xs text-[#858585]">当前没有打开的终端选项卡</div>
+             <div className="p-8 text-center text-xs text-[#858585]">{t('tabManager.empty') || '当前没有打开的终端选项卡'}</div>
           ) : (
             <div className="border border-[#2b2b2b] rounded overflow-hidden">
               <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-[#252526] border-b border-[#2b2b2b] text-[#858585] text-[11px] font-medium">
                   <tr>
-                    <th className="px-3.5 py-2 w-12 text-center">状态</th>
-                    <th className="px-3.5 py-2">会话名称</th>
-                    <th className="px-3.5 py-2">目标地址</th>
-                    <th className="px-3.5 py-2 text-right">操作</th>
+                    <th className="px-3.5 py-2 w-12 text-center">{t('tabManager.colStatus') || '状态'}</th>
+                    <th className="px-3.5 py-2">{t('tabManager.colName') || '会话名称'}</th>
+                    <th className="px-3.5 py-2">{t('tabManager.colTarget') || '目标地址'}</th>
+                    <th className="px-3.5 py-2 text-right">{t('tabManager.colActions') || '操作'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2b2b2b] bg-[#1e1e1e]">
@@ -95,14 +97,14 @@ export function TabManagerModal({
                           </span>
                         </td>
                         <td className="px-3.5 py-2 text-[#858585] font-mono text-[11px]">
-                          {tab.isLocal ? '本地终端 (Local Shell)' : `${tab.user || 'root'}@${tab.host}:${tab.port || 22}`}
+                          {tab.isLocal ? (t('tabManager.localShell') || '本地终端 (Local Shell)') : `${tab.user || 'root'}@${tab.host}:${tab.port || 22}`}
                         </td>
                         <td className="px-3.5 py-2 text-right">
                           <div className="flex items-center justify-end space-x-1" onClick={e => e.stopPropagation()}>
                              <button 
                                onClick={() => toggleTabLock(tab.id)}
                                className={`p-1 rounded hover:bg-[#333333] transition-colors ${isLocked ? 'text-[#cca700] bg-[#cca700]/10' : 'text-[#858585] hover:text-[#cccccc]'}`}
-                               title={isLocked ? "解锁标签页" : "锁定标签页"}
+                               title={isLocked ? (t('tabManager.unlockTip') || "解锁标签页") : (t('tabManager.lockTip') || "锁定标签页")}
                              >
                                {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                              </button>
@@ -110,7 +112,7 @@ export function TabManagerModal({
                                onClick={() => handleCloseTab(tab.id)}
                                disabled={isLocked}
                                className="p-1 rounded text-[#858585] hover:text-[#f14c4c] hover:bg-[#f14c4c]/10 disabled:opacity-20 disabled:hover:text-[#858585] disabled:hover:bg-transparent transition-colors"
-                               title="关闭标签页"
+                               title={t('tabManager.closeTip') || "关闭标签页"}
                              >
                                <Trash2 className="w-3.5 h-3.5" />
                              </button>
@@ -127,12 +129,12 @@ export function TabManagerModal({
 
         {/* Footer */}
         <div className="flex justify-between items-center px-5 py-3 bg-[#1f1f1f] border-t border-[#2b2b2b] text-xs text-[#858585]">
-          <span>总共打开 <strong className="text-[#e0e0e0]">{openTabs.length}</strong> 个选项卡</span>
+          <span>{(t('tabManager.totalTabs') || '总共打开 {count} 个选项卡').replace('{count}', String(openTabs.length))}</span>
           <button 
             onClick={onClose} 
             className="px-3 py-1 text-xs font-medium text-[#cccccc] bg-[#3c3c3c] hover:bg-[#484848] rounded transition-colors"
           >
-            关闭
+            {t('common.close') || '关闭'}
           </button>
         </div>
       </div>

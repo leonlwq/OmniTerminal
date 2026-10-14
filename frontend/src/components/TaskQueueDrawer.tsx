@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, UploadCloud, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface SftpTask {
   taskId: string;
@@ -28,6 +29,7 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
   onClearCompleted,
   activeTasksCount,
 }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   const formatBytes = (bytes: number) => {
@@ -45,14 +47,14 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
           <div className="w-6 h-6 rounded bg-[#0078d4]/15 border border-[#0078d4]/30 flex items-center justify-center text-[#3794ff]">
             <UploadCloud className={`h-3.5 w-3.5 ${activeTasksCount > 0 ? 'animate-bounce' : ''}`} />
           </div>
-          <h3 className="text-xs font-semibold text-white">文件传输队列 ({tasks.length})</h3>
+          <h3 className="text-xs font-semibold text-white">{t('taskQueue.title').replace('{count}', String(tasks.length))}</h3>
         </div>
         <div className="flex items-center space-x-2">
           <button 
             onClick={onClearCompleted}
             className="text-[11px] text-[#858585] hover:text-white px-2 py-0.5 rounded hover:bg-white/5 transition-colors"
           >
-            清空已完成
+            {t('taskQueue.clearCompleted')}
           </button>
           <button 
             onClick={onClose} 
@@ -66,7 +68,7 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-[#181818]">
         {tasks.length === 0 ? (
           <div className="text-center py-16 text-xs text-[#858585]">
-            暂无进行中或已完成的传输任务
+            {t('taskQueue.empty')}
           </div>
         ) : (
           tasks.map((task) => (
@@ -80,8 +82,8 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
                   task.status === 'failed' ? 'bg-red-950/60 text-red-300 border border-red-500/30' :
                   'bg-[#0078d4]/20 text-blue-300 border border-[#0078d4]/40 animate-pulse'
                 }`}>
-                  {task.status === 'completed' ? '已完成' :
-                   task.status === 'failed' ? '传输失败' : '正在传输'}
+                  {task.status === 'completed' ? t('taskQueue.statusDone') :
+                   task.status === 'failed' ? t('taskQueue.statusFailed') : t('taskQueue.statusRunning')}
                 </span>
               </div>
               

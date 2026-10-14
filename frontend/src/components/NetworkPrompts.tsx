@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { KeyRound, ShieldAlert, Check, X } from 'lucide-react';
 
 export const NetworkPrompts: React.FC = () => {
+  const { t } = useI18n();
   // --- Keyboard Interactive Auth ---
   const [kiChallenge, setKiChallenge] = useState<any>(null);
   const [kiAnswers, setKiAnswers] = useState<string[]>([]);
@@ -49,7 +51,7 @@ export const NetworkPrompts: React.FC = () => {
 
             if (targetIdx >= 0) {
               initialAnswers[targetIdx] = totpRes.code;
-              setAutofillTotpMsg(`已自动填入会话关联的 TOTP 令牌【${totpRes.label}】动态码: ${totpRes.code}`);
+              setAutofillTotpMsg(t('netPrompt.autofilledTotp').replace('{label}', totpRes.label).replace('{code}', totpRes.code));
             }
           }
         } catch (_) {
@@ -72,7 +74,7 @@ export const NetworkPrompts: React.FC = () => {
         const newAns = [...kiAnswers];
         newAns[questionIdx] = res.code;
         setKiAnswers(newAns);
-        setAutofillTotpMsg(`已注入令牌【${res.label}】动态码: ${res.code}`);
+        setAutofillTotpMsg(t('netPrompt.autofilledTotp').replace('{label}', res.label).replace('{code}', res.code));
       }
     } catch (e: any) {
       alert('计算动态码失败: ' + (e?.message || String(e)));
@@ -134,12 +136,12 @@ export const NetworkPrompts: React.FC = () => {
                 <KeyRound className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-xs font-semibold text-[#cccccc]">两步验证 / 交互式认证</h2>
+                <h2 className="text-xs font-semibold text-[#cccccc]">{t('netPrompt.twoFactorTitle')}</h2>
                 <span className="text-[11px] text-[#858585]">Keyboard Interactive Authentication Challenge</span>
               </div>
             </div>
             <div className="p-5 space-y-4 bg-[#1e1e1e]">
-              <p className="text-xs text-[#cccccc]">远程服务器要求提供额外的身份验证应答：</p>
+              <p className="text-xs text-[#cccccc]">{t('netPrompt.remotePromptNotice')}</p>
               {autofillTotpMsg && (
                 <div className="p-2.5 bg-[#0078d4]/15 border border-[#0078d4]/30 rounded flex items-center space-x-2 text-xs text-[#3794ff] animate-in fade-in">
                   <span className="text-sm">🔐</span>
@@ -157,7 +159,7 @@ export const NetworkPrompts: React.FC = () => {
                     <label className="text-xs font-medium text-[#cccccc] block">{q}</label>
                     {totpList.length > 0 && (
                       <div className="flex items-center space-x-1.5">
-                        <span className="text-[11px] text-[#858585]">快速填入:</span>
+                        <span className="text-[11px] text-[#858585]">{t('netPrompt.quickFill')}</span>
                         <select
                           onChange={(e) => {
                             if (e.target.value) injectTotpCode(e.target.value, idx);
@@ -165,7 +167,7 @@ export const NetworkPrompts: React.FC = () => {
                           defaultValue=""
                           className="bg-[#252526] border border-[#3c3c3c] rounded px-2 py-0.5 text-[11px] text-[#cccccc] outline-none cursor-pointer hover:border-[#0078d4]"
                         >
-                          <option value="" disabled>选择 TOTP 令牌...</option>
+                          <option value="" disabled>{t('netPrompt.selectTotp')}</option>
                           {totpList.map(t => (
                             <option key={t.id} value={t.id}>{t.label}</option>
                           ))}

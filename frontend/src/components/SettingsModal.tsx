@@ -142,7 +142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }`}
             >
               <Command className="w-3.5 h-3.5 shrink-0" />
-              <span>默认会话模板</span>
+              <span>{t('settings.tab.template') || '默认会话模板'}</span>
             </button>
             <button 
               onClick={() => setActiveTab('os')}
@@ -153,7 +153,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }`}
             >
               <Monitor className="w-3.5 h-3.5 shrink-0" />
-              <span>原生桌面 / 系统集成</span>
+              <span>{t('settings.tab.os') || '原生桌面 / 系统集成'}</span>
             </button>
             <button 
               onClick={() => setActiveTab('ai')}
@@ -164,7 +164,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 shrink-0 text-purple-400" />
-              <span>AI Copilot</span>
+              <span>{t('settings.tab.ai') || 'AI Copilot'}</span>
             </button>
             <div className="pt-1.5 border-t border-[#2b2b2b]">
               <button 

@@ -118,7 +118,7 @@ function App() {
               const tempId = 'local_' + Date.now();
               const tempSession = new app.SessionConfig({
                 id: tempId,
-                name: `💻 本地 Shell`,
+                name: `💻 ${t('quickConnect.localShell') || '本地 Shell'}`,
                 isFolder: false,
                 parentId: '',
                 host: 'Local',
@@ -141,7 +141,7 @@ function App() {
             const tempId = 'local_' + Date.now();
             const tempSession = new app.SessionConfig({
               id: tempId,
-              name: `💻 本地 Shell`,
+              name: `💻 ${t('quickConnect.localShell') || '本地 Shell'}`,
               isFolder: false,
               parentId: '',
               host: 'Local',
@@ -222,7 +222,7 @@ function App() {
           const tempId = 'local_' + Date.now();
           const tempSession = new app.SessionConfig({
             id: tempId,
-            name: `💻 本地 Shell`,
+            name: `💻 ${t('quickConnect.localShell') || '本地 Shell'}`,
             isFolder: false,
             parentId: '',
             host: 'Local',
@@ -275,6 +275,13 @@ function App() {
     toggleFavoriteSession
   } = useSettings();
   const { matchesAction } = useKeybindingManager((settings as any).customKeybindings);
+
+  // 同步设置中的语言偏好
+  useEffect(() => {
+    if ((settings as any)?.language && (settings as any).language !== lang) {
+      setLang((settings as any).language);
+    }
+  }, [(settings as any)?.language]);
 
   // 拦截 Tab 关闭并应用二次确认策略 (Stage 1)
   const onRequestCloseTab = useCallback((id: string, e?: React.MouseEvent) => {
@@ -594,10 +601,10 @@ function App() {
       if ((window as any).go?.app?.App?.ExportToSSHConfig) {
         const res = await (window as any).go.app.App.ExportToSSHConfig();
         await navigator.clipboard.writeText(res);
-        alert("已成功反向导出标准 OpenSSH 配置到剪贴板！\n您可以将其直接追加或粘贴至 ~/.ssh/config 中。");
+        alert(t('app.exportOpenSshSuccess'));
       }
     } catch (err: any) {
-      alert("导出失败: " + (err?.message || err));
+      alert(t('app.exportOpenSshFailed') + (err?.message || err));
     }
   };
 
@@ -707,7 +714,7 @@ function App() {
         setIsSettingsOpen(false);
       })
       .catch(err => {
-        alert("保存全局设置失败: " + err);
+        alert(t('app.saveSettingsFailed') + err);
       });
   };
 
@@ -1255,7 +1262,7 @@ function App() {
                 id: 'default',
                 parentId: '',
                 isFolder: false,
-                setName: '默认快捷命令',
+                setName: t('quickCmd.defaultSetName'),
                 commands: [{ label, cmd }]
               })];
             } else {
