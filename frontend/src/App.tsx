@@ -193,6 +193,7 @@ function App() {
     handleCloseOtherTabs,
     handleCloseRightTabs,
     handleCloneTab,
+    handleDuplicateTab,
     handleDetachTab,
     handleTabContextMenu,
     handleReconnectTab,
@@ -1072,6 +1073,7 @@ function App() {
             setOpenSftpTabs={setOpenSftpTabs}
             tabStatus={tabStatus}
             handleCloseTab={onRequestCloseTab}
+            handleDuplicateTab={handleDuplicateTab}
             onProbeReachability={() => triggerBatchProbeReachability()}
             isProbingReachability={isProbingReachability}
             dockSide={dockSide}
@@ -1131,6 +1133,7 @@ function App() {
                 handleTabDrop={handleTabDrop}
                 handleCloseTab={onRequestCloseTab}
                 handleDetachTab={handleDetachTab}
+                handleDuplicateTab={handleDuplicateTab}
                 resetSessionFormData={resetSessionFormData}
                 setModalMode={setModalMode}
                 setIsModalOpen={setIsModalOpen}

@@ -49,7 +49,7 @@ export function useSessionConnection({
       }
     }
 
-    const tabExists = openTabs.some((t: any) => t.id === finalSession.id);
+    const tabExists = openTabs.some((t: any) => t.id === finalSession.id || (typeof t.id === 'string' && t.id.startsWith(finalSession.id + '_')));
     if (tabExists) {
       const newTabId = `${finalSession.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
       finalSession.id = newTabId;

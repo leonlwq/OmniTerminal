@@ -26,6 +26,7 @@ export interface TerminalWorkspacePanesProps {
   handleTabDrop: (id: string) => void;
   handleCloseTab: (id: string, e?: React.MouseEvent) => void;
   handleDetachTab?: (id: string) => void;
+  handleDuplicateTab?: (tab: app.SessionConfig, targetPaneSetter?: (id: string) => void) => void;
   resetSessionFormData: (parentId?: string) => void;
   setModalMode: (mode: 'create' | 'edit') => void;
   setIsModalOpen: (open: boolean) => void;
@@ -86,6 +87,7 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
   handleTabDrop,
   handleCloseTab,
   handleDetachTab,
+  handleDuplicateTab,
   resetSessionFormData,
   setModalMode,
   setIsModalOpen,
@@ -164,6 +166,7 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
                 handleTabDrop={handleTabDrop}
                 handleCloseTab={handleCloseTab}
                 handleDetachTab={handleDetachTab}
+                handleDuplicateTab={(targetTab) => handleDuplicateTab ? handleDuplicateTab(targetTab, setActiveForPane) : undefined}
                 resetSessionFormData={resetSessionFormData}
                 setModalMode={setModalMode}
                 setIsModalOpen={setIsModalOpen}

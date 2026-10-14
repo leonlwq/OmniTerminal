@@ -16,6 +16,7 @@ interface TabBarProps {
   handleTabDrop: (id: string) => void;
   handleCloseTab: (id: string, e?: React.MouseEvent) => void;
   handleDetachTab?: (id: string) => void;
+  handleDuplicateTab?: (tab: app.SessionConfig) => void;
   resetSessionFormData: () => void;
   setModalMode: (mode: 'create' | 'edit') => void;
   setIsModalOpen: (isOpen: boolean) => void;
@@ -66,6 +67,7 @@ export function TabBar({
   handleTabDrop,
   handleCloseTab,
   handleDetachTab,
+  handleDuplicateTab,
   resetSessionFormData,
   setModalMode,
   setIsModalOpen,
@@ -105,7 +107,10 @@ export function TabBar({
           <div 
             key={t.id}
             onClick={() => setActiveForPane(t.id)}
-            onDoubleClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              handleDuplicateTab?.(t);
+            }}
             onContextMenu={(e) => handleTabContextMenu(e, t.id)}
             draggable={true}
             onDragStart={(e) => {
@@ -184,6 +189,7 @@ export function TabBar({
                   e.stopPropagation();
                   onOpenShareModal?.(t.id);
                 }}
+                onDoubleClick={(e) => e.stopPropagation()}
                 className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono shrink-0 hover:bg-emerald-500/30 transition-colors"
                 title={translate('tabBar.sharedViewerTooltip').replace('{count}', String(sharedSessionIds[t.id].viewerCount))}
               >
@@ -195,6 +201,7 @@ export function TabBar({
             {/* 关闭按钮 - VS Code 原生紧凑小叉号 */}
             <button 
               onClick={(e) => handleCloseTab(t.id, e)}
+              onDoubleClick={(e) => e.stopPropagation()}
               className={`w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 dark:hover:bg-white/10 text-app-text-muted hover:text-white transition-all ml-1 active:scale-95 shrink-0 ${
                 isActive ? 'opacity-80 hover:opacity-100' : 'opacity-0 group-hover:opacity-75 group-hover:hover:opacity-100'
               }`}

@@ -218,6 +218,31 @@ export function useTabManager() {
 
   const closeTabMenu = useCallback(() => setTabContextMenu(null), []);
 
+  const handleDuplicateTab = useCallback((tab: app.SessionConfig, targetPaneSetter?: (id: string) => void) => {
+    if (!tab) return;
+    const clone = new app.SessionConfig(tab);
+    const baseId = tab.id.includes('_') ? tab.id.split('_')[0] : tab.id;
+    clone.id = `${baseId}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    clone.name = tab.name;
+
+    if (tab.isLocal || tab.protocol === 'local') {
+      (clone as any).isLocal = true;
+      (clone as any).protocol = 'local';
+    }
+
+    setOpenTabs(prev => [...prev, clone]);
+
+    if (targetPaneSetter) {
+      targetPaneSetter(clone.id);
+    } else {
+      setActiveTabId(clone.id);
+    }
+
+    if (customTabNames[tab.id]) {
+      setCustomTabNames(prev => ({ ...prev, [clone.id]: customTabNames[tab.id] }));
+    }
+  }, [customTabNames, setOpenTabs, setActiveTabId, setCustomTabNames]);
+
   const handleTabAreaDoubleClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       const defaultSess = new app.SessionConfig();
@@ -225,6 +250,7 @@ export function useTabManager() {
       defaultSess.name = 'Local Shell';
       defaultSess.host = 'localhost';
       (defaultSess as any).protocol = 'local';
+      (defaultSess as any).isLocal = true;
       setOpenTabs(prev => [...prev, defaultSess]);
       setActiveTabId(defaultSess.id);
     }
@@ -265,6 +291,7 @@ export function useTabManager() {
     handleCloseOtherTabs,
     handleCloseRightTabs,
     handleCloneTab,
+    handleDuplicateTab,
     handleDetachTab,
     handleTabContextMenu,
     handleReconnectTab,

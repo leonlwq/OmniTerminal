@@ -52,6 +52,7 @@ interface SessionSidebarProps {
   hostReachabilityMap?: Record<string, HostStatusResult>;
   getColorLabelClass?: (colorStr: string | undefined, isConnected: boolean) => string;
   customTabNames?: { [id: string]: string };
+  handleDuplicateTab?: (tab: app.SessionConfig) => void;
 }
 
 export function SessionSidebar({
@@ -76,6 +77,7 @@ export function SessionSidebar({
   setOpenSftpTabs,
   tabStatus,
   handleCloseTab,
+  handleDuplicateTab,
   onProbeReachability,
   isProbingReachability,
   dockSide = 'left',
@@ -339,6 +341,10 @@ export function SessionSidebar({
                       setActiveTabId(tab.id);
                     }
                   }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    handleDuplicateTab?.(tab);
+                  }}
                   className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all active:scale-[0.98] ${
                     isActive 
                       ? 'bg-blue-600/15 text-blue-400 font-medium ring-1 ring-blue-500/25 shadow-sm' 
@@ -353,6 +359,7 @@ export function SessionSidebar({
                      {lockedTabs.includes(tab.id) && <Lock className="h-2.5 w-2.5 shrink-0 text-app-text-muted" />}
                    </div>
                    <button 
+                     onDoubleClick={(e) => e.stopPropagation()}
                      onClick={(e) => {
                        if (e) e.stopPropagation();
                        if (lockedTabs.includes(tab.id)) {
