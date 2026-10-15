@@ -19,6 +19,18 @@ import { FolderDiffModal } from './FolderDiffModal';
 import { SftpPreviewModal } from './SftpPreviewModal';
 import { MonacoEditorModal } from './MonacoEditorModal';
 
+// 模块级自然文件名排序器（带数字自然排序与基础敏感度，大幅超越反复初始化的 localeCompare）
+const sftpFileCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+// 纯函数文件大小格式化单例（消除组件渲染重复定义）
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  if (i < 0) return bytes + ' B';
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
 interface SftpListPanelProps {
   title: string;
   path: string;
@@ -33,7 +45,7 @@ interface SftpListPanelProps {
   bookmarks: string[];
   toggleBookmark: () => void;
   formatSize: (bytes: number) => string;
-  toggleSelect: (set: Set<string>, setFn: any, name: string, multi: boolean) => void;
+  toggleSelect: (setFn: any, name: string, multi: boolean) => void;
   onContextMenu?: (e: React.MouseEvent, file: app.SftpFileInfo) => void;
   isGitRepo?: boolean;
   gitStatusMap?: Record<string, { status: string; staged: boolean; untracked: boolean }>;
@@ -83,11 +95,10 @@ interface SftpFileItemProps {
   sessionId?: string;
   isRemote: boolean;
   path: string;
-  selected: Set<string>;
   gitStatus?: { status: string; staged: boolean; untracked: boolean };
   formatSize: (bytes: number) => string;
-  toggleSelect: (set: Set<string>, setFn: any, name: string, multi: boolean) => void;
-  setSelected: any;
+  onItemSelect: (fileName: string, multi: boolean) => void;
+  onItemDragStart: (e: React.DragEvent, fileName: string) => void;
   handleDbClick: (file: app.SftpFileInfo) => void;
   onContextMenu?: (e: React.MouseEvent, file: app.SftpFileInfo) => void;
   setDragOverFolder: (folder: string | null) => void;
@@ -103,11 +114,10 @@ const SftpFileItem = React.memo<SftpFileItemProps>(({
   sessionId,
   isRemote,
   path,
-  selected,
   gitStatus,
   formatSize,
-  toggleSelect,
-  setSelected,
+  onItemSelect,
+  onItemDragStart,
   handleDbClick,
   onContextMenu,
   setDragOverFolder,
@@ -120,18 +130,7 @@ const SftpFileItem = React.memo<SftpFileItemProps>(({
   return (
     <div 
       draggable={true}
-      onDragStart={(e) => {
-        const items = selected.has(f.name) ? Array.from(selected) : [f.name];
-        const dragData = {
-          sessionId: sessionId || '',
-          isRemote,
-          sourcePath: path,
-          files: items,
-        };
-        e.dataTransfer.setData('application/omni-sftp', JSON.stringify(dragData));
-        e.dataTransfer.setData('text/plain', items.join('\n'));
-        e.dataTransfer.effectAllowed = 'copyMove';
-      }}
+      onDragStart={(e) => onItemDragStart(e, f.name)}
       onDragOver={(e) => {
         if (f.isDir) {
           e.preventDefault();
@@ -156,7 +155,7 @@ const SftpFileItem = React.memo<SftpFileItemProps>(({
         }
       }}
       style={style}
-      onClick={(e) => toggleSelect(selected, setSelected, f.name, e.ctrlKey || e.metaKey)}
+      onClick={(e) => onItemSelect(f.name, e.ctrlKey || e.metaKey)}
       onDoubleClick={() => handleDbClick(f)}
       onContextMenu={(e) => onContextMenu?.(e, f)}
       className={`flex items-center justify-between px-2 py-1 h-8 cursor-pointer text-[10px] select-none hover:bg-app-hover transition-colors ${isSelected ? 'bg-blue-900/40' : ''} ${isDragOver ? 'bg-blue-500/25 ring-1 ring-blue-400' : ''}`}
@@ -197,9 +196,35 @@ const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean
   const parentRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+
+  // 保持当前选中的不可变引用快照，彻底解除 SftpFileItem 对外部 selected Set 的直接依赖
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+
+  const handleItemSelect = useCallback((fileName: string, multi: boolean) => {
+    toggleSelect(setSelected, fileName, multi);
+  }, [toggleSelect, setSelected]);
+
+  const handleItemDragStart = useCallback((e: React.DragEvent, fileName: string) => {
+    const cur = selectedRef.current;
+    const items = cur.has(fileName) ? Array.from(cur) : [fileName];
+    const dragData = {
+      sessionId: sessionId || '',
+      isRemote,
+      sourcePath: path,
+      files: items,
+    };
+    e.dataTransfer.setData('application/omni-sftp', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', items.join('\n'));
+    e.dataTransfer.effectAllowed = 'copyMove';
+  }, [sessionId, isRemote, path]);
   
+  // 基于自然数字序与目录优先的高性能排序，彻底根除 localeCompare 瓶颈
   const sortedFiles = React.useMemo(() => {
-    return [...files].sort((a,b) => (a.isDir === b.isDir ? a.name.localeCompare(b.name) : (a.isDir ? -1 : 1)));
+    return [...files].sort((a, b) => {
+      if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+      return sftpFileCollator.compare(a.name, b.name);
+    });
   }, [files]);
 
   // 当文件量适中 (<=300 项) 时采用原生高性能 CSS 滚动，彻底消除虚拟列表在 React 19 与隐藏 Tab 下的调度循环
@@ -302,18 +327,17 @@ const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean
               const f = sortedFiles[virtualRow.index];
               return (
                 <SftpFileItem
-                  key={virtualRow.index}
+                  key={f.name}
                   file={f}
                   isSelected={selected.has(f.name)}
                   isDragOver={dragOverFolder === f.name}
                   sessionId={sessionId}
                   isRemote={isRemote}
                   path={path}
-                  selected={selected}
                   gitStatus={gitStatusMap?.[f.name]}
                   formatSize={formatSize}
-                  toggleSelect={toggleSelect}
-                  setSelected={setSelected}
+                  onItemSelect={handleItemSelect}
+                  onItemDragStart={handleItemDragStart}
                   handleDbClick={handleDbClick}
                   onContextMenu={onContextMenu}
                   setDragOverFolder={setDragOverFolder}
@@ -342,11 +366,10 @@ const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean
                 sessionId={sessionId}
                 isRemote={isRemote}
                 path={path}
-                selected={selected}
                 gitStatus={gitStatusMap?.[f.name]}
                 formatSize={formatSize}
-                toggleSelect={toggleSelect}
-                setSelected={setSelected}
+                onItemSelect={handleItemSelect}
+                onItemDragStart={handleItemDragStart}
                 handleDbClick={handleDbClick}
                 onContextMenu={onContextMenu}
                 setDragOverFolder={setDragOverFolder}
@@ -693,14 +716,14 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
   };
 
   // Selection
-  const toggleSelect = (set: Set<string>, setFn: any, name: string, multi: boolean) => {
+  const toggleSelect = useCallback((setFn: any, name: string, multi: boolean) => {
     setFn((prev: Set<string>) => {
       const newSet = multi ? new Set(prev) : new Set<string>();
       if (newSet.has(name)) newSet.delete(name);
       else newSet.add(name);
       return newSet;
     });
-  };
+  }, []);
 
   // Actions
   const executeUpload = (paths: string[], resume: boolean, targetDir?: string) => {
@@ -854,7 +877,7 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
     executeDownload(paths, true);
   };
 
-  const handleRemoteDbClick = (file: app.SftpFileInfo) => {
+  const handleRemoteDbClick = useCallback((file: app.SftpFileInfo) => {
     const full = remotePath.endsWith('/') ? remotePath + file.name : remotePath + '/' + file.name;
     if (file.isDir) {
       setRemotePath(full);
@@ -863,9 +886,9 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
       // 双击远程文件，使用内置 Monaco 富文本代码编辑器打开
       setEditorModalFile({ path: full, name: file.name });
     }
-  };
+  }, [remotePath]);
 
-  const handleLocalDbClick = (file: app.SftpFileInfo) => {
+  const handleLocalDbClick = useCallback((file: app.SftpFileInfo) => {
     const full = joinFilePath(localPath, file.name);
     if (file.isDir) {
       setLocalPath(full);
@@ -880,7 +903,7 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
         alert(err);
       });
     }
-  };
+  }, [localPath, t]);
 
   const saveLocalEdit = () => {
     if (!editingFile) return;
@@ -895,18 +918,15 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
     });
   };
 
-  const toggleBookmark = () => {
-    const newBks = bookmarks.includes(remotePath) ? bookmarks.filter(p => p !== remotePath) : [...bookmarks, remotePath];
-    setBookmarks(newBks);
-    localStorage.setItem('sftp_bookmarks', JSON.stringify(newBks));
-  };
+  const toggleBookmark = useCallback(() => {
+    setBookmarks(prev => {
+      const newBks = prev.includes(remotePath) ? prev.filter(p => p !== remotePath) : [...prev, remotePath];
+      localStorage.setItem('sftp_bookmarks', JSON.stringify(newBks));
+      return newBks;
+    });
+  }, [remotePath]);
 
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const formatSize = formatFileSize;
 
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
 
@@ -968,6 +988,13 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
            lower.endsWith('.tar') || lower.endsWith('.zip') || lower.endsWith('.7z') || lower.endsWith('.rar');
   };
 
+  const handleLocalContextMenu = useCallback((e: React.MouseEvent, f: app.SftpFileInfo) => handleContextMenu(e, f, false), [handleContextMenu]);
+  const handleRemoteContextMenu = useCallback((e: React.MouseEvent, f: app.SftpFileInfo) => handleContextMenu(e, f, true), [handleContextMenu]);
+  const handleLocalDropItems = useCallback((src: any, dst: string) => handleDropOnPanel(false, src, dst), [handleDropOnPanel]);
+  const handleRemoteDropItems = useCallback((src: any, dst: string) => handleDropOnPanel(true, src, dst), [handleDropOnPanel]);
+  const handleLocalDropNativeFiles = useCallback((files: FileList, dst: string) => handleDropNativeFiles(false, files, dst), [handleDropNativeFiles]);
+  const handleRemoteDropNativeFiles = useCallback((files: FileList, dst: string) => handleDropNativeFiles(true, files, dst), [handleDropNativeFiles]);
+
   return (
     <div className="w-[600px] bg-app-bg border-l border-app-border flex flex-col h-full text-xs text-app-text shadow-md relative">
       <div className="p-1 border-b border-app-border flex items-center justify-between shrink-0 bg-app-surface">
@@ -1010,14 +1037,14 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           selected={selectedLocal}
           setSelected={setSelectedLocal}
           handleDbClick={handleLocalDbClick}
-          onContextMenu={(e, f) => handleContextMenu(e, f, false)}
+          onContextMenu={handleLocalContextMenu}
           isRemote={false}
           bookmarks={bookmarks}
           toggleBookmark={toggleBookmark}
           formatSize={formatSize}
           toggleSelect={toggleSelect}
-          onDropItems={(src, dst) => handleDropOnPanel(false, src, dst)}
-          onDropNativeFiles={(files, dst) => handleDropNativeFiles(false, files, dst)}
+          onDropItems={handleLocalDropItems}
+          onDropNativeFiles={handleLocalDropNativeFiles}
           isActive={isActive}
         />
         
@@ -1043,7 +1070,7 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           selected={selectedRemote}
           setSelected={setSelectedRemote}
           handleDbClick={handleRemoteDbClick}
-          onContextMenu={(e, f) => handleContextMenu(e, f, true)}
+          onContextMenu={handleRemoteContextMenu}
           isRemote={true}
           bookmarks={bookmarks}
           toggleBookmark={toggleBookmark}
@@ -1051,8 +1078,8 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           toggleSelect={toggleSelect}
           isGitRepo={isGitRepo}
           gitStatusMap={gitStatusMap}
-          onDropItems={(src, dst) => handleDropOnPanel(true, src, dst)}
-          onDropNativeFiles={(files, dst) => handleDropNativeFiles(true, files, dst)}
+          onDropItems={handleRemoteDropItems}
+          onDropNativeFiles={handleRemoteDropNativeFiles}
           isActive={isActive}
         />
       </div>

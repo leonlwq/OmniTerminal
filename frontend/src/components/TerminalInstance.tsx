@@ -61,6 +61,38 @@ export const terminalCastRecordings: Record<string, () => string> = {};
 import { THEMES, hexToRgba } from "../constants/terminalThemes";
 export { THEMES, hexToRgba };
 
+// 共享高效 Base64 编解码单例工具，消除每个组件实例与热路径下的重复定义与 GC 压力
+export const fastBase64ToBytes = (b64: string): Uint8Array => {
+  if (typeof (Uint8Array as any).fromBase64 === 'function') {
+    try {
+      return (Uint8Array as any).fromBase64(b64);
+    } catch (_) {}
+  }
+  const binary = window.atob(b64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
+export const fastBytesToBase64 = (bytes: Uint8Array): string => {
+  if (typeof (bytes as any).toBase64 === 'function') {
+    try {
+      return (bytes as any).toBase64();
+    } catch (_) {}
+  }
+  let binary = '';
+  const len = bytes.byteLength;
+  const chunkSize = 8192;
+  for (let i = 0; i < len; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
+  return window.btoa(binary);
+};
+
 interface TerminalInstanceProps {
   sessionId: string;
   name: string;
@@ -82,10 +114,10 @@ interface TerminalInstanceProps {
   tunnels?: any[];
   isRecordingMacro?: boolean;
   onClosed?: () => void;
-  onTerminalReady?: (cols: number, rows: number) => void;
+  onTerminalReady?: (cols: number, rows: number, sessionId?: string) => void;
   onStatusChange?: (sessionId: string, status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => void;
   onTrafficUpdate?: (sessionId: string, rx: number, tx: number) => void;
-  onUserInput?: (data: string) => void;
+  onUserInput?: (data: string, sessionId: string) => void;
   encoding?: string;
   jumpHostSessionId?: string;
   termType?: string;
@@ -233,7 +265,7 @@ interface TerminalInstanceProps {
   k8sContainer?: string;
   k8sKubeconfig?: string;
   isCommandBlockMode?: boolean;
-  onToggleCommandBlockMode?: () => void;
+  onToggleCommandBlockMode?: (sessionId?: string) => void;
 }
 
 const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
@@ -513,15 +545,8 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
   const lastSentCharRef = useRef<{ data: string; time: number } | null>(null);
 
 
-  // 辅助函数：将 Uint8Array 转为 Base64
-  const bytesToBase64 = (bytes: Uint8Array): string => {
-    let binary = '';
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  };
+  // 辅助函数：将 Uint8Array 转为 Base64（复用全局快速分块转换单例）
+  const bytesToBase64 = fastBytesToBase64;
 
   const processWriteQueue = async () => {
     if (isWritingRef.current || writeQueueRef.current.length === 0) return;
@@ -664,11 +689,11 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
   const activeCommandBlockMode = isCommandBlockModeProp !== undefined ? isCommandBlockModeProp : internalCommandBlockMode;
   const toggleCommandBlockMode = useCallback(() => {
     if (onToggleCommandBlockModeProp) {
-      onToggleCommandBlockModeProp();
+      onToggleCommandBlockModeProp(sessionId);
     } else {
       setInternalCommandBlockMode(prev => !prev);
     }
-  }, [onToggleCommandBlockModeProp]);
+  }, [onToggleCommandBlockModeProp, sessionId]);
   const [commandBlocks, setCommandBlocks] = useState<CommandBlock[]>([]);
 
   const addBookmarkAtCurrentLine = () => {
@@ -995,15 +1020,8 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
     }
   }, [isSearchOpen, searchText, searchIsRegex, searchCaseSensitive, searchWholeWord, t]);
 
-  // 辅助函数：将 Base64 转为 Uint8Array
-  const base64ToBytes = (b64: string): Uint8Array => {
-    const binary = window.atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  };
+  // 辅助函数：将 Base64 转为 Uint8Array（复用全局快速单例）
+  const base64ToBytes = fastBase64ToBytes;
 
 
   // 封装 SSH 连接的核心方法
@@ -1147,7 +1165,7 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
         term.focus();
         
         if (onTerminalReady) {
-          onTerminalReady(currentCols, currentRows);
+          onTerminalReady(currentCols, currentRows, sessionId);
         }
       })
       .catch((err: any) => {
@@ -1677,7 +1695,7 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
 
       writeQueueRef.current.push(rawBytes);
       processWriteQueue();
-      onUserInput?.(bytesToBase64(rawBytes));
+      onUserInput?.(bytesToBase64(rawBytes), sessionId);
     };
 
     const handleInputDuringReconnect = () => {
@@ -2227,7 +2245,7 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
           console.warn('Resize SSH fail:', e);
         });
         if (onTerminalReady) {
-          onTerminalReady(currentCols, currentRows);
+          onTerminalReady(currentCols, currentRows, sessionId);
         }
       }
     });
@@ -2564,7 +2582,7 @@ const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
         ResizeSSH(sessionId, currentCols, currentRows).catch(() => {});
         termRef.current?.focus();
         if (onTerminalReady) {
-          onTerminalReady(currentCols, currentRows);
+          onTerminalReady(currentCols, currentRows, sessionId);
         }
       }, 50);
     }

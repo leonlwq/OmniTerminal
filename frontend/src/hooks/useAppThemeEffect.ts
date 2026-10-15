@@ -61,7 +61,6 @@ export function useAppThemeEffect({ settings, openTabs }: UseAppThemeEffectOptio
     settings.windowOpacity,
     settings.terminalOpacity,
     settings.enableBlur,
-    openTabs,
     isTranslucentMode,
     hasWindowOpacity
   ]);

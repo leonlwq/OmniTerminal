@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { WriteSSH } from '../../wailsjs/go/app/App';
 import { app } from '../../wailsjs/go/models';
 import { resolveEffectiveSessionConfig } from './useSessionManager';
@@ -28,6 +28,9 @@ export function useSessionConnection({
   setQuickCmd,
 }: UseSessionConnectionOptions) {
   const { t } = useI18n();
+  const openTabsRef = useRef(openTabs);
+  openTabsRef.current = openTabs;
+
   // 文件夹批量连接确认弹窗
   const [folderToConnect, setFolderToConnect] = useState<app.SessionConfig[] | null>(null);
 
@@ -49,15 +52,17 @@ export function useSessionConnection({
       }
     }
 
-    const tabExists = openTabs.some((t: any) => t.id === finalSession.id || (typeof t.id === 'string' && t.id.startsWith(finalSession.id + '_')));
-    if (tabExists) {
-      const newTabId = `${finalSession.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-      finalSession.id = newTabId;
-    }
-
-    setOpenTabs(prev => [...prev, finalSession]);
-    setActiveTabId(finalSession.id);
-  }, [sessions, authProfiles, openTabs, setOpenTabs, setActiveTabId]);
+    setOpenTabs(prev => {
+      let finalId = finalSession.id;
+      const tabExists = prev.some((t: any) => t.id === finalSession.id || (typeof t.id === 'string' && t.id.startsWith(finalSession.id + '_')));
+      if (tabExists) {
+        finalId = `${finalSession.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+        finalSession = new app.SessionConfig({ ...finalSession, id: finalId });
+      }
+      setActiveTabId(finalId);
+      return [...prev, finalSession];
+    });
+  }, [sessions, authProfiles, setOpenTabs, setActiveTabId]);
 
   // 文件夹右键“分组连接”
   const handleConnectFolder = useCallback((folderId: string) => {
@@ -87,16 +92,20 @@ export function useSessionConnection({
     if (!folderToConnect) return;
     const targetSessions = folderToConnect;
     setFolderToConnect(null);
-    const newOpenTabs = [...openTabs];
-    targetSessions.forEach((s: any) => {
-      const exists = newOpenTabs.some((t: any) => t.id === s.id);
-      if (!exists) {
-        newOpenTabs.push(s);
-      }
+    setOpenTabs(prev => {
+      const newOpenTabs = [...prev];
+      targetSessions.forEach((s: any) => {
+        const exists = newOpenTabs.some((t: any) => t.id === s.id);
+        if (!exists) {
+          newOpenTabs.push(s);
+        }
+      });
+      return newOpenTabs;
     });
-    setOpenTabs(newOpenTabs);
-    setActiveTabId(targetSessions[targetSessions.length - 1].id);
-  }, [folderToConnect, openTabs, setOpenTabs, setActiveTabId]);
+    if (targetSessions.length > 0) {
+      setActiveTabId(targetSessions[targetSessions.length - 1].id);
+    }
+  }, [folderToConnect, setOpenTabs, setActiveTabId]);
 
   // 容器连接
   const handleConnectContainer = useCallback((target: {
@@ -171,8 +180,9 @@ export function useSessionConnection({
     const base64Str = window.btoa(binary);
 
     if (isBroadcast) {
-      if (openTabs.length === 0) return;
-      const promises = openTabs.map(tab => WriteSSH(tab.id, base64Str));
+      const currentTabs = openTabsRef.current;
+      if (currentTabs.length === 0) return;
+      const promises = currentTabs.map(tab => WriteSSH(tab.id, base64Str));
       Promise.all(promises)
         .then(() => setQuickCmd(''))
         .catch(err => console.error("广播发送部分失败:", err));
@@ -182,7 +192,7 @@ export function useSessionConnection({
         .then(() => setQuickCmd(''))
         .catch(err => console.error("发送指令失败:", err));
     }
-  }, [isBroadcast, openTabs, activeTabId, setQuickCmd]);
+  }, [isBroadcast, activeTabId, setQuickCmd]);
 
   const handleSendQuickCmd = useCallback((cmdText: string) => {
     if (!cmdText.trim()) return;

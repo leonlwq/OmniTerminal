@@ -289,8 +289,22 @@ export class HighlightAddon implements ITerminalAddon {
       if (this._decorationsByLine.size > MAX_ACTIVE_DECORATIONS) {
         this._pruneDistantDecorations(baseY);
       }
+
+      // 内存防护：若行文本指纹缓存超出上限，及时淘汰距离视口最远的行指纹，防止长时间会话内存泄漏
+      if (this._lineContentCache.size > 2000) {
+        this._pruneDistantCache(baseY);
+      }
     } finally {
       this._isScanning = false;
+    }
+  }
+
+  private _pruneDistantCache(currentBaseY: number): void {
+    const keys = Array.from(this._lineContentCache.keys());
+    keys.sort((a, b) => Math.abs(b - currentBaseY) - Math.abs(a - currentBaseY));
+    const toRemoveCount = this._lineContentCache.size - 1200;
+    for (let i = 0; i < toRemoveCount && i < keys.length; i++) {
+      this._lineContentCache.delete(keys[i]);
     }
   }
 

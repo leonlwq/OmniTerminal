@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { GetSessionUptime, ResizeSSH } from '../../wailsjs/go/app/App';
+import { useState } from 'react';
+import { ResizeSSH } from '../../wailsjs/go/app/App';
 import { activeTerminals } from '../components/TerminalInstance';
 import { app } from '../../wailsjs/go/models';
 
@@ -16,27 +16,10 @@ export function useTerminalUptimeAndTraffic({
 }: UseTerminalUptimeAndTrafficOptions) {
   // 终端行列数实时追踪
   const [termDimensions, setTermDimensions] = useState<{ [id: string]: { cols: number; rows: number } }>({});
-  // 会话在线时长追踪
+  // 会话在线时长追踪（惰性保持结构兼容，废除高频根组件轮询定时器）
   const [sessionUptimes, setSessionUptimes] = useState<{ [id: string]: number }>({});
   // 网络流量统计 (rx/tx bytes per second)
   const [trafficSpeeds, setTrafficSpeeds] = useState<{ [id: string]: { rx: number; tx: number } }>({});
-
-  // 会话在线时间定时刷新轮询
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | null = null;
-    if (activeTabId && tabStatus[activeTabId] === 'connected') {
-      timer = setInterval(() => {
-        GetSessionUptime(activeTabId)
-          .then((seconds: number) => {
-            setSessionUptimes(prev => ({ ...prev, [activeTabId]: seconds }));
-          })
-          .catch(() => {});
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [activeTabId, tabStatus]);
 
   const formatUptime = (totalSeconds: number) => {
     if (!totalSeconds || totalSeconds < 0) return '00:00:00';

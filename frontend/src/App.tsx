@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSettings } from './hooks/useSettings';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useTabManager } from './hooks/useTabManager';
@@ -750,20 +750,26 @@ function App() {
   }, [activeTabId, setTabStatus]);
 
   const handlePrevTab = useCallback(() => {
-    if (openTabs.length > 1 && activeTabId) {
-      const idx = openTabs.findIndex(t => t.id === activeTabId);
-      const prevIdx = idx > 0 ? idx - 1 : openTabs.length - 1;
-      setActiveTabId(openTabs[prevIdx].id);
-    }
-  }, [openTabs, activeTabId, setActiveTabId]);
+    setOpenTabs(currentTabs => {
+      if (currentTabs.length > 1 && activeTabId) {
+        const idx = currentTabs.findIndex(t => t.id === activeTabId);
+        const prevIdx = idx > 0 ? idx - 1 : currentTabs.length - 1;
+        setActiveTabId(currentTabs[prevIdx].id);
+      }
+      return currentTabs;
+    });
+  }, [activeTabId, setActiveTabId, setOpenTabs]);
 
   const handleNextTab = useCallback(() => {
-    if (openTabs.length > 1 && activeTabId) {
-      const idx = openTabs.findIndex(t => t.id === activeTabId);
-      const nextIdx = idx < openTabs.length - 1 ? idx + 1 : 0;
-      setActiveTabId(openTabs[nextIdx].id);
-    }
-  }, [openTabs, activeTabId, setActiveTabId]);
+    setOpenTabs(currentTabs => {
+      if (currentTabs.length > 1 && activeTabId) {
+        const idx = currentTabs.findIndex(t => t.id === activeTabId);
+        const nextIdx = idx < currentTabs.length - 1 ? idx + 1 : 0;
+        setActiveTabId(currentTabs[nextIdx].id);
+      }
+      return currentTabs;
+    });
+  }, [activeTabId, setActiveTabId, setOpenTabs]);
 
   const handleRenameTabFromMenu = useCallback((id: string) => {
     setRenameTabId(id);
@@ -792,6 +798,14 @@ function App() {
       setOpenSftpTabs([...openSftpTabs, activeTabId]);
     }
   };
+
+  const activeSessionsFingerprint = useMemo(() => {
+    return openTabs.map(t => `${t.id}:${t.name}:${t.host}`).join(';');
+  }, [openTabs]);
+
+  const activeSessionsForContainers = useMemo(() => {
+    return openTabs.map(t => ({ id: t.id, name: t.name, host: t.host }));
+  }, [activeSessionsFingerprint]);
 
   const foldersOnly = sessions.filter((s: any) => s.isFolder);
 
@@ -1096,7 +1110,7 @@ function App() {
           <ContainerExplorerDrawer
             isOpen={true}
             onClose={() => setActiveDockPanel('none')}
-            activeSessions={openTabs.map(t => ({ id: t.id, name: t.name, host: t.host }))}
+            activeSessions={activeSessionsForContainers}
             onOpenTerminal={handleConnectContainer}
           />
         )}
@@ -1338,7 +1352,7 @@ function App() {
           <ContainerExplorerDrawer
             isOpen={true}
             onClose={() => setActiveDockPanel('none')}
-            activeSessions={openTabs.map(t => ({ id: t.id, name: t.name, host: t.host }))}
+            activeSessions={activeSessionsForContainers}
             onOpenTerminal={handleConnectContainer}
           />
         )}

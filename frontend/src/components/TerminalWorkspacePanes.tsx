@@ -8,6 +8,9 @@ import { TerminalInstance } from './TerminalInstance';
 import { SftpPanel } from './SftpPanel';
 import { WriteSSH, SaveSettings } from '../../wailsjs/go/app/App';
 
+const EMPTY_ARRAY: any[] = [];
+const NOOP = () => {};
+
 export interface TerminalWorkspacePanesProps {
   openTabs: app.SessionConfig[];
   activeTabId: string | null;
@@ -169,10 +172,14 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
     return fallback ? fallback.id : null;
   }, [splitMode, secondaryTabId, activeTabId, openTabs]);
 
-  // 记忆化 SFTP 标签页列表引用，阻断无谓的每秒全量 re-render
+  // 记忆化 SFTP 标签页列表引用，基于结构指纹阻断 Tab 内部不相关变更时的全量 re-render
+  const sftpOpenTabsFingerprint = useMemo(() => {
+    return openTabs.map(t => `${t.id}:${t.name || t.id}:${t.host}:${Boolean(t.isLocal)}`).join(';');
+  }, [openTabs]);
+
   const sftpOpenTabs = useMemo(() => {
     return openTabs.map(t => ({ id: t.id, title: t.name || t.id, host: t.host, isLocal: t.isLocal }));
-  }, [openTabs]);
+  }, [sftpOpenTabsFingerprint]);
 
   const handleCdToTerminal = useCallback((tabId: string, dir: string) => {
     const cmd = `cd ${JSON.stringify(dir)}\n`;
@@ -185,14 +192,43 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
     WriteSSH(tabId, window.btoa(binary));
   }, []);
 
+  // 稳定快捷命令列表，避免无变更时反复分配新数组打破 memo
+  const activeQuickCommands = useMemo(() => {
+    return settings.quickCommandSets?.find((s: any) => s.id === settings.activeCommandSetID)?.commands || EMPTY_ARRAY;
+  }, [settings.quickCommandSets, settings.activeCommandSetID]);
+
+  // 命令块模式切换回调（具备会话标识透传）
+  const handleToggleCommandBlockMode = useCallback((sessId?: string) => {
+    if (!sessId) return;
+    setCommandBlockModes?.(prev => ({ ...prev, [sessId]: !prev[sessId] }));
+  }, [setCommandBlockModes]);
+
   // 终端尺寸稳定报告，严格按值比较，消除向根组件扩散的重绘风暴
-  const handleTerminalReady = useCallback((tabId: string, cols: number, rows: number) => {
+  const handleTerminalReadyStable = useCallback((cols: number, rows: number, tabId?: string) => {
+    if (!tabId) return;
     setTermDimensions(prev => {
       const existing = prev[tabId];
       if (existing && existing.cols === cols && existing.rows === rows) return prev;
       return { ...prev, [tabId]: { cols, rows } };
     });
   }, [setTermDimensions]);
+
+  // AI Copilot 呼出与诊断稳定回调
+  const handleToggleAICopilot = useCallback(() => {
+    setAiCopilotMode('command');
+    setIsAICopilotOpen(prev => !prev);
+  }, [setAiCopilotMode, setIsAICopilotOpen]);
+
+  const handleDirectoryChange = useCallback((sid: string, dir: string) => {
+    setTerminalDirs(prev => prev[sid] === dir ? prev : ({ ...prev, [sid]: dir }));
+  }, [setTerminalDirs]);
+
+  const handleTriggerAIDiagnose = useCallback((errText: string, lastCmd: string) => {
+    setAiCopilotMode('diagnose');
+    setAiCopilotErrorText(errText);
+    setAiCopilotLastCmd(lastCmd);
+    setIsAICopilotOpen(true);
+  }, [setAiCopilotMode, setAiCopilotErrorText, setAiCopilotLastCmd, setIsAICopilotOpen]);
 
   // 自动将计算出的 effectiveSecondaryTabId 同步回父级状态
   useEffect(() => {
@@ -271,18 +307,18 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       key={tab.id + "_" + (connectEpochs[tab.id] || 0)}
                       tab={tab}
                       isActive={activeTabId === tab.id}
-                      onStatusChange={(sessId, status) => setTabStatus(prev => ({ ...prev, [sessId]: status }))}
+                      onStatusChange={handleStatusChange}
                     />
                   ) : tab.protocol === 'vnc' ? (
                     <VncInstance
                       key={tab.id + "_" + (connectEpochs[tab.id] || 0)}
                       tab={tab}
                       isActive={activeTabId === tab.id}
-                      onStatusChange={(sessId, status) => setTabStatus(prev => ({ ...prev, [sessId]: status }))}
+                      onStatusChange={handleStatusChange}
                     />
                   ) : (
                     <TerminalInstance
-                      onUserInput={(data) => handleLinkedInput(data, tab.id)}
+                      onUserInput={handleLinkedInput}
                       key={tab.id + "_" + (connectEpochs[tab.id] || 0)}
                       sessionId={tab.id}
                       name={tab.name}
@@ -292,12 +328,12 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       password={tab.password}
                       privateKey={tab.privateKey}
                       identityKeyId={tab.identityKeyId}
-                      loginScripts={tab.loginScripts || []}
-                      triggers={tab.triggers || []}
+                      loginScripts={tab.loginScripts || EMPTY_ARRAY}
+                      triggers={tab.triggers || EMPTY_ARRAY}
                       overrideTheme={tab.overrideTheme || ''}
                       overrideFontSize={tab.overrideFontSize || 0}
                       logConfig={tab.logConfig}
-                      tunnels={tab.tunnels || []}
+                      tunnels={tab.tunnels || EMPTY_ARRAY}
                       isRecordingMacro={isRecording && activeTabId === tab.id}
                       isActive={activeTabId === tab.id}
                       themeName={settings.themeName}
@@ -312,9 +348,9 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       backgroundFit={(tab as any).backgroundFit}
                       enableLigatures={settings.enableLigatures ?? true}
                       overrideEnableLigatures={(tab as any).overrideEnableLigatures || 0}
-                      customThemes={settings.customThemes || []}
-                      quickCommands={settings.quickCommandSets?.find((s: any) => s.id === settings.activeCommandSetID)?.commands || []}
-                      onOpenQuickCommandManager={() => setIsSettingsOpen(true)}
+                      customThemes={settings.customThemes || EMPTY_ARRAY}
+                      quickCommands={activeQuickCommands}
+                      onOpenQuickCommandManager={handleOpenSettings}
                       syncScroll={isSyncScroll}
                       onScrollSync={handleScrollSync}
                       charSendDelayMs={settings.charSendDelayMs || 0}
@@ -346,18 +382,18 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       enableTerminalImages={(settings as any).enableTerminalImages !== false}
                       imageStorageLimitMB={(settings as any).imageStorageLimitMB || 128}
                       aiConfig={settings.aiConfig}
-                      onClosed={() => { }}
+                      onClosed={NOOP}
                       onStatusChange={handleStatusChange}
                       isCommandBlockMode={Boolean(commandBlockModes && commandBlockModes[tab.id])}
-                      onToggleCommandBlockMode={() => setCommandBlockModes?.(prev => ({ ...prev, [tab.id]: !prev[tab.id] }))}
+                      onToggleCommandBlockMode={handleToggleCommandBlockMode}
                       onTrafficUpdate={handleTrafficUpdate}
-                      onTerminalReady={(cols, rows) => handleTerminalReady(tab.id, cols, rows)}
+                      onTerminalReady={handleTerminalReadyStable}
                       scrollbackLines={settings.scrollbackLines}
                       copyOnSelect={settings.copyOnSelect}
                       enableHighlightRules={(settings as any).enableHighlightRules !== false}
-                      highlightRules={settings.highlightRules || []}
+                      highlightRules={settings.highlightRules || EMPTY_ARRAY}
                       onAddHighlightRule={handleAddHighlightRule}
-                      keyMappings={settings.keyMappings || []}
+                      keyMappings={settings.keyMappings || EMPTY_ARRAY}
                       rightClickAction={settings.rightClickAction || 'contextMenu'}
                       doubleClickAction={settings.doubleClickAction || 'selectWord'}
                       cursorStyle={settings.cursorStyle as 'block' | 'underline' | 'bar'}
@@ -368,10 +404,7 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       overrideCursorBlink={tab.overrideCursorBlink}
                       overrideEnableBell={tab.overrideEnableBell}
                       overrideCopyOnSelect={tab.overrideCopyOnSelect}
-                      onToggleAICopilot={() => {
-                        setAiCopilotMode('command');
-                        setIsAICopilotOpen(prev => !prev);
-                      }}
+                      onToggleAICopilot={handleToggleAICopilot}
                       onZoomIn={handleZoomIn}
                       onZoomOut={handleZoomOut}
                       onZoomReset={handleZoomReset}
@@ -401,19 +434,14 @@ const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = (
                       moshPortRange={(tab as any).moshPortRange || '60000:61000'}
                       enableSafePaste={settings.enableSafePaste ?? true}
                       enableDangerousGuard={settings.enableDangerousGuard ?? true}
-                      dangerousRules={settings.dangerousRules || []}
+                      dangerousRules={settings.dangerousRules || EMPTY_ARRAY}
                       useAltAsMeta={settings.useAltAsMeta ?? true}
                       wordSeparators={settings.wordSeparators}
                       openLinksOnClick={settings.openLinksOnClick}
                       enableMiniTelemetry={(settings as any).enableMiniTelemetry !== false}
                       miniTelemetryIntervalSec={(settings as any).miniTelemetryIntervalSec || 3}
-                      onDirectoryChange={(sid, dir) => setTerminalDirs(prev => ({ ...prev, [sid]: dir }))}
-                      onTriggerAIDiagnose={(errText, lastCmd) => {
-                        setAiCopilotMode('diagnose');
-                        setAiCopilotErrorText(errText);
-                        setAiCopilotLastCmd(lastCmd);
-                        setIsAICopilotOpen(true);
-                      }}
+                      onDirectoryChange={handleDirectoryChange}
+                      onTriggerAIDiagnose={handleTriggerAIDiagnose}
                     />
                   )}
                 </div>

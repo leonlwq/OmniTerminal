@@ -78,6 +78,10 @@
 * **零 Warning 编译**：每次提交前确保 `wails build` 零告警、零报错。
 * **增量修改原则**：修改已有文件时，优先使用精确替换（replace），严禁全文件覆盖。
 * **事件批处理与渲染降级**：后端向前端发送终端数据时，采用 16ms 帧对齐（60fps）窗口与 64KB 单次批处理上限防爆，防止高速输出时 IPC 丢包与主线程卡死；前端构建 WebGL → @xterm/addon-canvas → DOM 三级平滑降级链，非活动 Tab 释放 GPU context 避免超限；多 Tab 遥测与流量按需休眠，切断根组件重绘风暴。
-* **SFTP 渲染与无死循环防护**：SFTP 文件列表 <=300 项时采用原生 CSS 硬件加速滚动，彻底消除 @tanstack/react-virtual 在 React 19 并发渲染与非活动 Tab (尺寸 0x0) 下的 flushSync 调度重绘死循环；大列表 (>300项) 显式配置 useFlushSync: false 与稳定回调；SftpFileItem 实施 React.memo 行级隔离；HighlightAddon 增设行文本指纹对比 (_lineContentCache)、重入锁 (_isScanning) 与 80ms 节流，彻底斩断 onRender -> registerDecoration -> _fullRefresh 自激振荡死循环。
+* **高频状态隔离与 React.memo 强约束**：彻底清除根级无用 1000ms 轮询定时器（如废除每秒唤醒 `App.tsx` 的 `GetSessionUptime`）；工作台容器 `TerminalWorkspacePanes` 全量使用稳定常量 `EMPTY_ARRAY` 与稳定的 useCallback 引用，确保多标签环境下非活动 Tab 100% 阻断无效渲染。
+* **PTY I/O 热路径零堆拷贝与 Base64 优化**：Go 端 `decodeToUTF8` 废除 `strings.NewReader(string(data))` 改用 `bytes.NewReader(data)`，`encodeFromUTF8` 直接传递 `[]byte` 并使用 `bytes.Buffer`，`readLoop` 的 `flushPending` 使用 offset 索引并保留切片容量 `pending = pending[:0]`；前端使用模块级单例 `fastBase64ToBytes`（支持 WebKit Stage 4 探测）与分块无堆压力的 `fastBytesToBase64`。
+* **SFTP 渲染与无死循环防护**：SFTP 文件列表 <=300 项时采用原生 CSS 硬件加速滚动，彻底消除 @tanstack/react-virtual 在 React 19 并发渲染与非活动 Tab (尺寸 0x0) 下的 flushSync 调度重绘死循环；大列表 (>300项) 显式配置 useFlushSync: false 与稳定回调；采用模块级单例 `Intl.Collator` 自然数字排序杜绝排序热点；将 `selected: Set<string>` 拆分为布尔基元 `isSelected: boolean` 并稳定化所有操作句柄，使 `React.memo(SftpFileItem)` 达成真正的 $O(1)$ 局部更新，消除万级文件点击时全量重排重绘；SftpFileItem 实施 React.memo 行级隔离；HighlightAddon 增设行文本指纹对比 (_lineContentCache)、重入锁 (_isScanning)、80ms 节流与动态淘汰机制（上限 2000 行），彻底斩断 onRender -> registerDecoration -> _fullRefresh 自激振荡死循环与长会话内存泄漏。
+* **逐跳探测连接泄漏防护**：`ProbeHopViaSSH` 增设超时竞态取消信道 `done`，超时分支提前返回时，若底层异步 `client.Dial` 延迟成功则强制立即关闭连接，杜绝远端 SSH Channel 与 TCP socket 残留。
+* **Hook 依赖指纹化与 IPC 洁净化**：`useSessionSharing` 采用会话 ID 序列指纹（`tabIdsFingerprint`）合并 `useEffect`，彻底杜绝 Tab 内部属性（字号、编码、标题）变动时注销/重注 Wails 事件与重复拉取 `GetShareSessionStatus`；`useWorkspaceSync` 将 `WindowSetTitle` 依赖收敛至 `activeTabName`，工作区自动保存基于结构指纹防抖；`useSessionConnection` 采用函数式状态更新解除 `handleConnect` 与 `openTabs` 的依赖耦合；`useAppThemeEffect` 剔除无用的 `openTabs` 依赖；`useAutoLock` 增设 1000ms 活动节流，杜绝鼠标微小位移时的高频定时器启停。
 * **开发后更新**：任何功能开发完成后，必须同步更新根目录 `AGENTS.md` 中对应任务项的状态标记。
 

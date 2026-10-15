@@ -31,11 +31,20 @@ export function useAutoLock({
     }
   }, [settings.hasMasterPassword, settings.autoLockTimeoutMinutes, isLocked]);
 
+  const lastActivityTimeRef = useRef<number>(0);
+
   useEffect(() => {
-    const handleActivity = () => resetIdleTimer();
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('click', handleActivity);
+    const handleActivity = () => {
+      const now = Date.now();
+      // 节流高频活动事件（尤其是 mousemove），至少间隔 1000ms 刷新一次空闲定时器，消除主线程无谓的计时器分配
+      if (now - lastActivityTimeRef.current >= 1000) {
+        lastActivityTimeRef.current = now;
+        resetIdleTimer();
+      }
+    };
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('click', handleActivity, { passive: true });
 
     resetIdleTimer();
 

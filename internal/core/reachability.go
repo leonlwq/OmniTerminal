@@ -122,14 +122,23 @@ func ProbeHopViaSSH(client *ssh.Client, targetAddr string, timeout time.Duration
 		err  error
 	}
 
+	done := make(chan struct{})
 	ch := make(chan dialRes, 1)
 	go func() {
 		c, err := client.Dial("tcp", targetAddr)
-		ch <- dialRes{conn: c, err: err}
+		select {
+		case <-done:
+			// 外部超时已提前返回，若拨号最终成功则必须即刻关闭连接，防止 SSH Channel 与远程 Socket 泄漏
+			if err == nil && c != nil {
+				_ = c.Close()
+			}
+		case ch <- dialRes{conn: c, err: err}:
+		}
 	}()
 
 	select {
 	case res := <-ch:
+		close(done)
 		if res.err != nil {
 			return false, 0, res.err
 		}
@@ -140,6 +149,7 @@ func ProbeHopViaSSH(client *ssh.Client, targetAddr string, timeout time.Duration
 		}
 		return true, latency, nil
 	case <-time.After(timeout):
+		close(done)
 		return false, 0, fmt.Errorf("内网逐跳探测超时 (%v)", timeout)
 	}
 }

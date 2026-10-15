@@ -74,7 +74,10 @@ export function useWorkspaceSync({
     }
   }, [sessions, isLocked, autoRestoreWorkspace, toggleTabLock, setOpenTabs, setActiveTabId, setSplitMode, setSecondaryTabId]);
 
-  // 工作区状态防抖持久化
+  // 工作区状态防抖持久化：基于结构化指纹对比，避免 Tab 内部无状态变化（如持续输出打字、网速刷新）时频繁重启定时器
+  const workspaceFingerprint = openTabs.map(t => `${t.id}:${customTabNames[t.id] || ''}:${lockedTabs.includes(t.id)}`).join('|') +
+    `#${activeTabId || ''}#${splitMode}#${secondaryTabId || ''}`;
+
   useEffect(() => {
     if (!hasRestoredWorkspaceRef.current || isLocked) return;
     const timer = setTimeout(() => {
@@ -93,15 +96,18 @@ export function useWorkspaceSync({
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [openTabs, activeTabId, splitMode, secondaryTabId, customTabNames, lockedTabs, isLocked]);
+  }, [workspaceFingerprint, isLocked]);
 
-  // 窗口标题动态追踪
+  // 窗口标题动态追踪：仅在 activeTabId 或当前活跃 Tab 的显示名称变更时才发起 WindowSetTitle 原生 IPC
+  const activeTabName = activeTabId
+    ? (customTabNames[activeTabId] || openTabs.find(t => t.id === activeTabId)?.name || 'Local Shell')
+    : '';
+
   useEffect(() => {
     if (activeTabId) {
-      const tabName = customTabNames[activeTabId] || openTabs.find(t => t.id === activeTabId)?.name || 'Local Shell';
-      WindowSetTitle(`${tabName} - OmniTerminal`);
+      WindowSetTitle(`${activeTabName} - OmniTerminal`);
     } else {
       WindowSetTitle('OmniTerminal');
     }
-  }, [activeTabId, customTabNames, openTabs]);
+  }, [activeTabId, activeTabName]);
 }

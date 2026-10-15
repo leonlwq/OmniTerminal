@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -735,13 +736,13 @@ func (m *SSHManager) readLoop(id string, reader io.Reader, info *SessionInfo) {
 			if len(pending) == 0 {
 				return
 			}
-			for len(pending) > 0 {
-				chunkSize := len(pending)
+			for offset := 0; offset < len(pending); {
+				chunkSize := len(pending) - offset
 				if chunkSize > maxBatchBytes {
 					chunkSize = maxBatchBytes
 				}
-				chunk := pending[:chunkSize]
-				pending = pending[chunkSize:]
+				chunk := pending[offset : offset+chunkSize]
+				offset += chunkSize
 
 				utf8Bytes, transErr := decodeToUTF8(chunk, info.Encoding)
 				var b64Str string
@@ -753,7 +754,7 @@ func (m *SSHManager) readLoop(id string, reader io.Reader, info *SessionInfo) {
 				wailsruntime.EventsEmit(m.Ctx, fmt.Sprintf("ssh-data:%s", id), b64Str)
 				m.BroadcastData(id, b64Str)
 			}
-			pending = nil
+			pending = pending[:0]
 		}
 
 		for {
@@ -1152,7 +1153,7 @@ func (m *SSHManager) Write(id string, base64Data string) error {
 		return fmt.Errorf("解码数据失败: %v", err)
 	}
 
-	encodedBytes, transErr := encodeFromUTF8(string(data), info.Encoding)
+	encodedBytes, transErr := encodeFromUTF8(data, info.Encoding)
 	if transErr == nil {
 		_, err = info.WriteCloser.Write(encodedBytes)
 	} else {
@@ -1381,27 +1382,35 @@ func getEncoding(encName string) encoding.Encoding {
 }
 
 func decodeToUTF8(data []byte, encName string) ([]byte, error) {
+	if encName == "" || strings.EqualFold(encName, "utf-8") || strings.EqualFold(encName, "utf8") {
+		return data, nil
+	}
 	enc := getEncoding(encName)
 	if enc == nil {
 		return data, nil
 	}
-	reader := transform.NewReader(strings.NewReader(string(data)), enc.NewDecoder())
+	reader := transform.NewReader(bytes.NewReader(data), enc.NewDecoder())
 	return io.ReadAll(reader)
 }
 
-func encodeFromUTF8(utf8Str string, encName string) ([]byte, error) {
+func encodeFromUTF8(data []byte, encName string) ([]byte, error) {
+	if encName == "" || strings.EqualFold(encName, "utf-8") || strings.EqualFold(encName, "utf8") {
+		return data, nil
+	}
 	enc := getEncoding(encName)
 	if enc == nil {
-		return []byte(utf8Str), nil
+		return data, nil
 	}
-	var buf strings.Builder
+	var buf bytes.Buffer
 	writer := transform.NewWriter(&buf, enc.NewEncoder())
-	_, err := writer.Write([]byte(utf8Str))
+	_, err := writer.Write(data)
 	if err != nil {
 		return nil, err
 	}
-	writer.Close()
-	return []byte(buf.String()), nil
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 
