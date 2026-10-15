@@ -17,6 +17,7 @@ import { activeTerminals, searchAddons, terminalBuffers } from './TerminalInstan
 import * as models from '../../wailsjs/go/models';
 import { MacroManagerModal } from './MacroManagerModal';
 import { UpdateModal } from './UpdateModal';
+import appIcon from '../assets/images/appicon.png';
 
 // Menu item type supporting separators and shortcut annotations
 interface MenuItem {
@@ -829,9 +830,11 @@ export function Toolbar({
             className="wails-drag flex items-center space-x-2 pr-2.5 border-r border-white/[0.08] cursor-default"
             style={{ '--wails-draggable': 'drag', WebkitAppRegion: 'drag' } as React.CSSProperties}
           >
-            <div className="w-[22px] h-[22px] rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-blue-500/25 ring-1 ring-white/20 pointer-events-none">
-              <TermIcon className="h-3 w-3 text-white" />
-            </div>
+            <img 
+              src={appIcon} 
+              alt="OmniTerminal" 
+              className="w-[22px] h-[22px] object-contain drop-shadow-sm pointer-events-none select-none" 
+            />
             <span className="text-[12px] font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-cyan-200 to-indigo-200 bg-clip-text text-transparent pointer-events-none select-none">
               OmniTerminal
             </span>
@@ -1078,7 +1081,7 @@ export function Toolbar({
             </button>
           </div>
 
-          {/* OmniAI 智能运维 Copilot */}
+          {/* OmniAI 智能运维 Copilot (幻彩极客渐变胶囊) */}
           <button
             onClick={() => {
               if (setIsAIChatDrawerOpen) {
@@ -1087,15 +1090,13 @@ export function Toolbar({
                 setIsAICopilotOpen?.(true);
               }
             }}
-            className={`px-2.5 py-1 rounded-md border flex items-center gap-1.5 text-[11px] font-medium transition-all active:scale-95 ${
-              isAIChatDrawerOpen
-                ? 'bg-purple-600 text-white border-purple-400 shadow-sm'
-                : 'bg-app-surface hover:bg-app-hover border-app-border text-app-text shadow-sm'
+            className={`px-3 py-1 rounded-lg border flex items-center gap-1.5 text-xs font-semibold text-white transition-all duration-200 active:scale-95 cursor-pointer bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 border-purple-400/50 hover:border-purple-300 shadow-[0_0_14px_rgba(147,51,234,0.45)] hover:shadow-[0_0_20px_rgba(147,51,234,0.65)] ${
+              isAIChatDrawerOpen ? 'ring-2 ring-purple-300 shadow-[0_0_22px_rgba(168,85,247,0.8)] scale-[1.02]' : ''
             }`}
             title={t('toolbar.aiCopilot') || "唤起 OmniAI 智能运维对话侧边栏 (Cmd+L / Ctrl+L)"}
           >
-            <Sparkles className="h-3 w-3 text-purple-400" />
-            <span>OmniAI</span>
+            <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
+            <span className="tracking-wide">OmniAI</span>
           </button>
 
           {/* 核心控制池 (工具箱、主题、锁屏、设置) */}

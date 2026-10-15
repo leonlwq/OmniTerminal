@@ -4,13 +4,14 @@ import {
   Folder, File, ArrowLeft, ArrowRight, RefreshCw, Upload, Download, 
   Trash2, Edit3, Loader2, FolderPlus, Key, Eye, X, Star, ChevronDown, Check,
   ExternalLink, CheckCircle2, Columns, Archive, ShieldCheck, Terminal as TermIcon, Compass,
-  GitBranch, GitCommit, SplitSquareVertical, Code, Info, AlertCircle
+  GitBranch, GitCommit, SplitSquareVertical, Code, Info, AlertCircle, FilePlus, Copy, Edit2
 } from 'lucide-react';
 import { 
   SftpListDir, SftpDelete, SftpMkdir, SftpRename, SftpChmod, 
   LocalListDir, GetLocalHomeDir, LocalDelete, LocalMkdir, LocalRename, LocalReadFile, LocalWriteFile,
   SftpUploadPaths, SftpDownloadPaths, OpenRemoteFileWithEditor,
-  SftpUploadPathsWithResume, SftpDownloadPathsWithResume, SftpTransferBetweenSessions, SftpCheckFileResume, CancelSftpTransfer
+  SftpUploadPathsWithResume, SftpDownloadPathsWithResume, SftpTransferBetweenSessions, SftpCheckFileResume, CancelSftpTransfer,
+  SftpSaveFileWithOptimisticLock
 } from '../../wailsjs/go/app/App';
 import { app, models } from '../../wailsjs/go/models';
 import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime';
@@ -52,6 +53,9 @@ interface SftpListPanelProps {
   sessionId?: string;
   onDropItems?: (sourceData: { sessionId: string; isRemote: boolean; sourcePath: string; files: string[] }, targetDir: string) => void;
   onDropNativeFiles?: (fileList: FileList, targetDir: string) => void;
+  onNewFolder?: () => void;
+  onNewFile?: () => void;
+  onDeleteSelected?: () => void;
 }
 
 // 跨平台目录上级路径解析 (兼容 Unix '/' 与 Windows 'C:\' 盘符及正反斜杠)
@@ -190,7 +194,8 @@ const SftpFileItem = React.memo<SftpFileItemProps>(({
 
 const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean }> = ({
   title, path, setPath, files, loading, loadDir, selected, setSelected, handleDbClick, isRemote, bookmarks, toggleBookmark, formatSize, toggleSelect, onContextMenu,
-  isGitRepo, gitStatusMap, sessionId, onDropItems, onDropNativeFiles, isActive = true
+  isGitRepo, gitStatusMap, sessionId, onDropItems, onDropNativeFiles, isActive = true,
+  onNewFolder, onNewFile, onDeleteSelected
 }) => {
   const { t } = useI18n();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -272,7 +277,42 @@ const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean
             </button>
           )}
         </span>
-        <button onClick={() => loadDir(path)} className="text-app-text-muted hover:text-white"><RefreshCw className="w-3.5 h-3.5" /></button>
+        <div className="flex items-center gap-0.5">
+          {selected.size > 0 && onDeleteSelected && (
+            <button
+              onClick={onDeleteSelected}
+              className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded transition-colors"
+              title={`${t('sftp.delete') || '删除'} (${selected.size})`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onNewFile && (
+            <button
+              onClick={onNewFile}
+              className="p-1 text-app-text-muted hover:text-white hover:bg-app-hover rounded transition-colors"
+              title={t('sftp.newFile') || '新建文件'}
+            >
+              <FilePlus className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onNewFolder && (
+            <button
+              onClick={onNewFolder}
+              className="p-1 text-app-text-muted hover:text-white hover:bg-app-hover rounded transition-colors"
+              title={t('sftp.newFolder') || '新建文件夹'}
+            >
+              <FolderPlus className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            onClick={() => loadDir(path)}
+            className="p-1 text-app-text-muted hover:text-white hover:bg-app-hover rounded transition-colors"
+            title={t('common.refresh') || '刷新'}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
       
       <div className="p-1.5 bg-app-input flex items-center gap-1 shrink-0 border-b border-app-border">
@@ -297,6 +337,15 @@ const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean
 
       <div 
         ref={parentRef} 
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Delete' || (e.key === 'Backspace' && (e.metaKey || e.ctrlKey))) {
+            if (selected.size > 0 && onDeleteSelected) {
+              e.preventDefault();
+              onDeleteSelected();
+            }
+          }
+        }} 
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -495,6 +544,27 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
   const [syncNotice, setSyncNotice] = useState<{ fileName: string; time: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: app.SftpFileInfo; isRemote: boolean } | null>(null);
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string; size: number } | null>(null);
+
+  // 文件删除/重命名/新建弹窗状态
+  const [deleteModalData, setDeleteModalData] = useState<{
+    isOpen: boolean;
+    items: string[];
+    isRemote: boolean;
+  }>({ isOpen: false, items: [], isRemote: false });
+
+  const [renameModalData, setRenameModalData] = useState<{
+    isOpen: boolean;
+    file: app.SftpFileInfo | null;
+    isRemote: boolean;
+    newName: string;
+  }>({ isOpen: false, file: null, isRemote: false, newName: '' });
+
+  const [newItemModalData, setNewItemModalData] = useState<{
+    isOpen: boolean;
+    type: 'folder' | 'file';
+    isRemote: boolean;
+    name: string;
+  }>({ isOpen: false, type: 'folder', isRemote: false, name: '' });
 
   // 文件夹大小异步计算状态与缓存
   const [folderSizeMap, setFolderSizeMap] = useState<Record<string, { totalSize: number; fileCount: number; dirCount: number; done: boolean; loading: boolean }>>({});
@@ -995,6 +1065,142 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
   const handleLocalDropNativeFiles = useCallback((files: FileList, dst: string) => handleDropNativeFiles(false, files, dst), [handleDropNativeFiles]);
   const handleRemoteDropNativeFiles = useCallback((files: FileList, dst: string) => handleDropNativeFiles(true, files, dst), [handleDropNativeFiles]);
 
+  // 文件删除执行
+  const executeDelete = async () => {
+    const { items, isRemote } = deleteModalData;
+    setDeleteModalData({ isOpen: false, items: [], isRemote: false });
+    if (items.length === 0) return;
+    setBusyAction(t('sftp.busyDeleting') || '正在删除项目...');
+    try {
+      if (isRemote) {
+        for (const name of items) {
+          const full = remotePath.endsWith('/') ? remotePath + name : `${remotePath}/${name}`;
+          const fObj = remoteFiles.find(f => f.name === name);
+          await SftpDelete(sessionId, full, Boolean(fObj?.isDir));
+        }
+        loadRemoteDir(remotePath);
+        setSelectedRemote(new Set());
+      } else {
+        for (const name of items) {
+          const full = joinFilePath(localPath, name);
+          await LocalDelete(full);
+        }
+        loadLocalDir(localPath);
+        setSelectedLocal(new Set());
+      }
+    } catch (err: any) {
+      alert(`${t('sftp.deleteFailed') || '删除失败'}: ${err?.message || err}`);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  // 文件重命名执行
+  const executeRename = async () => {
+    const { file, isRemote, newName } = renameModalData;
+    const trimmed = newName.trim();
+    if (!file || !trimmed || trimmed === file.name) {
+      setRenameModalData({ isOpen: false, file: null, isRemote: false, newName: '' });
+      return;
+    }
+    setRenameModalData({ isOpen: false, file: null, isRemote: false, newName: '' });
+    setBusyAction(t('sftp.busyRenaming') || '正在重命名...');
+    try {
+      if (isRemote) {
+        const oldFull = remotePath.endsWith('/') ? remotePath + file.name : `${remotePath}/${file.name}`;
+        const newFull = remotePath.endsWith('/') ? remotePath + trimmed : `${remotePath}/${trimmed}`;
+        await SftpRename(sessionId, oldFull, newFull);
+        loadRemoteDir(remotePath);
+      } else {
+        const oldFull = joinFilePath(localPath, file.name);
+        const newFull = joinFilePath(localPath, trimmed);
+        await LocalRename(oldFull, newFull);
+        loadLocalDir(localPath);
+      }
+    } catch (err: any) {
+      alert(`${t('sftp.renameFailed') || '重命名失败'}: ${err?.message || err}`);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  // 新建文件/文件夹执行
+  const executeCreateItem = async () => {
+    const { type, isRemote, name } = newItemModalData;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setNewItemModalData({ isOpen: false, type: 'folder', isRemote: false, name: '' });
+      return;
+    }
+    setNewItemModalData({ isOpen: false, type: 'folder', isRemote: false, name: '' });
+    setBusyAction(t('sftp.busyCreating') || '正在创建...');
+    try {
+      if (isRemote) {
+        const full = remotePath.endsWith('/') ? remotePath + trimmed : `${remotePath}/${trimmed}`;
+        if (type === 'folder') {
+          await SftpMkdir(sessionId, full);
+        } else {
+          await SftpSaveFileWithOptimisticLock(sessionId, full, '', 0);
+        }
+        loadRemoteDir(remotePath);
+      } else {
+        const full = joinFilePath(localPath, trimmed);
+        if (type === 'folder') {
+          await LocalMkdir(full);
+        } else {
+          await LocalWriteFile(full, '');
+        }
+        loadLocalDir(localPath);
+      }
+    } catch (err: any) {
+      alert(`${t('sftp.createFailed') || '创建失败'}: ${err?.message || err}`);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleDeleteSelectedLocal = useCallback(() => {
+    setSelectedLocal(prev => {
+      if (prev.size > 0) {
+        setDeleteModalData({
+          isOpen: true,
+          items: Array.from(prev),
+          isRemote: false
+        });
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleDeleteSelectedRemote = useCallback(() => {
+    setSelectedRemote(prev => {
+      if (prev.size > 0) {
+        setDeleteModalData({
+          isOpen: true,
+          items: Array.from(prev),
+          isRemote: true
+        });
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleNewFolderLocal = useCallback(() => {
+    setNewItemModalData({ isOpen: true, type: 'folder', isRemote: false, name: 'new_folder' });
+  }, []);
+
+  const handleNewFolderRemote = useCallback(() => {
+    setNewItemModalData({ isOpen: true, type: 'folder', isRemote: true, name: 'new_folder' });
+  }, []);
+
+  const handleNewFileLocal = useCallback(() => {
+    setNewItemModalData({ isOpen: true, type: 'file', isRemote: false, name: 'new_file.txt' });
+  }, []);
+
+  const handleNewFileRemote = useCallback(() => {
+    setNewItemModalData({ isOpen: true, type: 'file', isRemote: true, name: 'new_file.txt' });
+  }, []);
+
   return (
     <div className="w-[600px] bg-app-bg border-l border-app-border flex flex-col h-full text-xs text-app-text shadow-md relative">
       <div className="p-1 border-b border-app-border flex items-center justify-between shrink-0 bg-app-surface">
@@ -1045,6 +1251,9 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           toggleSelect={toggleSelect}
           onDropItems={handleLocalDropItems}
           onDropNativeFiles={handleLocalDropNativeFiles}
+          onNewFolder={handleNewFolderLocal}
+          onNewFile={handleNewFileLocal}
+          onDeleteSelected={handleDeleteSelectedLocal}
           isActive={isActive}
         />
         
@@ -1080,6 +1289,9 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           gitStatusMap={gitStatusMap}
           onDropItems={handleRemoteDropItems}
           onDropNativeFiles={handleRemoteDropNativeFiles}
+          onNewFolder={handleNewFolderRemote}
+          onNewFile={handleNewFileRemote}
+          onDeleteSelected={handleDeleteSelectedRemote}
           isActive={isActive}
         />
       </div>
@@ -1340,6 +1552,102 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
           >
             <Info className="w-3.5 h-3.5 text-[#3794ff]" />
             <span>{t('sftp.properties')}</span>
+          </button>
+
+          {/* 复制路径 */}
+          <button
+            onClick={() => {
+              const fullPath = contextMenu.isRemote
+                ? (remotePath.endsWith('/') ? remotePath + contextMenu.file.name : `${remotePath}/${contextMenu.file.name}`)
+                : joinFilePath(localPath, contextMenu.file.name);
+              navigator.clipboard?.writeText(fullPath);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
+          >
+            <Copy className="w-3.5 h-3.5 text-sky-400" />
+            <span>{t('sftp.copyPath') || '复制路径'}</span>
+          </button>
+
+          {/* 重命名 */}
+          <button
+            onClick={() => {
+              setRenameModalData({
+                isOpen: true,
+                file: contextMenu.file,
+                isRemote: contextMenu.isRemote,
+                newName: contextMenu.file.name
+              });
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
+          >
+            <Edit2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>{t('sftp.rename') || '重命名'}</span>
+          </button>
+
+          {/* 新建文件 */}
+          <button
+            onClick={() => {
+              setNewItemModalData({
+                isOpen: true,
+                type: 'file',
+                isRemote: contextMenu.isRemote,
+                name: 'new_file.txt'
+              });
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
+          >
+            <FilePlus className="w-3.5 h-3.5 text-blue-400" />
+            <span>{t('sftp.newFile') || '新建文件'}</span>
+          </button>
+
+          {/* 新建文件夹 */}
+          <button
+            onClick={() => {
+              setNewItemModalData({
+                isOpen: true,
+                type: 'folder',
+                isRemote: contextMenu.isRemote,
+                name: 'new_folder'
+              });
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-[#cccccc]"
+          >
+            <FolderPlus className="w-3.5 h-3.5 text-yellow-400" />
+            <span>{t('sftp.newFolder') || '新建文件夹'}</span>
+          </button>
+
+          {/* 分隔线与删除 */}
+          <div className="my-1 border-t border-[#3c3c3c]" />
+
+          <button
+            onClick={() => {
+              const sel = contextMenu.isRemote ? selectedRemote : selectedLocal;
+              const items = sel.has(contextMenu.file.name) && sel.size > 1
+                ? Array.from(sel)
+                : [contextMenu.file.name];
+              setDeleteModalData({
+                isOpen: true,
+                items,
+                isRemote: contextMenu.isRemote
+              });
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-red-950/40 hover:text-red-300 text-red-400 flex items-center gap-2 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <span>
+              {(() => {
+                const sel = contextMenu.isRemote ? selectedRemote : selectedLocal;
+                const count = sel.has(contextMenu.file.name) && sel.size > 1 ? sel.size : 1;
+                return count > 1
+                  ? (t('sftp.deleteSelected') || '删除所选 ({count})').replace('{count}', String(count))
+                  : (t('sftp.delete') || '删除');
+              })()}
+            </span>
           </button>
         </div>
       )}
@@ -1746,6 +2054,176 @@ const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCd
                 className="w-full py-1.5 text-center text-[#858585] hover:text-[#cccccc] text-xs transition-colors cursor-pointer"
               >
                 {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {deleteModalData.isOpen && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-96 text-[#cccccc] space-y-4">
+            <h3 className="font-semibold text-xs text-red-400 border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span>{t('sftp.delete') || '删除确认'}</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-[#cccccc]">
+                {deleteModalData.items.length === 1
+                  ? (t('sftp.deleteConfirmSingle') || '确定要永久删除 "{name}" 吗？此操作无法撤销。').replace('{name}', deleteModalData.items[0])
+                  : (t('sftp.deleteConfirmBatch') || '确定要永久删除选中的 {count} 个项目吗？此操作无法撤销。').replace('{count}', String(deleteModalData.items.length))}
+              </p>
+
+              {/* 文件列表预览 */}
+              <div className="max-h-28 overflow-y-auto bg-[#1e1e1e] border border-[#3c3c3c] rounded p-2 text-[11px] font-mono text-[#858585] space-y-1">
+                {deleteModalData.items.map(name => (
+                  <div key={name} className="truncate flex items-center gap-1.5 text-red-300/90">
+                    <Trash2 className="w-3 h-3 shrink-0 text-red-400/80" />
+                    <span className="truncate">{name}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-[11px] text-[#858585] truncate">
+                {deleteModalData.isRemote ? t('sftp.remotePanel') : t('sftp.localPanel')}: {deleteModalData.isRemote ? remotePath : localPath}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2b2b2b]">
+              <button
+                onClick={() => setDeleteModalData({ isOpen: false, items: [], isRemote: false })}
+                className="px-3 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white transition-colors cursor-pointer text-xs"
+              >
+                {t('common.cancel') || '取消'}
+              </button>
+              <button
+                onClick={executeDelete}
+                className="px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-medium transition-colors cursor-pointer text-xs flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{t('sftp.delete') || '永久删除'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 重命名弹窗 */}
+      {renameModalData.isOpen && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-96 text-[#cccccc] space-y-4">
+            <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
+              <Edit2 className="w-4 h-4 text-amber-400" />
+              <span>{t('sftp.rename') || '重命名'}</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[#858585] block mb-1.5">
+                  {t('sftp.enterNewName') || '请输入新名称:'}
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={renameModalData.newName}
+                  onChange={e => setRenameModalData(prev => ({ ...prev, newName: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      executeRename();
+                    } else if (e.key === 'Escape') {
+                      setRenameModalData({ isOpen: false, file: null, isRemote: false, newName: '' });
+                    }
+                  }}
+                  className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] font-mono outline-none"
+                />
+              </div>
+
+              <div className="text-[11px] text-[#858585] truncate">
+                {renameModalData.isRemote ? t('sftp.remotePanel') : t('sftp.localPanel')}: {renameModalData.file?.name}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2b2b2b]">
+              <button
+                onClick={() => setRenameModalData({ isOpen: false, file: null, isRemote: false, newName: '' })}
+                className="px-3 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white transition-colors cursor-pointer text-xs"
+              >
+                {t('common.cancel') || '取消'}
+              </button>
+              <button
+                onClick={executeRename}
+                disabled={!renameModalData.newName.trim() || renameModalData.newName.trim() === renameModalData.file?.name}
+                className="px-3 py-1.5 rounded bg-[#0078d4] hover:bg-[#0086ea] disabled:opacity-50 text-white font-medium transition-colors cursor-pointer text-xs"
+              >
+                {t('common.confirm') || '确定'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 新建文件/文件夹弹窗 */}
+      {newItemModalData.isOpen && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-96 text-[#cccccc] space-y-4">
+            <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
+              {newItemModalData.type === 'folder' ? (
+                <FolderPlus className="w-4 h-4 text-[#0078d4]" />
+              ) : (
+                <FilePlus className="w-4 h-4 text-[#0078d4]" />
+              )}
+              <span>
+                {newItemModalData.type === 'folder'
+                  ? (t('sftp.newFolder') || '新建文件夹')
+                  : (t('sftp.newFile') || '新建文件')}
+              </span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[#858585] block mb-1.5">
+                  {newItemModalData.type === 'folder'
+                    ? (t('sftp.enterFolderName') || '请输入文件夹名称:')
+                    : (t('sftp.enterFileName') || '请输入文件名:')}
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newItemModalData.name}
+                  onChange={e => setNewItemModalData(prev => ({ ...prev, name: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      executeCreateItem();
+                    } else if (e.key === 'Escape') {
+                      setNewItemModalData({ isOpen: false, type: 'folder', isRemote: false, name: '' });
+                    }
+                  }}
+                  className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] font-mono outline-none"
+                />
+              </div>
+
+              <div className="text-[11px] text-[#858585] truncate">
+                {newItemModalData.isRemote ? t('sftp.remotePanel') : t('sftp.localPanel')}: {newItemModalData.isRemote ? remotePath : localPath}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2b2b2b]">
+              <button
+                onClick={() => setNewItemModalData({ isOpen: false, type: 'folder', isRemote: false, name: '' })}
+                className="px-3 py-1.5 rounded bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white transition-colors cursor-pointer text-xs"
+              >
+                {t('common.cancel') || '取消'}
+              </button>
+              <button
+                onClick={executeCreateItem}
+                disabled={!newItemModalData.name.trim()}
+                className="px-3 py-1.5 rounded bg-[#0078d4] hover:bg-[#0086ea] disabled:opacity-50 text-white font-medium transition-colors cursor-pointer text-xs"
+              >
+                {t('common.confirm') || '确定'}
               </button>
             </div>
           </div>

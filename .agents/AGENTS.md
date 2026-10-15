@@ -4,8 +4,10 @@
 
 ## 1. 界面与布局规范 (UI/UX)
 * **现代专业工作台范式 (Modern Pro Workspace Paradigm)**：使用精致微圆角（`rounded-md` 4~6px）、现代紧凑排版、清晰视觉层次。
-* **一体化现代顶栏**：Unified Command Header 整合应用 Logo、折叠菜单、居中 Omnibar 快速直连输入与工作区工具组。
-* **左侧现代 Activity Bar 与会话导航**：提供 44px 紧凑活动栏（会话 🖥️、SFTP 📦、网络隧道 🌐、密钥 🔑、任务 ⚡、日志 📋）与树状会话导航。
+* **一体化现代顶栏**：Unified Command Header 整合应用 Logo、折叠菜单、居中 Omnibar 快速直连输入（带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
+* **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余灰色包裹框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
+* **左侧赛博极客 Activity Bar 与会话导航**：提供 48px 赛博霓虹活动栏（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），独立语义色彩、微光阴影及精准激活指示条；会话导航标题强制单行不折行（`whitespace-nowrap shrink-0`），提供高辨识度的“+ 资源”蓝色微胶囊按钮与新建目录按钮，搜索框支持标签与 IP 快捷过滤。
+* **经典状态栏 (StatusBar)**：24px 极致紧凑高度与 11px 字阶，集成“命令广播”、“终端录制”、“连通性复用 (N/M)”、实时网络流量吞吐与字符编码弹窗。
 * **中部平滑胶囊页签 (Capsule Tabs)**：支持双击打开新 Tab，Tab 栏在终端上方，支持拖拽、锁定、分屏与状态呼吸指示灯。
 * **右侧 SFTP 并排联动**：点击"SFTP 传输"时，在当前终端 Tab 内部的右侧并排划出文件管理器，维持命令行和远程文件浏览的上下文关联。
 * **底部折叠命令抽屉**：支持广播开关、多行撰写 Compose Pane 与快捷命令集。
@@ -59,6 +61,12 @@
 * **SFTP 大文件断点续传与服务端零磁盘直传 (Resumable & Server-to-Server Transfer)**：
   * **断点续传**：上传与下载时智能探测已存在的目标文件尺寸，弹窗引导用户选择断点续传或覆盖；底层通过 `Seek(startOffset, io.SeekStart)` 续传并校准 `ProgressStream` 速率基准。
   * **服务端对传**：支持从当前会话直接流式复制至其他活动会话，基于内存 256KB 环形通道 `io.Pipe()` 直连双方 SFTP 流，宿主机零磁盘 I/O 写入。
+  * **文件全生命周期管理与安全删除**：
+    * 后端 `SftpDelete` 采用 `RemoveAll` 彻底解决远端非空目录删除失败；
+    * 前端提供双端安全删除模态框（含待删除文件预览与不可逆警示），支持多选批量删除；
+    * 列表视口支持原生键盘快捷键 `Delete` 与 `Cmd+Backspace` / `Ctrl+Backspace`；
+    * 顶部工具栏提供快捷删除所选、新建文件、新建文件夹、刷新；
+    * 右键上下文菜单提供复制绝对路径、重命名、新建文件、新建文件夹、删除，支持 4 国语言 100% 本地化。
 * **单通道多路复用与零感知监控 (SSH Multiplexing & Stealth Telemetry)**：
   * **单连接强约束**：通过 `PooledSSHClient` 统一托管底层物理连接与通道计数（PTY、SFTP、Telemetry、Tunnel），自动多通道共享，避免远程高频登录刷屏。
   * **零感知无痕采样**：后台遥测（CPU/内存/磁盘）通过复用已建立的 `*ssh.Client.NewSession()` 执行轻量只读读取，sshd 审计 0 记录，PAM 0 次鉴权，杜绝告警误触。

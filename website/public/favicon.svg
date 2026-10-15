@@ -1,9 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 128 128">
-    <path d="M50.4 78.5a75.1 75.1 0 0 0-28.5 6.9l24.2-65.7c.7-2 1.9-3.2 3.4-3.2h29c1.5 0 2.7 1.2 3.4 3.2l24.2 65.7s-11.6-7-28.5-7L67 45.5c-.4-1.7-1.6-2.8-2.9-2.8-1.3 0-2.5 1.1-2.9 2.7L50.4 78.5Zm-1.1 28.2Zm-4.2-20.2c-2 6.6-.6 15.8 4.2 20.2a17.5 17.5 0 0 1 .2-.7 5.5 5.5 0 0 1 5.7-4.5c2.8.1 4.3 1.5 4.7 4.7.2 1.1.2 2.3.2 3.5v.4c0 2.7.7 5.2 2.2 7.4a13 13 0 0 0 5.7 4.9v-.3l-.2-.3c-1.8-5.6-.5-9.5 4.4-12.8l1.5-1a73 73 0 0 0 3.2-2.2 16 16 0 0 0 6.8-11.4c.3-2 .1-4-.6-6l-.8.6-1.6 1a37 37 0 0 1-22.4 2.7c-5-.7-9.7-2-13.2-6.2Z" />
-    <style>
-        path { fill: #000; }
-        @media (prefers-color-scheme: dark) {
-            path { fill: #FFF; }
-        }
-    </style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <!-- Background squircle gradient -->
+    <linearGradient id="bgGrad" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#181c2a" />
+      <stop offset="100%" stop-color="#0f1118" />
+    </linearGradient>
+
+    <!-- Border glow gradient -->
+    <linearGradient id="borderGrad" x1="10" y1="10" x2="118" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="45%" stop-color="#0078d4" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+
+    <!-- 3D Pill 'O' gradient -->
+    <linearGradient id="pillGrad" x1="72" y1="36" x2="108" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="60%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+
+    <!-- 3D Pill inner shadow / lighting -->
+    <linearGradient id="pillHighlight" x1="74" y1="38" x2="74" y2="98" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Terminal prompt gradient -->
+    <linearGradient id="promptGrad" x1="28" y1="44" x2="68" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#bae6fd" />
+    </linearGradient>
+
+    <!-- Drop shadow for the 'O' -->
+    <filter id="pillShadow" x="60" y="30" width="56" height="76" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="-2" dy="4" stdDeviation="4" flood-color="#05070e" flood-opacity="0.65" />
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="12" y="12" width="104" height="104" rx="26" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="4.5" />
+
+  <!-- Terminal prompt: > -->
+  <path d="M 32 42 L 48 56 L 32 70" stroke="url(#promptGrad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Terminal prompt: _ -->
+  <path d="M 46 72 L 64 72" stroke="url(#promptGrad)" stroke-width="6.5" stroke-linecap="round" />
+
+  <!-- 3D Pill 'O' with drop shadow -->
+  <g filter="url(#pillShadow)">
+    <path fill-rule="evenodd" clip-rule="evenodd" 
+          d="M 88 36 C 98.49 36 107 44.51 107 55 L 107 79 C 107 89.49 98.49 98 88 98 C 77.51 98 69 89.49 69 79 L 69 55 C 69 44.51 77.51 36 88 36 Z M 88 50 C 83.58 50 80 53.58 80 58 L 80 76 C 80 80.42 83.58 84 88 84 C 92.42 84 96 80.42 96 76 L 96 58 C 96 53.58 92.42 50 88 50 Z" 
+          fill="url(#pillGrad)" />
+    <!-- Bevel highlight overlay -->
+    <path fill-rule="evenodd" clip-rule="evenodd" 
+          d="M 88 36 C 98.49 36 107 44.51 107 55 L 107 79 C 107 89.49 98.49 98 88 98 C 77.51 98 69 89.49 69 79 L 69 55 C 69 44.51 77.51 36 88 36 Z M 88 50 C 83.58 50 80 53.58 80 58 L 80 76 C 80 80.42 83.58 84 88 84 C 92.42 84 96 80.42 96 76 L 96 58 C 96 53.58 92.42 50 88 50 Z" 
+          stroke="url(#pillHighlight)" stroke-width="1.2" />
+  </g>
 </svg>

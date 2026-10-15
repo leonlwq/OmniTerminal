@@ -48,7 +48,12 @@
 
 - **现代专业工作台范式 (Modern Pro Workspace Paradigm)**：使用精致微圆角（`rounded-md` 4~6px）、现代紧凑排版、清晰视觉层次。
 - **VS Code Dark Modern 现代工程美学**：基底 `#1e1e1e`，镀铬与侧栏 `#181818`，面板卡片 `#252526`，微边框 `#2b2b2b`，主字阶 `#cccccc`，经典高亮蓝 `#0078d4`。
-- **一体化顶栏与 Command Center**：Unified Header 整合品牌、Omnibar 快速连接检索胶囊与工作区工具组。
+- **一体化顶栏与 Command Center**：Unified Header 整合品牌、Omnibar 快速连接检索胶囊（居中对齐、带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
+- **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余的灰色包裹内框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
+- **会话侧栏 (SessionSidebar)**：标题规范为“会话导航”，强制单行不折行（`whitespace-nowrap shrink-0`），显式提供高辨识度的“+ 资源”蓝色微胶囊按钮与新建目录按钮；搜索框支持标签与 IP 快捷过滤。
+- **极客赛博活动栏 (ActivityBar)**：全面升级为赛博霓虹色彩体系（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），每个模块具备独立的语义色彩、微光阴影及精准的激活指示条。
+- **经典状态栏 (StatusBar)**：24px 极致紧凑高度与 11px 字阶，集成“命令广播”、“终端录制”、“连通性复用 (N/M)”、实时网络流量吞吐与字符编码弹窗。
+- **应用全景图标规范 (App Icon & Packaging Standard)**：基于 3D 霓虹终端与极客立体 O 胶囊设计，1024×1024 画布满铺率达 96%（BBox 约 984×896），四周仅保留原生微呼吸间距；彻底消除 macOS LaunchServices Legacy Platter 自动垫白底问题；全链路同步产出 16~1024px Retina 级 Apple 原生 `.icns`、Windows 多尺寸 `.ico`、系统托盘高清图及前端资源。
 
 ### 国际化与本地化约定 (i18n & Localization)
 
@@ -77,6 +82,11 @@
 - **传输生命周期与可控中断**：`[x]`
   - 后端提供统一的任务取消通道（`CancelSftpTransfer`），基于 `context.WithCancel` 与 `contextReader` 在中断信号触发时即时终止传输并清理资源。
   - 前端任务抽屉（`TaskQueueDrawer`）针对进行中的传输任务提供清晰的取消按钮交互与状态反馈。
+- **文件全生命周期管理与安全删除（File Lifecycle & Safety Operations）**：`[x]`
+  - **安全递归删除**：后端 `SftpDelete` 针对远端目录采用 `RemoveAll` 支持非空目录深层清理；前端提供双端（本地与远端）删除安全确认弹窗，明确提示不可逆风险并提供待删除项目列表与路径预览，支持多选批量删除（`Delete Selected (N)`）与单项删除。
+  - **键盘快捷键与工具栏**：文件列表容器支持原生键盘快捷键（`Delete` 与 `Cmd+Backspace` / `Ctrl+Backspace`）；工具栏显式提供「删除所选」、「新建文件」、「新建文件夹」、「刷新」快捷操作。
+  - **右键上下文菜单全家桶**：右键菜单支持「复制绝对路径（Copy Path）」、「重命名（Rename）」、「新建文件（New File）」、「新建文件夹（New Folder）」与「删除（Delete）」。
+  - **全量 4 国语言本地化**：所有删除确认提示、批量计数、重命名/新建输入弹窗文案在 `zh-CN`、`en-US`、`ja-JP`、`ko-KR` 100% 对齐。
 
 ### 单通道多路复用与零感知监控规范 (SSH Multiplexing & Stealth Telemetry)
 

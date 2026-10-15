@@ -448,7 +448,7 @@ export function StatusBar({
 
         <div className="h-3 w-px bg-app-border" />
 
-        {/* 🧬 Warp 结构化命令块模式开关 */}
+        {/* 🧬 Warp 结构化命令广播/命令块模式开关 */}
         <button
           onClick={onToggleCommandBlockMode}
           className={`flex items-center space-x-1 px-2 py-0.5 rounded-md transition-all active:scale-95 ${
@@ -456,10 +456,10 @@ export function StatusBar({
               ? 'bg-blue-500/25 text-blue-400 font-semibold border border-blue-500/40 shadow-sm' 
               : 'hover:bg-app-hover text-app-text-muted hover:text-app-text'
           }`}
-          title={t('statusbar.commandBlockTooltip') || "切换 Warp 结构化命令块交互模式 (⌘⇧B / Ctrl+Shift+B)"}
+          title={t('statusbar.commandBlockTooltip') || "切换 Warp 结构化命令广播/命令块模式 (⌘⇧B / Ctrl+Shift+B)"}
         >
           <Sparkles className={`w-3 h-3 ${isCommandBlockMode ? 'text-blue-400' : 'text-app-text-muted'}`} />
-          <span>{isCommandBlockMode ? (t('statusbar.commandBlockOn') || '🧬 命令块: 开') : (t('statusbar.commandBlock') || '命令块')}</span>
+          <span>{isCommandBlockMode ? (t('statusbar.commandBlockOn') || '🧬 命令广播: 开') : (t('statusbar.commandBlock') || '命令广播')}</span>
         </button>
 
         <div className="h-3 w-px bg-app-border" />
@@ -496,7 +496,7 @@ export function StatusBar({
               title={t('statusbar.recordSessionTooltip')}
             >
               <Circle className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
-              <span>{t('statusbar.record') || '录像'}</span>
+              <span>{t('statusbar.record') || '终端录制'}</span>
             </button>
             <button
               onClick={onOpenCastPlayer}

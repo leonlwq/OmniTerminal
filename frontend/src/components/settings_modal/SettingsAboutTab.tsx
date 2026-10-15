@@ -1,6 +1,6 @@
 import React from 'react';
-import { Terminal } from 'lucide-react';
 import { useI18n } from '../../i18n/I18nContext';
+import appIcon from '../../assets/images/appicon.png';
 
 export function SettingsAboutTab() {
   const { t } = useI18n();
@@ -8,8 +8,13 @@ export function SettingsAboutTab() {
   return (
     <div className="flex flex-col items-center justify-center py-6">
       <div className="w-full max-w-md bg-[#252526] border border-[#2b2b2b] rounded-lg p-8 text-center space-y-4 shadow-sm">
-        <div className="inline-flex p-3.5 bg-[#1e1e1e] border border-[#3c3c3c] rounded-lg mb-1">
-          <Terminal className="w-10 h-10 text-[#0078d4]" />
+        <div className="flex justify-center mb-2 relative group">
+          <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full scale-90 pointer-events-none" />
+          <img 
+            src={appIcon} 
+            alt="OmniTerminal Logo" 
+            className="w-16 h-16 object-contain drop-shadow-[0_8px_24px_rgba(0,120,212,0.35)] relative z-10 select-none pointer-events-none hover:scale-105 transition-transform duration-200" 
+          />
         </div>
         <div>
           <h3 className="text-base font-semibold text-[#e0e0e0] tracking-tight">OmniTerminal</h3>

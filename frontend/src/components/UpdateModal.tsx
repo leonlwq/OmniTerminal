@@ -1,7 +1,8 @@
 import React from 'react';
-import { Terminal, ShieldCheck, Loader2, X, ExternalLink } from 'lucide-react';
+import { ShieldCheck, Loader2, X, ExternalLink } from 'lucide-react';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { useI18n } from '../i18n/I18nContext';
+import appIcon from '../assets/images/appicon.png';
 
 interface UpdateInfo {
   tag_name: string;
@@ -27,9 +28,11 @@ export function UpdateModal({ isOpen, onClose, isChecking, updateInfo, currentVe
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 bg-[#1f1f1f] border-b border-[#2b2b2b] shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-7 h-7 rounded bg-[#2d2d2d] border border-[#3c3c3c] flex items-center justify-center text-[#0078d4]">
-              <Terminal className="h-3.5 w-3.5" />
-            </div>
+            <img 
+              src={appIcon} 
+              alt="OmniTerminal" 
+              className="w-7 h-7 object-contain select-none pointer-events-none drop-shadow-sm" 
+            />
             <div>
               <h2 className="text-sm font-semibold text-[#e0e0e0] leading-tight">{t('update.title') || '关于 OmniTerminal'}</h2>
               <span className="text-[11px] text-[#858585] font-normal">About & Version Check</span>
@@ -37,7 +40,7 @@ export function UpdateModal({ isOpen, onClose, isChecking, updateInfo, currentVe
           </div>
           <button 
             onClick={onClose}
-            className="text-[#858585] hover:text-[#e0e0e0] p-1.5 hover:bg-[#333333] rounded transition-colors"
+            className="text-[#858585] hover:text-[#e0e0e0] p-1.5 hover:bg-[#333333] rounded transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -45,8 +48,13 @@ export function UpdateModal({ isOpen, onClose, isChecking, updateInfo, currentVe
 
         {/* Content */}
         <div className="p-5 flex flex-col items-center bg-[#1e1e1e]">
-          <div className="w-14 h-14 bg-[#252526] border border-[#3c3c3c] rounded flex items-center justify-center mb-3 text-[#0078d4] shadow-sm">
-            <Terminal className="h-7 w-7 text-[#0078d4]" />
+          <div className="relative mb-3 flex items-center justify-center group">
+            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full scale-90 pointer-events-none" />
+            <img 
+              src={appIcon} 
+              alt="OmniTerminal Logo" 
+              className="w-16 h-16 object-contain drop-shadow-[0_8px_24px_rgba(0,120,212,0.35)] relative z-10 select-none pointer-events-none hover:scale-105 transition-transform duration-200" 
+            />
           </div>
           <h2 className="text-base font-bold text-[#e0e0e0] mb-0.5 tracking-tight">OmniTerminal Pro</h2>
           <p className="text-xs font-mono text-[#0078d4] mb-4 bg-[#2d2d2d] px-2.5 py-0.5 rounded border border-[#3c3c3c]">Version {currentVersion}</p>

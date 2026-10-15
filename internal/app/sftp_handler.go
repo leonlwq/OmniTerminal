@@ -792,9 +792,16 @@ func (a *App) SftpDelete(id string, remotePath string, isDir bool) error {
 
 	targetRemote, _ := resolveRemotePathWithFallback(info, remotePath)
 	if isDir {
-		return info.SftpClient.RemoveDirectory(targetRemote)
+		return info.SftpClient.RemoveAll(targetRemote)
 	}
-	return info.SftpClient.Remove(targetRemote)
+	err := info.SftpClient.Remove(targetRemote)
+	if err != nil {
+		// 若以普通文件删除失败，尝试以目录形式递归清理
+		if rErr := info.SftpClient.RemoveAll(targetRemote); rErr == nil {
+			return nil
+		}
+	}
+	return err
 }
 
 func (a *App) SftpUploadPaths(id string, localPaths []string, remoteDir string) error {

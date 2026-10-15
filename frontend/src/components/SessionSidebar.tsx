@@ -125,7 +125,7 @@ export function SessionSidebar({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-app-text-muted" />
           <input 
             type="text" 
-            placeholder={t('sidebar.searchPlaceholder') || "搜索会话 (tag:prod, ip:192...)"}
+            placeholder={t('sidebar.searchPlaceholder') || "搜索会话 (支持标签、IP...)"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoCapitalize="none"
@@ -206,22 +206,23 @@ export function SessionSidebar({
         }}
         className="flex-1 overflow-y-auto p-2 space-y-1"
       >
-        <div className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-app-text-muted uppercase tracking-wider select-none">
-          <div className="flex items-center space-x-1.5">
-            <span>{t('sidebar.sessionNav') || '会话导航'}</span>
-            <span className="text-[10px] px-1.5 py-0.2 bg-app-surface border border-app-border rounded text-app-text-muted">
+        <div className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-app-text-muted uppercase tracking-wider select-none gap-1">
+          <div className="flex items-center space-x-1.5 shrink-0 whitespace-nowrap min-w-0">
+            <span className="truncate">{t('sidebar.sessionNav') || '会话导航'}</span>
+            <span className="text-[10px] px-1.5 py-0.2 bg-app-surface border border-app-border rounded text-app-text-muted shrink-0">
               {sessions.filter(s => !s.isFolder).length}
             </span>
           </div>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 shrink-0">
             {onNewSession && (
               <button
                 type="button"
                 onClick={onNewSession}
-                className="p-1 text-app-text-muted hover:text-app-text hover:bg-app-hover rounded transition-colors active:scale-95"
+                className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 bg-[#0078d4] hover:bg-[#006cbe] active:bg-[#005a9e] text-white rounded transition-colors active:scale-95 shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
                 title={t('sidebar.newSessionTooltip') || "新建主机会话 (Ctrl+N)"}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3" />
+                <span>{t('sidebar.addResource') || '+ 资源'}</span>
               </button>
             )}
             {onNewFolder && (
