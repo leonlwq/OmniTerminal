@@ -3,12 +3,18 @@ import { X, Filter, Play, Pause, Trash2, Copy, Check, ChevronDown, ChevronUp, Sp
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
+import { CanvasAddon } from '@xterm/addon-canvas';
 import { SearchAddon } from '@xterm/addon-search';
 import { ImageAddon } from '@xterm/addon-image';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { LigaturesAddon } from '@xterm/addon-ligatures';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
+
+// 共享 TextDecoder 单例，消除热路径高频分配与垃圾回收
+const sharedUtf8Decoder = new TextDecoder('utf-8', { fatal: false });
+const sharedLatin1Decoder = new TextDecoder('latin1');
 import { ZmodemAddon } from '../utils/ZmodemAddon';
+import { HighlightAddon } from '../utils/HighlightAddon';
 import { ConnectSSH, ConnectSerial, ConnectTelnet, ConnectRawTCP, ConnectLocalShell, WriteSSH, ResizeSSH, DisconnectSSH } from '../../wailsjs/go/app/App';
 import { EventsOn, ClipboardSetText, ClipboardGetText, BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { SafePasteModal } from './SafePasteModal';
@@ -26,6 +32,7 @@ import { TerminalCommandBlockView } from './terminal/TerminalCommandBlockView';
 import { TerminalSearchMinimap } from './terminal/TerminalSearchMinimap';
 import { InlineAICopilotPopover } from './terminal/InlineAICopilotPopover';
 import { MiniServerTelemetryWidget } from './terminal/MiniServerTelemetryWidget';
+import { MultiplexBadge } from './terminal/MultiplexBadge';
 import { getContextAwareSuggestion } from '../constants/commandCompletionDb';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -111,7 +118,9 @@ interface TerminalInstanceProps {
   cursorBlink?: boolean;
   enableBell?: boolean;
 
+  enableHighlightRules?: boolean;
   highlightRules?: any[];
+  onAddHighlightRule?: (rule: any) => void;
   keyMappings?: any[];
   rightClickAction?: string;
   doubleClickAction?: string;
@@ -227,7 +236,7 @@ interface TerminalInstanceProps {
   onToggleCommandBlockMode?: () => void;
 }
 
-export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
+const TerminalInstanceComponent: React.FC<TerminalInstanceProps> = ({
   sessionId,
   name,
   host,
@@ -326,7 +335,9 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
   cursorBlink = true,
   enableBell = true,
 
+  enableHighlightRules = true,
   highlightRules = [],
+  onAddHighlightRule,
   keyMappings = [],
   rightClickAction = 'contextMenu',
   doubleClickAction = 'selectWord',
@@ -391,7 +402,40 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const searchAddonRef = useRef<SearchAddon | null>(null);
   const webglAddonRef = useRef<WebglAddon | null>(null);
+  const canvasAddonRef = useRef<CanvasAddon | null>(null);
   const imageAddonRef = useRef<ImageAddon | null>(null);
+  const highlightAddonRef = useRef<HighlightAddon | null>(null);
+
+  const disposeCanvas = useCallback(() => {
+    if (canvasAddonRef.current) {
+      try { canvasAddonRef.current.dispose(); } catch (_) {}
+      canvasAddonRef.current = null;
+    }
+  }, []);
+
+  const disposeWebgl = useCallback(() => {
+    if (webglAddonRef.current) {
+      try { webglAddonRef.current.dispose(); } catch (_) {}
+      webglAddonRef.current = null;
+    }
+  }, []);
+
+  const loadCanvasFallback = useCallback(() => {
+    if (!termRef.current || canvasAddonRef.current) return;
+    try {
+      if (typeof document !== 'undefined') {
+        const testEl = document.createElement('canvas');
+        if (!testEl.getContext || !testEl.getContext('2d')) {
+          return;
+        }
+      }
+      const cAddon = new CanvasAddon();
+      termRef.current.loadAddon(cAddon);
+      canvasAddonRef.current = cAddon;
+    } catch (err) {
+      console.warn('CanvasAddon load error, falling back to DOM renderer', err);
+    }
+  }, []);
 
   // 终端智能补全与命令预测状态 (IntelliSense Ghost Text)
   const [ghostSuggestion, setGhostSuggestion] = useState<string | null>(null);
@@ -873,6 +917,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
   };
 
   useEffect(() => {
+    if (!isActive) return;
     const timer = setInterval(() => {
       if (onTrafficUpdate) {
         onTrafficUpdate(sessionId, rxBytesRef.current, txBytesRef.current);
@@ -881,7 +926,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       txBytesRef.current = 0;
     }, 1000);
     return () => clearInterval(timer);
-  }, [sessionId, onTrafficUpdate]);
+  }, [sessionId, isActive, onTrafficUpdate]);
   
   useEffect(() => {
     if (!showLiveHex) return;
@@ -960,34 +1005,6 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     return bytes;
   };
 
-  // 辅助函数：对终端数据流进行关键字正则高亮过滤 (ERROR/FAIL/FAILED 标红底，SUCCESS 标绿)
-  const highlightData = (data: Uint8Array): Uint8Array => {
-    try {
-      // 若数据包包含 Sixel (DCS \x1bP...) 或 iTerm2 (\x1b]1337;File=...) 图像转义序列，跳过正则高亮以保护二进制图像数据
-      for (let i = 0; i < Math.min(data.length, 32); i++) {
-        if (data[i] === 0x1b && (data[i + 1] === 0x50 || (data[i + 1] === 0x5d && data[i + 2] === 0x31 && data[i + 3] === 0x33))) {
-          return data;
-        }
-      }
-      const text = new TextDecoder('utf-8', { fatal: false }).decode(data);
-      if (text.includes('\x1bP') || text.includes('\x1b]1337;File=')) {
-        return data;
-      }
-      if (!/\b(ERROR|FAIL|FAILED|SUCCESS)\b/.test(text)) {
-        return data;
-      }
-      let modified = text;
-      // 用 ANSI 转义码匹配单词并高亮
-      // ERROR, FAIL, FAILED 标为红底白字 \x1b[41;97mERROR\x1b[0m
-      modified = modified.replace(/\b(ERROR|FAIL|FAILED)\b/g, '\x1b[41;97m$1\x1b[0m');
-      // SUCCESS 标为绿底黑字或带颜色
-      modified = modified.replace(/\b(SUCCESS)\b/g, '\x1b[42;30m$1\x1b[0m');
-      
-      return new TextEncoder().encode(modified);
-    } catch {
-      return data;
-    }
-  };
 
   // 封装 SSH 连接的核心方法
   const connectSSHInstance = (isRetry = false) => {
@@ -1338,6 +1355,18 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       console.warn('Unicode11Addon load error:', e);
     }
 
+    // 挂载动态智能高亮插件 (HighlightAddon - 开箱即用日志与关键字自动着色)
+    try {
+      const highlightAddon = new HighlightAddon(
+        highlightRules && highlightRules.length > 0 ? highlightRules : undefined,
+        enableHighlightRules !== false
+      );
+      term.loadAddon(highlightAddon);
+      highlightAddonRef.current = highlightAddon;
+    } catch (e) {
+      console.warn('HighlightAddon load error:', e);
+    }
+
     // 捕获远端 Shell 发送的 OSC 7 目录变更序列 (OSC 7 Directory Tracking)
     try {
       if (term.parser && typeof term.parser.registerOscHandler === 'function') {
@@ -1538,8 +1567,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
           WriteSSH(sessionId, bytesToBase64(data)).catch(err => console.error("ZMODEM WriteSSH fail", err));
         },
         onNormalData: (data: Uint8Array) => {
-          const highlightedBytes = highlightData(data);
-          term.write(highlightedBytes);
+          term.write(data);
         }
       });
     } else {
@@ -1999,6 +2027,14 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       const rawBytes = base64ToBytes(b64Data);
       rxBytesRef.current += rawBytes.length;
 
+      // 终端数据显示层直接投递（最高优先级渲染，零阻塞）
+      const activeProto = protocol || (isLocal ? 'local' : 'ssh');
+      if (activeProto !== 'local' && zmodemRef.current) {
+        zmodemRef.current.consume(rawBytes);
+      } else {
+        term.write(rawBytes);
+      }
+
       // 命令执行耗时计算
       if (commandStartTimeRef.current > 0 && lastExecutedCmdRef.current) {
         const elapsed = performance.now() - commandStartTimeRef.current;
@@ -2014,31 +2050,45 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         commandStartTimeRef.current = 0;
       }
 
-      // 24.2.1: 命令块输出追加与完成状态更新
-      try {
-        const strChunk = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
-        const cleanChunk = strChunk.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
-        setCommandBlocks(prev => {
-          if (prev.length === 0) return prev;
-          const last = prev[prev.length - 1];
-          if (last.isRunning) {
-            const isEnded = cleanChunk.includes('$ ') || cleanChunk.includes('# ') || cleanChunk.includes('> ');
-            const hasErr = cleanChunk.includes('command not found') || cleanChunk.includes('error:') || cleanChunk.includes('Error:');
-            return prev.map((b, i) => i === prev.length - 1 ? {
-              ...b,
-              output: (b.output + cleanChunk).slice(-8000),
-              isRunning: !isEnded,
-              exitCode: hasErr ? 1 : b.exitCode,
-            } : b);
-          }
-          return prev;
-        });
-      } catch (_) {}
+      // 单例共享 TextDecoder，按需延迟惰性解码，杜绝热路径重复解码与垃圾回收
+      let _strChunk: string | null = null;
+      const getStrChunk = () => {
+        if (_strChunk === null) _strChunk = sharedUtf8Decoder.decode(rawBytes);
+        return _strChunk;
+      };
+
+      let _cleanChunk: string | null = null;
+      const getCleanChunk = () => {
+        if (_cleanChunk === null) _cleanChunk = getStrChunk().replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+        return _cleanChunk;
+      };
+
+      // 24.2.1: 命令块输出追加与完成状态更新（仅在命令块模式下解析）
+      if (activeCommandBlockMode) {
+        try {
+          const cleanChunk = getCleanChunk();
+          setCommandBlocks(prev => {
+            if (prev.length === 0) return prev;
+            const last = prev[prev.length - 1];
+            if (last.isRunning) {
+              const isEnded = cleanChunk.includes('$ ') || cleanChunk.includes('# ') || cleanChunk.includes('> ');
+              const hasErr = cleanChunk.includes('command not found') || cleanChunk.includes('error:') || cleanChunk.includes('Error:');
+              return prev.map((b, i) => i === prev.length - 1 ? {
+                ...b,
+                output: (b.output + cleanChunk).slice(-8000),
+                isRunning: !isEnded,
+                exitCode: hasErr ? 1 : b.exitCode,
+              } : b);
+            }
+            return prev;
+          });
+        } catch (_) {}
+      }
 
       // 24.1.7: 智能结构化语法特征嗅探 (JSON / 表格)
       if (enableStructuredOutput) {
         try {
-          const strChunk = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
+          const strChunk = getStrChunk();
           recentOutputBufferRef.current = (recentOutputBufferRef.current + strChunk).slice(-8000);
           const buf = recentOutputBufferRef.current;
           const isJSON = (buf.includes('{') && buf.includes('}')) || (buf.includes('[') && buf.includes(']'));
@@ -2049,27 +2099,29 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         } catch (_) {}
       }
       
-      // Update Hex Buffer
-      if (hexLinesRef.current.length > 500) {
-        hexLinesRef.current = hexLinesRef.current.slice(-300);
-      }
-      const str = new TextDecoder("latin1").decode(rawBytes);
-      for (let i = 0; i < str.length; i += 16) {
-        const chunk = str.slice(i, i + 16);
-        let hex = '';
-        let ascii = '';
-        for (let j = 0; j < chunk.length; j++) {
-          const code = chunk.charCodeAt(j);
-          hex += code.toString(16).padStart(2, '0').toUpperCase() + ' ';
-          ascii += (code >= 32 && code <= 126) ? chunk[j] : '.';
+      // Update Hex Buffer（仅在 Hex 面板打开时执行转换）
+      if (showLiveHex) {
+        if (hexLinesRef.current.length > 500) {
+          hexLinesRef.current = hexLinesRef.current.slice(-300);
         }
-        hexLinesRef.current.push(hex.padEnd(48, ' ') + '  |' + ascii + '|');
+        const str = sharedLatin1Decoder.decode(rawBytes);
+        for (let i = 0; i < str.length; i += 16) {
+          const chunk = str.slice(i, i + 16);
+          let hex = '';
+          let ascii = '';
+          for (let j = 0; j < chunk.length; j++) {
+            const code = chunk.charCodeAt(j);
+            hex += code.toString(16).padStart(2, '0').toUpperCase() + ' ';
+            ascii += (code >= 32 && code <= 126) ? chunk[j] : '.';
+          }
+          hexLinesRef.current.push(hex.padEnd(48, ' ') + '  |' + ascii + '|');
+        }
       }
 
       // 实时日志过滤器抓取 (Live Buffer Filter)
       if (filterConfigRef.current.isOpen && !filterConfigRef.current.isPaused && filterConfigRef.current.pattern) {
         try {
-          const decodedText = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
+          const decodedText = getStrChunk();
           const lines = decodedText.split(/\r?\n/);
           const p = filterConfigRef.current.pattern;
           const isReg = filterConfigRef.current.isRegex;
@@ -2103,29 +2155,20 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       // Asciinema Cast 录制事件抓取
       if (recordingRef.current && castStartTimeRef.current > 0) {
         const offsetSec = (performance.now() - castStartTimeRef.current) / 1000;
-        const textChunk = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
+        const textChunk = getStrChunk();
         castEventsRef.current.push([Number(offsetSec.toFixed(4)), 'o', textChunk]);
       }
 
       // AI 智能报错检测 (AI Error Sniffer)
       try {
-        const textChunk = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
-        const cleanChunk = textChunk.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
-        if (/\b(?:Permission denied|No space left on device|Command not found|Connection refused|fatal error|Address already in use|No such file or directory|SyntaxError)\b/i.test(cleanChunk)) {
+        const cleanChunk = getCleanChunk();
+        if (cleanChunk.length > 5 && /\b(?:Permission denied|No space left on device|Command not found|Connection refused|fatal error|Address already in use|No such file or directory|SyntaxError)\b/i.test(cleanChunk)) {
           setDetectedError({
             errorText: cleanChunk.trim().slice(0, 400),
             lastCmd: currentInputBufferRef.current || '',
           });
         }
       } catch (_) {}
-
-      const activeProto = protocol || (isLocal ? 'local' : 'ssh');
-      if (activeProto !== 'local' && zmodemRef.current) {
-        zmodemRef.current.consume(rawBytes);
-      } else {
-        const highlightedBytes = highlightData(rawBytes);
-        term.write(highlightedBytes);
-      }
     });
 
     const scrollDisp = term.onScroll ? term.onScroll(() => {
@@ -2218,6 +2261,14 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         } catch (_) {}
         imageAddonRef.current = null;
       }
+      if (highlightAddonRef.current) {
+        try {
+          highlightAddonRef.current.dispose();
+        } catch (_) {}
+        highlightAddonRef.current = null;
+      }
+      disposeCanvas();
+      disposeWebgl();
       term.dispose();
       termRef.current = null;
       zmodemRef.current = null;
@@ -2290,23 +2341,24 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       const shouldEnableWebgl = (rendererType === 'webgl') || (rendererType === 'auto' && !isTransparentBg);
 
       if (shouldDisableWebgl) {
-        if (webglAddonRef.current) {
-          try {
-            webglAddonRef.current.dispose();
-          } catch (e) {}
-          webglAddonRef.current = null;
+        disposeWebgl();
+        if (rendererType !== 'dom' && isActive && !canvasAddonRef.current) {
+          loadCanvasFallback();
         }
       } else if (shouldEnableWebgl && isActive && !webglAddonRef.current) {
+        disposeCanvas();
         try {
           const addon = new WebglAddon();
           addon.onContextLoss(() => {
             addon.dispose();
             webglAddonRef.current = null;
+            loadCanvasFallback();
           });
           termRef.current.loadAddon(addon);
           webglAddonRef.current = addon;
         } catch (e) {
-          console.warn('WebGL addon could not be loaded', e);
+          console.warn('WebGL addon could not be loaded, smoothly degrading to Canvas', e);
+          loadCanvasFallback();
         }
       }
 
@@ -2422,7 +2474,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     isActive
   ]);
 
-  // 管理 WebGL 上下文，根据 rendererType 及背景透明度动态切换 WebGL / Canvas
+  // 管理 WebGL / Canvas / DOM 三级平滑渲染降级架构
   useEffect(() => {
     if (!termRef.current) return;
     const finalOpacity = (overrideTerminalOpacity && overrideTerminalOpacity > 0) ? overrideTerminalOpacity : (terminalOpacity ?? 1.0);
@@ -2430,29 +2482,77 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     const shouldDisableWebgl = rendererType === 'canvas' || rendererType === 'dom' || (rendererType === 'auto' && isTransparentBg);
     const shouldEnableWebgl = (rendererType === 'webgl') || (rendererType === 'auto' && !isTransparentBg);
 
-    if (isActive && shouldEnableWebgl) {
-      if (!webglAddonRef.current) {
-        try {
-          const addon = new WebglAddon();
-          addon.onContextLoss(() => {
-            addon.dispose();
-            webglAddonRef.current = null;
-          });
-          termRef.current.loadAddon(addon);
-          webglAddonRef.current = addon;
-        } catch (e) {
-          console.warn('WebGL addon could not be loaded on active', e);
+    if (isActive) {
+      if (rendererType === 'dom') {
+        disposeWebgl();
+        disposeCanvas();
+      } else if (shouldEnableWebgl) {
+        disposeCanvas();
+        if (!webglAddonRef.current) {
+          try {
+            const addon = new WebglAddon();
+            addon.onContextLoss(() => {
+              addon.dispose();
+              webglAddonRef.current = null;
+              loadCanvasFallback();
+            });
+            termRef.current.loadAddon(addon);
+            webglAddonRef.current = addon;
+          } catch (e) {
+            console.warn('WebGL addon could not be loaded on active, smoothly degrading to Canvas', e);
+            loadCanvasFallback();
+          }
+        }
+      } else {
+        disposeWebgl();
+        if (!canvasAddonRef.current) {
+          loadCanvasFallback();
         }
       }
     } else {
-      if (webglAddonRef.current) {
-        try {
-          webglAddonRef.current.dispose();
-        } catch (e) {}
-        webglAddonRef.current = null;
+      // 非活动 Tab 释放 WebGL 上下文，避免超过浏览器 8~16 个 GPU context 硬件上限
+      disposeWebgl();
+      disposeCanvas();
+    }
+  }, [isActive, terminalOpacity, overrideTerminalOpacity, backgroundImage, globalBackgroundImage, rendererType, disposeWebgl, disposeCanvas, loadCanvasFallback]);
+
+  // 动态同步智能高亮规则与启闭状态
+  useEffect(() => {
+    if (highlightAddonRef.current) {
+      highlightAddonRef.current.setEnabled(enableHighlightRules !== false);
+      if (highlightRules) {
+        highlightAddonRef.current.setRules(highlightRules);
       }
     }
-  }, [isActive, terminalOpacity, overrideTerminalOpacity, backgroundImage, globalBackgroundImage, rendererType]);
+  }, [enableHighlightRules, highlightRules]);
+
+  // 右键快捷高亮所选文本词条
+  const handleAddHighlightWord = useCallback((text: string) => {
+    if (!text) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = trimmed.includes(' ') ? escaped : `\\b${escaped}\\b`;
+    const colors = ['#e5c07b', '#4ec9b0', '#c678dd', '#61afef', '#f14c4c', '#98c379', '#dcdcaa'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    const newRule = {
+      id: `custom_${Date.now()}`,
+      name: trimmed.length > 20 ? trimmed.substring(0, 20) + '...' : trimmed,
+      pattern,
+      color: randomColor,
+      category: 'custom' as const,
+      enabled: true,
+      ignoreCase: true,
+      showInRuler: false,
+    };
+    if (highlightAddonRef.current) {
+      const currentRules = highlightAddonRef.current.getRules();
+      highlightAddonRef.current.setRules([...currentRules, newRule]);
+    }
+    if (onAddHighlightRule) {
+      onAddHighlightRule(newRule);
+    }
+  }, [onAddHighlightRule]);
 
   // 当激活标签改变时获取焦点并对齐
   useEffect(() => {
@@ -2700,15 +2800,25 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       >
         <div ref={containerRef} className="w-full h-full bg-transparent" onContextMenu={handleContextMenu} />
 
-        {/* Phase 8 (25.4.3): 终端视口 Mini 服务器硬件遥测小部件 */}
-        <MiniServerTelemetryWidget
-          sessionId={sessionId}
-          sessionName={name}
-          isLocal={isLocal}
-          enableMiniTelemetry={enableMiniTelemetry}
-          intervalSec={miniTelemetryIntervalSec}
-          onOpenFullMonitor={tabShortcutsRef.current.onToggleHostMonitor}
-        />
+        {/* 终端视口顶部状态胶囊组 (多路复用通道 + Mini 硬件遥测) */}
+        <div className="absolute top-2.5 right-4 z-30 flex items-center gap-2 pointer-events-auto select-none">
+          <MultiplexBadge
+            sessionId={sessionId}
+            sessionName={name}
+            isActive={isActive}
+            isLocal={isLocal}
+          />
+          <MiniServerTelemetryWidget
+            sessionId={sessionId}
+            sessionName={name}
+            isActive={isActive}
+            isLocal={isLocal}
+            enableMiniTelemetry={enableMiniTelemetry}
+            intervalSec={miniTelemetryIntervalSec}
+            onOpenFullMonitor={tabShortcutsRef.current.onToggleHostMonitor}
+            className="relative top-0 right-0"
+          />
+        </div>
       </div>
 
       {/* 实时日志过滤器 (Live Buffer Filter Pane) */}
@@ -2869,6 +2979,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
         onScreenshot={handleScreenshot}
         isCommandBlockMode={activeCommandBlockMode}
         onToggleCommandBlockMode={toggleCommandBlockMode}
+        onAddHighlightWord={handleAddHighlightWord}
       />
 
       {/* 📊 智能输出语义化解析浮动按钮 */}
@@ -2947,3 +3058,5 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
     </div>
   );
 };
+
+export const TerminalInstance = React.memo(TerminalInstanceComponent);

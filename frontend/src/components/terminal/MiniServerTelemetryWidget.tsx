@@ -18,19 +18,23 @@ import { HostResourceMetrics } from '../../types';
 interface MiniServerTelemetryWidgetProps {
   sessionId: string;
   sessionName: string;
+  isActive?: boolean;
   isLocal?: boolean;
   enableMiniTelemetry?: boolean;
   intervalSec?: number;
   onOpenFullMonitor?: () => void;
+  className?: string;
 }
 
 export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps> = ({
   sessionId,
   sessionName,
+  isActive = true,
   isLocal = false,
   enableMiniTelemetry = true,
   intervalSec = 3,
   onOpenFullMonitor,
+  className,
 }) => {
   const { t } = useI18n();
   const [metrics, setMetrics] = useState<HostResourceMetrics | null>(null);
@@ -93,14 +97,14 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
     }
   }, [sessionId, isLocal]);
 
-  // 定时采样循环（带页面可见性监听）
+  // 定时采样循环（带页面可见性与活跃状态监听，非活跃 Tab 自动休眠）
   useEffect(() => {
     isMountedRef.current = true;
-    if (!enableMiniTelemetry || isLocal || !sessionId) {
+    if (!enableMiniTelemetry || isLocal || !sessionId || !isActive) {
       return;
     }
 
-    // 首次挂载立即采样一次
+    // 活跃时立即采样一次保证最新指标展示
     fetchMetrics();
 
     const intervalMs = Math.max(2, intervalSec) * 1000;
@@ -115,7 +119,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
     }, intervalMs);
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && isMountedRef.current) {
+      if (!document.hidden && isMountedRef.current && isActive) {
         fetchMetrics();
       }
     };
@@ -126,7 +130,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
       clearInterval(timerId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [sessionId, isLocal, enableMiniTelemetry, intervalSec, fetchMetrics]);
+  }, [sessionId, isLocal, enableMiniTelemetry, intervalSec, isActive, fetchMetrics]);
 
   // 点击外部关闭弹层
   useEffect(() => {
@@ -199,7 +203,7 @@ export const MiniServerTelemetryWidget: React.FC<MiniServerTelemetryWidgetProps>
   };
 
   return (
-    <div ref={containerRef} className="absolute top-2.5 right-4 z-30 pointer-events-auto select-none font-sans">
+    <div ref={containerRef} className={`z-30 pointer-events-auto select-none font-sans ${className ?? 'absolute top-2.5 right-4'}`}>
       {/* 极简磨砂胶囊徽标 (Micro Capsule) */}
       <button
         onClick={() => setIsPopoverOpen(!isPopoverOpen)}

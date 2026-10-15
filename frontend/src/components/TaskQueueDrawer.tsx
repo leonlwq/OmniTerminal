@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, UploadCloud, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
+import { CancelSftpTransfer } from '../../wailsjs/go/app/App';
 
 export interface SftpTask {
   taskId: string;
@@ -40,6 +41,12 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const handleCancel = (taskId: string) => {
+    CancelSftpTransfer(taskId).catch(err => {
+      console.warn('Failed to cancel task:', err);
+    });
+  };
+
   return (
     <aside className="w-88 bg-[#181818] border-l border-[#2b2b2b] flex flex-col shrink-0 overflow-hidden animate-in slide-in-from-right duration-200 z-30 shadow-2xl absolute right-0 top-0 bottom-0 text-[#cccccc]">
       <div className="flex items-center justify-between px-4 py-2.5 bg-[#1f1f1f] border-b border-[#2b2b2b] shrink-0">
@@ -77,14 +84,25 @@ export const TaskQueueDrawer: React.FC<TaskQueueDrawerProps> = ({
                 <span className="font-medium text-[#cccccc] truncate pr-2 flex-1" title={task.fileName}>
                   {task.fileName}
                 </span>
-                <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
-                  task.status === 'completed' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30' :
-                  task.status === 'failed' ? 'bg-red-950/60 text-red-300 border border-red-500/30' :
-                  'bg-[#0078d4]/20 text-blue-300 border border-[#0078d4]/40 animate-pulse'
-                }`}>
-                  {task.status === 'completed' ? t('taskQueue.statusDone') :
-                   task.status === 'failed' ? t('taskQueue.statusFailed') : t('taskQueue.statusRunning')}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                    task.status === 'completed' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30' :
+                    task.status === 'failed' ? 'bg-red-950/60 text-red-300 border border-red-500/30' :
+                    'bg-[#0078d4]/20 text-blue-300 border border-[#0078d4]/40 animate-pulse'
+                  }`}>
+                    {task.status === 'completed' ? t('taskQueue.statusDone') :
+                     task.status === 'failed' ? t('taskQueue.statusFailed') : t('taskQueue.statusRunning')}
+                  </span>
+                  {(task.status === 'started' || task.status === 'transferring') && (
+                    <button
+                      onClick={() => handleCancel(task.taskId)}
+                      title={t('taskQueue.cancelTask')}
+                      className="text-[#858585] hover:text-red-400 p-0.5 rounded hover:bg-white/5 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
               
               {/* 进度条 */}

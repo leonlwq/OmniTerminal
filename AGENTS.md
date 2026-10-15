@@ -28,13 +28,16 @@
   - **鼠标选区自动复制**：选中文本释放鼠标或特定配置下，自动同步至系统剪贴板。
   - **右键自定义行为**：支持配置为弹出气泡菜单或直接粘贴剪切板，杜绝浏览器默认右键菜单。
   - **连接双击快速追加**：双击已有的终端连接（TabBar 标签页或侧栏活动会话）时，自动追加新建一个完全相同的终端连接（保持名称、主机、认证及环境变量一致）并立即激活。
+  - **动态智能高亮引擎（Highlight Rules）**：对标 WindTerm / MobaXterm，内置 8 大预设规则集（Fatal/Critical、Error/Fail、Warn/Warning、Success/OK、IPv4/Port、Timestamp/Date、FilePath、HTTP 状态码），开箱即用自动着色；基于 xterm.js Decoration API + WebGL 着色器硬件加速，纯显示层渲染，绝不污染底层 PTY 流与系统剪切板；智能检测并在全屏模式（Alternate Buffer 如 vim/htop）下自动避让；支持终端右键“添加为高亮关键词”快速交互与设置中心增删改查。
 
 ### 性能与诊断日志约定（Zero Hot-path Logging）
 
 - **严禁热路径磁盘写盘**：在终端 I/O 热路径（PTY 读取循环 `readLoop`、输入写入 `Write`、窗口缩放 `Resize` 以及每次击键）中，**严禁向磁盘写入任何未轮转的临时调试日志**（彻底废除开发期残留的 `local_shell_debug.log`）；任何调试输出仅允许在显式配置 `OMNI_DEBUG=1` 时输出至标准输出，避免内存逃逸与堆分配。
 - **IPC 通信洁净化**：严禁在前端每次击键、每个数据块接收时向后端发射高频调试 IPC，保证主线程高帧率与极速输入响应。
 - **正式日志归口**：会话操作与审计日志必须统一接入规范的 `SessionLogger` / 日志审计中心，由用户按需启用并按日期分卷归档。
-- **终端渲染与流控**：xterm.js 优先启用 WebGL 硬件加速渲染（透明/特殊模式平滑降级 Canvas/DOM）；后端向前端投递终端输出数据流时，必须采用 10ms 批处理窗口合并碎片化事件，防范高频输出时 IPC 丢包与卡顿。
+- **终端渲染与流控**：xterm.js 优先启用 WebGL 硬件加速，构建 WebGL → @xterm/addon-canvas 硬件位图加速 → DOM 基础兜底的三级无缝降级链路；非活动 Tab 释放 GPU context 避免超限；后端向前端投递终端输出数据流时，采用 16ms 帧对齐（60fps）+ 64KB 单次批处理上限防爆，杜绝超大 base64 阻塞 IPC；前端数据热路径直接投递 term.write，二级功能惰性单例解码与防抖调度。
+- **高频状态隔离与实例保活**：多标签切换基于 display: none 保留 DOM 实例；TerminalInstance 与工作台容器采用 React.memo 隔离；网络流量与后台主机遥测（MiniServerTelemetryWidget）在非活动 Tab 自动休眠，切回活动 Tab 时按需即时刷新，杜绝向根组件渗透高频重绘风暴。
+- **SFTP 渲染与无死循环防护**：SFTP 文件列表 <=300 项时采用原生 CSS 硬件加速滚动，彻底消除 @tanstack/react-virtual 在 React 19 并发渲染与非活动 Tab (尺寸 0x0) 下的 flushSync 调度重绘死循环；大列表 (>300项) 显式配置 useFlushSync: false 与稳定回调；SftpFileItem 实施 React.memo 行级隔离；HighlightAddon 增设行文本指纹对比 (_lineContentCache)、重入锁 (_isScanning) 与 80ms 节流，彻底斩断 onRender -> registerDecoration -> _fullRefresh 自激振荡死循环。
 - **内存泄漏防护**：React 组件卸载生命周期必须显式执行 `EventsOn` 返回的注销函数，严禁调用全局 `EventsOff` 导致多 Tab 事件混乱。
 
 ### 界面设计美学约定
@@ -56,6 +59,49 @@
     - SFTP 双栏文件传输管理器（`SftpPanel`）、多行命令撰写抽屉（`ComposePane`）、端到端加密云同步（`CloudSyncModal`）、TOTP / MFA 令牌管理（`TOTPManagerModal`）、SSH 身份密钥管理（`KeyManagerModal`）、端口转发与隧道监控（`TunnelMonitorModal`）、快捷键速查（`ShortcutReferenceModal`）、标签页工作台管理（`TabManagerModal`）、全局搜索（`GlobalSearchModal`）、历史命令检索（`CommandHistoryModal`）。
     - 会话配置全量 6 大选项卡：`SessionConnectionTab`、`SessionAppearanceTab`、`SessionAuthTab`、`SessionTerminalTab`、`SessionTunnelTab`、`SessionAuditTab`。
   - 彻底清除各子功能页面直接硬编码中文，杜绝在非中文语言下回退默认中文。
+
+### SFTP 高性能文件引擎与高级传输规范 (SFTP Engine & Resumable Transfer)
+
+- **断点续传（Resumable Transfer）**：`[x]`
+  - 上传与下载前支持自动探测源/目标尺寸（`SftpCheckFileResume`）。
+  - 若目标已存在较小尺寸文件，提供智能模态对话框引导用户选择「断点续传 / 覆盖 / 取消」。
+  - 底层基于 `OpenFile(..., os.O_WRONLY)`（避免 `O_TRUNC`）配合双方文件指针 `Seek(startOffset, io.SeekStart)`，精确从断点位置恢复 `io.Copy`。
+  - 进度监控与速率计算校准：`ProgressStream` 初始基准对齐 `startOffset`，传输速率完全基于增量字节计算，杜绝显示速率瞬间暴增。
+- **服务端跨机零磁盘直传（Server-to-Server Direct Transfer）**：`[x]`
+  - 支持直接在活动会话列表之间复制文件/文件夹（`SftpTransferBetweenSessions`）。
+  - 核心架构基于内存 `io.Pipe()` 256KB 环形通道流式传输，零宿主机磁盘 I/O，零临时落地文件，极大节省本地存储与网络翻倍开销。
+- **传输生命周期与可控中断**：`[x]`
+  - 后端提供统一的任务取消通道（`CancelSftpTransfer`），基于 `context.WithCancel` 与 `contextReader` 在中断信号触发时即时终止传输并清理资源。
+  - 前端任务抽屉（`TaskQueueDrawer`）针对进行中的传输任务提供清晰的取消按钮交互与状态反馈。
+
+### 单通道多路复用与零感知监控规范 (SSH Multiplexing & Stealth Telemetry)
+
+- **单通道连接池强约束与通道记账（Channel Accounting）**：`[x]`
+  - `PooledSSHClient` 维护底层物理连接与活跃通道（PTY、SFTP、Telemetry、Tunnel）映射字典 `Channels map[string]int`。
+  - 多终端 Tab、SFTP 传输、端口转发与后台硬件遥测默认共享底层单个物理 TCP 连接与已认证 SSH Transport，避免远程服务器高频登录与多物理连接浪费。
+- **零感知无痕采样（Zero-Touch / Stealth Telemetry Sampling）**：`[x]`
+  - 后台主机硬件性能监控（CPU/内存/磁盘/网络速率）通过复用 `*ssh.Client.NewSession()` 轻量执行读取 `/proc` 只读接口，使用完毕立即安全关闭临时 Channel。
+  - 整个采样过程零额外 TCP 握手、远程 `/var/log/secure` 或 `auth.log` 0 笔 PAM 登录审计日志，告警 0 误触。
+- **MaxSessions 自动探测与物理分流弹性（Multiplexing Overflow Fallback）**：`[x]`
+  - 当远端服务器由于 `sshd_config` 的 `MaxSessions` 限制或物理连接失效导致新建 Session 失败时，连接池自动剔除失效连接并重试全新拨号分配二级连接，杜绝通道满载导致的用户连接阻塞。
+- **前端极客多路复用感知看板（MultiplexBadge & Popover）**：`[x]`
+  - 终端右上角视口集成磨砂微胶囊徽章（`⚡ 1 物理连接 / N 通道`），点击弹出高质感玻璃拟态详情看板。
+  - 全面透视共享物理 Socket 地址、无痕安全保证、活跃通道类型与累计节省的握手开销（RTT Saved）。
+
+### 多跳链路网络诊断与流光拓扑看板规范 (Network Topology & Multi-hop Diagnostics)
+
+- **SSH Keepalive 真实物理 RTT 探测与零虚构**：`[x]`
+  - 废除假 RTT 硬编码，基于 `client.SendRequest("keepalive@openssh.com", true, nil)` 在已认证 SSH Transport 上执行零开销物理级 RTT 毫秒精准测距。
+  - 动态检测活跃隧道映射（`ActiveTunnels`），向下游自动拓扑探测服务节点（如 MySQL 3306、Redis 6379、Web 80/443 等）并附加服务卡片。
+- **端到端多跳穿透链路可达性诊断（DiagnoseTopologyHop）**：`[x]`
+  - 后端提供统一的链路排障接口 `DiagnoseTopologyHop(sessionId, targetAddr)`，逐跳拆解「本地到堡垒机/跳板机」与「跳板机到下游目标服务」的网络通断。
+  - 精准定界故障点（如跳板机畅通但目标端口连接拒绝或超时），输出结构化诊断结论（healthy/broken）与针对性运维排障建议。
+- **流光动态拓扑图谱看板（NetworkTopologyModal）**：`[x]`
+  - 前端基于分层架构（Local -> JumpHost -> Target -> Service）渲染多跳拓扑网络。
+  - 健康链路采用 SVG 呼吸渐变流光虚线动画，异常/熔断链路采用高亮警示红色虚线与错误徽章。
+  - 右侧提供深度排障侧栏抽屉，支持一键实时重测、查看分跳延迟耗时瀑布图与智能专家建议。
+- **4 国语言全量本地化对齐**：`[x]`
+  - `zh-CN`、`en-US`、`ja-JP`、`ko-KR` 四种语言全量覆盖拓扑节点、连线状态、诊断排障文案。
 
 ### 代码质量底线
 

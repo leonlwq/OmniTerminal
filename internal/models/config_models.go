@@ -19,8 +19,15 @@ type ExpectInteractive struct {
 }
 
 type HighlightRule struct {
-	Pattern string `json:"pattern"`
-	Color   string `json:"color"` // e.g. "red", "green", "bg-red", "ansi-red" etc
+	ID          string `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Pattern     string `json:"pattern"`
+	Color       string `json:"color"`              // 前景色 hex (如 "#f14c4c")
+	BgColor     string `json:"bgColor,omitempty"`  // 背景色 hex (如 "#b91c1c")
+	Category    string `json:"category,omitempty"` // "severity" | "network" | "timestamp" | "path" | "http" | "custom"
+	Enabled     bool   `json:"enabled"`
+	IgnoreCase  bool   `json:"ignoreCase"`
+	ShowInRuler bool   `json:"showInRuler"`        // 是否在右侧 Overview Ruler 显示标尺指示点
 }
 
 type KeyMapping struct {
@@ -118,7 +125,8 @@ type AppSettings struct {
 	ImageStorageLimitMB  int  `json:"imageStorageLimitMB"`  // 图像存储上限 (MB, 默认 128)
 
 	// Terminal Interaction Customizations
-	HighlightRules     []HighlightRule   `json:"highlightRules"`
+	EnableHighlightRules bool            `json:"enableHighlightRules"` // 是否启用智能终端高亮 (默认 true)
+	HighlightRules       []HighlightRule `json:"highlightRules"`
 	KeyMappings        []KeyMapping      `json:"keyMappings"`
 	RightClickAction   string            `json:"rightClickAction"` // "contextMenu" | "paste" | "none"
 	DoubleClickAction  string            `json:"doubleClickAction"` // "copy" | "selectWord" | "none"
@@ -470,14 +478,44 @@ type ActiveTunnelInfo struct {
 
 // SSHPoolStat SSH 连接池运行状态
 type SSHPoolStat struct {
-	Key         string `json:"key"`         // user@host:port
-	Host        string `json:"host"`
-	Port        int    `json:"port"`
-	User        string `json:"user"`
-	RefCount    int    `json:"refCount"`    // 当前复用该连接的活动会话数
-	IdleSeconds int    `json:"idleSeconds"` // 闲置倒计时秒数 (若引用计数为0)
-	ActiveSince string `json:"activeSince"` // 建立时间
+	Key                 string         `json:"key"`                 // user@host:port
+	Host                string         `json:"host"`
+	Port                int            `json:"port"`
+	User                string         `json:"user"`
+	RefCount            int            `json:"refCount"`            // 当前复用该连接的活动会话数
+	ActiveChannelsCount int            `json:"activeChannelsCount"` // 活跃复用通道总数
+	ChannelsBreakdown   map[string]int `json:"channelsBreakdown"`   // 通道分布
+	IdleSeconds         int            `json:"idleSeconds"`         // 闲置倒计时秒数 (若引用计数为0)
+	ActiveSince         string         `json:"activeSince"`         // 建立时间
+	MaxSessionsReached  bool           `json:"maxSessionsReached"`  // 是否达远端上限并触发了溢出分流
 }
+
+// MultiplexChannelDetail 单个复用通道详情
+type MultiplexChannelDetail struct {
+	Type        string `json:"type"`        // "pty" (终端PTY), "sftp" (SFTP引擎), "telemetry" (零感知遥测), "tunnel" (端口转发)
+	Name        string `json:"name"`        // 会话名称或通道标识
+	SessionID   string `json:"sessionId"`   // 所属会话ID
+	Active      bool   `json:"active"`      // 是否处于活动状态
+	Description string `json:"description"` // 通道说明
+}
+
+// SessionMultiplexInfo 会话的底层单通道多路复用全景详情
+type SessionMultiplexInfo struct {
+	SessionID           string                   `json:"sessionId"`
+	PoolKey             string                   `json:"poolKey"`
+	IsPooled            bool                     `json:"isPooled"`
+	Host                string                   `json:"host"`
+	Port                int                      `json:"port"`
+	User                string                   `json:"user"`
+	PhysicalConnections int                      `json:"physicalConnections"` // 共享物理连接数 (通常为 1)
+	ActiveChannelsCount int                      `json:"activeChannelsCount"` // 当前底层物理连接复用的活跃通道总数
+	ChannelsBreakdown   map[string]int           `json:"channelsBreakdown"`   // 每类通道数量，例如 pty: 2, sftp: 1, telemetry: 1, tunnel: 0
+	ChannelDetails      []MultiplexChannelDetail `json:"channelDetails"`      // 详细通道列表
+	StealthAuditNote    string                   `json:"stealthAuditNote"`    // 零感知审计特性说明
+	EstimatedRttSavedMs int                      `json:"estimatedRttSavedMs"` // 预估为该主机累计节省的 TCP+SSH 握手开销毫秒数
+	CreatedAt           string                   `json:"createdAt"`
+}
+
 
 // FolderSizeProgress SFTP 文件夹大小异步统计进度
 type FolderSizeProgress struct {
@@ -521,11 +559,12 @@ type TopologyNode struct {
 	Host               string `json:"host"`
 	Port               int    `json:"port"`
 	User               string `json:"user"`
-	Type               string `json:"type"` // "local" | "jumphost" | "target"
-	Status             string `json:"status"` // "connected" | "disconnected"
+	Type               string `json:"type"`   // "local" | "jumphost" | "target" | "service"
+	Status             string `json:"status"` // "connected" | "disconnected" | "error"
 	Uptime             string `json:"uptime"`
 	ActiveTunnelsCount int    `json:"activeTunnelsCount"`
 	RttMs              int64  `json:"rttMs"`
+	ErrorMessage       string `json:"errorMessage,omitempty"`
 }
 
 // TopologyEdge 网络拓扑边
@@ -533,8 +572,10 @@ type TopologyEdge struct {
 	ID     string `json:"id"`
 	Source string `json:"source"`
 	Target string `json:"target"`
-	Type   string `json:"type"` // "direct" | "jump_host" | "cascade"
+	Type   string `json:"type"`             // "direct" | "jump_host" | "cascade" | "tunnel"
 	Label  string `json:"label"`
+	Status string `json:"status,omitempty"` // "healthy" | "broken" | "warning"
+	RttMs  int64  `json:"rttMs,omitempty"`
 }
 
 // TopologyTunnel 拓扑中的活动隧道
@@ -544,6 +585,28 @@ type TopologyTunnel struct {
 	LocalAddr  string `json:"localAddr"`
 	RemoteAddr string `json:"remoteAddr"`
 	Status     string `json:"status"`
+}
+
+// HopDiagnosisDetail 单跳链路诊断明细
+type HopDiagnosisDetail struct {
+	HopIndex    int    `json:"hopIndex"`
+	Name        string `json:"name"`
+	FromAddr    string `json:"fromAddr"`
+	ToAddr      string `json:"toAddr"`
+	RttMs       int64  `json:"rttMs"`
+	Status      string `json:"status"` // "healthy" | "broken" | "timeout"
+	ErrorDetail string `json:"errorDetail,omitempty"`
+}
+
+// ReachabilityDiagnosisResult 网络链路全景诊断结论
+type ReachabilityDiagnosisResult struct {
+	Target      string               `json:"target"`
+	Healthy     bool                 `json:"healthy"`
+	TotalRttMs  int64                `json:"totalRttMs"`
+	Hops        []HopDiagnosisDetail `json:"hops"`
+	Conclusion  string               `json:"conclusion"`
+	Suggestion  string               `json:"suggestion"`
+	DiagnosedAt string               `json:"diagnosedAt"`
 }
 
 // NetworkTopologyData 完整网络拓扑链路数据集

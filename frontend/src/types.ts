@@ -165,3 +165,104 @@ export interface ContainerLogItem {
   line: string;
   source: 'stdout' | 'stderr';
 }
+
+// SSH Multiplexing & Telemetry Types
+export interface MultiplexChannelDetail {
+  type: string; // 'pty' | 'sftp' | 'telemetry' | 'tunnel'
+  name: string;
+  sessionId: string;
+  active: boolean;
+  description: string;
+}
+
+export interface SessionMultiplexInfo {
+  sessionId: string;
+  poolKey: string;
+  isPooled: boolean;
+  host: string;
+  port: number;
+  user: string;
+  physicalConnections: number;
+  activeChannelsCount: number;
+  channelsBreakdown: Record<string, number>;
+  channelDetails: MultiplexChannelDetail[];
+  stealthAuditNote: string;
+  estimatedRttSavedMs: number;
+  createdAt: string;
+}
+
+export interface SSHPoolStat {
+  key: string;
+  host: string;
+  port: number;
+  user: string;
+  refCount: number;
+  activeChannelsCount: number;
+  channelsBreakdown?: Record<string, number>;
+  idleSeconds: number;
+  activeSince: string;
+  maxSessionsReached?: boolean;
+}
+
+// Network Topology & Diagnostic Types
+export interface TopologyNode {
+  id: string;
+  label: string;
+  host: string;
+  port: number;
+  user: string;
+  type: 'local' | 'jumphost' | 'target' | 'service';
+  status: 'connected' | 'disconnected' | 'error';
+  uptime: string;
+  activeTunnelsCount: number;
+  rttMs: number;
+  errorMessage?: string;
+  x?: number;
+  y?: number;
+}
+
+export interface TopologyEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: 'direct' | 'jump_host' | 'cascade' | 'tunnel';
+  label: string;
+  status?: 'healthy' | 'broken' | 'warning';
+  rttMs?: number;
+}
+
+export interface TopologyTunnel {
+  sessionId: string;
+  type: string;
+  localAddr: string;
+  remoteAddr: string;
+  status: string;
+}
+
+export interface NetworkTopologyData {
+  nodes: TopologyNode[];
+  edges: TopologyEdge[];
+  tunnels: TopologyTunnel[];
+}
+
+export interface HopDiagnosisDetail {
+  hopIndex: number;
+  name: string;
+  fromAddr: string;
+  toAddr: string;
+  rttMs: number;
+  status: 'healthy' | 'broken' | 'timeout';
+  errorDetail?: string;
+}
+
+export interface ReachabilityDiagnosisResult {
+  target: string;
+  healthy: boolean;
+  totalRttMs: number;
+  hops: HopDiagnosisDetail[];
+  conclusion: string;
+  suggestion: string;
+  diagnosedAt: string;
+}
+
+

@@ -4,12 +4,13 @@ import {
   Folder, File, ArrowLeft, ArrowRight, RefreshCw, Upload, Download, 
   Trash2, Edit3, Loader2, FolderPlus, Key, Eye, X, Star, ChevronDown, Check,
   ExternalLink, CheckCircle2, Columns, Archive, ShieldCheck, Terminal as TermIcon, Compass,
-  GitBranch, GitCommit, SplitSquareVertical, Code, Info
+  GitBranch, GitCommit, SplitSquareVertical, Code, Info, AlertCircle
 } from 'lucide-react';
 import { 
   SftpListDir, SftpDelete, SftpMkdir, SftpRename, SftpChmod, 
   LocalListDir, GetLocalHomeDir, LocalDelete, LocalMkdir, LocalRename, LocalReadFile, LocalWriteFile,
-  SftpUploadPaths, SftpDownloadPaths, OpenRemoteFileWithEditor
+  SftpUploadPaths, SftpDownloadPaths, OpenRemoteFileWithEditor,
+  SftpUploadPathsWithResume, SftpDownloadPathsWithResume, SftpTransferBetweenSessions, SftpCheckFileResume, CancelSftpTransfer
 } from '../../wailsjs/go/app/App';
 import { app, models } from '../../wailsjs/go/models';
 import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime';
@@ -36,6 +37,9 @@ interface SftpListPanelProps {
   onContextMenu?: (e: React.MouseEvent, file: app.SftpFileInfo) => void;
   isGitRepo?: boolean;
   gitStatusMap?: Record<string, { status: string; staged: boolean; untracked: boolean }>;
+  sessionId?: string;
+  onDropItems?: (sourceData: { sessionId: string; isRemote: boolean; sourcePath: string; files: string[] }, targetDir: string) => void;
+  onDropNativeFiles?: (fileList: FileList, targetDir: string) => void;
 }
 
 // 跨平台目录上级路径解析 (兼容 Unix '/' 与 Windows 'C:\' 盘符及正反斜杠)
@@ -72,23 +76,159 @@ function joinFilePath(baseDir: string, fileName: string): string {
   return baseDir + sep + fileName;
 }
 
-const SftpListPanel: React.FC<SftpListPanelProps> = ({
+interface SftpFileItemProps {
+  file: app.SftpFileInfo;
+  isSelected: boolean;
+  isDragOver: boolean;
+  sessionId?: string;
+  isRemote: boolean;
+  path: string;
+  selected: Set<string>;
+  gitStatus?: { status: string; staged: boolean; untracked: boolean };
+  formatSize: (bytes: number) => string;
+  toggleSelect: (set: Set<string>, setFn: any, name: string, multi: boolean) => void;
+  setSelected: any;
+  handleDbClick: (file: app.SftpFileInfo) => void;
+  onContextMenu?: (e: React.MouseEvent, file: app.SftpFileInfo) => void;
+  setDragOverFolder: (folder: string | null) => void;
+  setIsDragOver: (over: boolean) => void;
+  handleDroppedData: (e: React.DragEvent, targetDir: string) => void;
+  style?: React.CSSProperties;
+}
+
+const SftpFileItem = React.memo<SftpFileItemProps>(({
+  file: f,
+  isSelected,
+  isDragOver,
+  sessionId,
+  isRemote,
+  path,
+  selected,
+  gitStatus,
+  formatSize,
+  toggleSelect,
+  setSelected,
+  handleDbClick,
+  onContextMenu,
+  setDragOverFolder,
+  setIsDragOver,
+  handleDroppedData,
+  style,
+}) => {
+  const { t } = useI18n();
+
+  return (
+    <div 
+      draggable={true}
+      onDragStart={(e) => {
+        const items = selected.has(f.name) ? Array.from(selected) : [f.name];
+        const dragData = {
+          sessionId: sessionId || '',
+          isRemote,
+          sourcePath: path,
+          files: items,
+        };
+        e.dataTransfer.setData('application/omni-sftp', JSON.stringify(dragData));
+        e.dataTransfer.setData('text/plain', items.join('\n'));
+        e.dataTransfer.effectAllowed = 'copyMove';
+      }}
+      onDragOver={(e) => {
+        if (f.isDir) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'copy';
+          setDragOverFolder(f.name);
+        }
+      }}
+      onDragLeave={(e) => {
+        if (f.isDir) {
+          setDragOverFolder(null);
+        }
+      }}
+      onDrop={(e) => {
+        if (f.isDir) {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragOverFolder(null);
+          setIsDragOver(false);
+          const targetDir = joinFilePath(path, f.name);
+          handleDroppedData(e, targetDir);
+        }
+      }}
+      style={style}
+      onClick={(e) => toggleSelect(selected, setSelected, f.name, e.ctrlKey || e.metaKey)}
+      onDoubleClick={() => handleDbClick(f)}
+      onContextMenu={(e) => onContextMenu?.(e, f)}
+      className={`flex items-center justify-between px-2 py-1 h-8 cursor-pointer text-[10px] select-none hover:bg-app-hover transition-colors ${isSelected ? 'bg-blue-900/40' : ''} ${isDragOver ? 'bg-blue-500/25 ring-1 ring-blue-400' : ''}`}
+    >
+      <div className="flex items-center gap-2 truncate">
+        {f.isDir ? <Folder className="w-3.5 h-3.5 text-yellow-500 shrink-0" /> : <File className="w-3.5 h-3.5 text-app-text-muted shrink-0" />}
+        <span className="truncate text-app-text">{f.name}</span>
+        {gitStatus && (
+          <span 
+            className={`px-1 py-0.2 rounded text-[9px] font-mono font-bold shrink-0 ${
+              gitStatus.status === 'modified' 
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                : gitStatus.status === 'added'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : gitStatus.status === 'deleted'
+                ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+            }`}
+            title={`Git: ${gitStatus.status}${gitStatus.staged ? (t('sftp.gitStaged') || ' (已暂存)') : ''}`}
+          >
+            {gitStatus.status === 'modified' ? 'M' : gitStatus.status === 'added' ? 'A' : gitStatus.status === 'deleted' ? 'D' : '?'}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-app-text-muted font-mono scale-90">{f.mode}</span>
+        {!f.isDir && <span className="text-app-text-muted w-12 text-right">{formatSize(f.size)}</span>}
+      </div>
+    </div>
+  );
+});
+
+const SftpListPanelComponent: React.FC<SftpListPanelProps & { isActive?: boolean }> = ({
   title, path, setPath, files, loading, loadDir, selected, setSelected, handleDbClick, isRemote, bookmarks, toggleBookmark, formatSize, toggleSelect, onContextMenu,
-  isGitRepo, gitStatusMap
+  isGitRepo, gitStatusMap, sessionId, onDropItems, onDropNativeFiles, isActive = true
 }) => {
   const { t } = useI18n();
   const parentRef = useRef<HTMLDivElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   
   const sortedFiles = React.useMemo(() => {
     return [...files].sort((a,b) => (a.isDir === b.isDir ? a.name.localeCompare(b.name) : (a.isDir ? -1 : 1)));
   }, [files]);
 
+  // 当文件量适中 (<=300 项) 时采用原生高性能 CSS 滚动，彻底消除虚拟列表在 React 19 与隐藏 Tab 下的调度循环
+  const isLargeList = sortedFiles.length > 300;
+  const getScrollElement = useCallback(() => parentRef.current, []);
+
   const rowVirtualizer = useVirtualizer({
-    count: sortedFiles.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 32, // approximately 32px per row (py-1.5 = 6px + text size)
+    count: isLargeList ? sortedFiles.length : 0,
+    getScrollElement,
+    estimateSize: () => 32,
     overscan: 10,
+    useFlushSync: false,
   });
+
+  const handleDroppedData = useCallback((e: React.DragEvent, targetDir: string) => {
+    const rawData = e.dataTransfer.getData('application/omni-sftp');
+    if (rawData) {
+      try {
+        const sourceData = JSON.parse(rawData);
+        onDropItems?.(sourceData, targetDir);
+        return;
+      } catch (err) {
+        console.warn('Failed to parse SFTP drag data:', err);
+      }
+    }
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onDropNativeFiles?.(e.dataTransfer.files, targetDir);
+    }
+  }, [onDropItems, onDropNativeFiles]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 border-app-border border-r last:border-r-0">
@@ -130,69 +270,161 @@ const SftpListPanel: React.FC<SftpListPanelProps> = ({
         />
       </div>
 
-      <div ref={parentRef} className="flex-1 overflow-y-auto relative bg-app-bg">
+      <div 
+        ref={parentRef} 
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'copy';
+          setIsDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+          setDragOverFolder(null);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          setDragOverFolder(null);
+          handleDroppedData(e, path);
+        }}
+        className={`flex-1 overflow-y-auto relative bg-app-bg transition-colors ${
+          isDragOver ? 'ring-2 ring-inset ring-blue-500/50 bg-blue-500/5' : ''
+        }`}
+      >
         {loading && <div className="absolute inset-0 bg-app-surface flex items-center justify-center z-10"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>}
-        <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-          {rowVirtualizer.getVirtualItems().map(virtualRow => {
-            const f = sortedFiles[virtualRow.index];
-            return (
-              <div 
-                key={virtualRow.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-                onClick={(e) => toggleSelect(selected, setSelected, f.name, e.ctrlKey || e.metaKey)}
-                onDoubleClick={() => handleDbClick(f)}
-                onContextMenu={(e) => onContextMenu?.(e, f)}
-                className={`flex items-center justify-between px-2 py-0 cursor-pointer text-[10px] select-none hover:bg-app-hover ${selected.has(f.name) ? 'bg-blue-900/40' : ''}`}
-              >
-                <div className="flex items-center gap-2 truncate">
-                  {f.isDir ? <Folder className="w-3.5 h-3.5 text-yellow-500 shrink-0" /> : <File className="w-3.5 h-3.5 text-app-text-muted shrink-0" />}
-                  <span className="truncate text-app-text">{f.name}</span>
-                  {gitStatusMap?.[f.name] && (
-                    <span 
-                      className={`px-1 py-0.2 rounded text-[9px] font-mono font-bold shrink-0 ${
-                        gitStatusMap[f.name].status === 'modified' 
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                          : gitStatusMap[f.name].status === 'added'
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                          : gitStatusMap[f.name].status === 'deleted'
-                          ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                          : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
-                      }`}
-                      title={`Git: ${gitStatusMap[f.name].status}${gitStatusMap[f.name].staged ? (t('sftp.gitStaged') || ' (已暂存)') : ''}`}
-                    >
-                      {gitStatusMap[f.name].status === 'modified' ? 'M' : gitStatusMap[f.name].status === 'added' ? 'A' : gitStatusMap[f.name].status === 'deleted' ? 'D' : '?'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-app-text-muted font-mono scale-90">{f.mode}</span>
-                  {!f.isDir && <span className="text-app-text-muted w-12 text-right">{formatSize(f.size)}</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        
+        {isLargeList ? (
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map(virtualRow => {
+              const f = sortedFiles[virtualRow.index];
+              return (
+                <SftpFileItem
+                  key={virtualRow.index}
+                  file={f}
+                  isSelected={selected.has(f.name)}
+                  isDragOver={dragOverFolder === f.name}
+                  sessionId={sessionId}
+                  isRemote={isRemote}
+                  path={path}
+                  selected={selected}
+                  gitStatus={gitStatusMap?.[f.name]}
+                  formatSize={formatSize}
+                  toggleSelect={toggleSelect}
+                  setSelected={setSelected}
+                  handleDbClick={handleDbClick}
+                  onContextMenu={onContextMenu}
+                  setDragOverFolder={setDragOverFolder}
+                  setIsDragOver={setIsDragOver}
+                  handleDroppedData={handleDroppedData}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="w-full flex flex-col">
+            {sortedFiles.map(f => (
+              <SftpFileItem
+                key={f.name}
+                file={f}
+                isSelected={selected.has(f.name)}
+                isDragOver={dragOverFolder === f.name}
+                sessionId={sessionId}
+                isRemote={isRemote}
+                path={path}
+                selected={selected}
+                gitStatus={gitStatusMap?.[f.name]}
+                formatSize={formatSize}
+                toggleSelect={toggleSelect}
+                setSelected={setSelected}
+                handleDbClick={handleDbClick}
+                onContextMenu={onContextMenu}
+                setDragOverFolder={setDragOverFolder}
+                setIsDragOver={setIsDragOver}
+                handleDroppedData={handleDroppedData}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+const SftpListPanel = React.memo(SftpListPanelComponent);
 
 interface SftpPanelProps {
   sessionId: string;
   onClose: () => void;
   onCdToTerminal?: (path: string) => void;
   currentTerminalDir?: string;
+  openTabs?: { id: string; title: string; host?: string; isLocal?: boolean }[];
+  isActive?: boolean;
 }
 
-export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdToTerminal, currentTerminalDir }) => {
+const SftpPanelComponent: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdToTerminal, currentTerminalDir, openTabs = [], isActive = true }) => {
   const { t } = useI18n();
+
+  // 零磁盘服务器直传状态 (Server-to-Server Direct Transfer)
+  const [serverTransferModalOpen, setServerTransferModalOpen] = useState(false);
+  const [serverTransferPaths, setServerTransferPaths] = useState<string[]>([]);
+  const [serverTransferTargetSession, setServerTransferTargetSession] = useState<string>('');
+  const [serverTransferTargetDir, setServerTransferTargetDir] = useState<string>('.');
+  const [serverTransferResume, setServerTransferResume] = useState<boolean>(true);
+
+  // 断点续传智能询问弹窗状态 (Resumable Transfer Prompt)
+  const [resumePrompt, setResumePrompt] = useState<{
+    open: boolean;
+    isUpload: boolean;
+    paths: string[];
+    targetDir: string;
+    fileName: string;
+    resumedBytes: number;
+    totalBytes: number;
+    percentage: number;
+  } | null>(null);
+
+  // 过滤出可用的其他目标会话（排除当前会话与纯本地会话）
+  const availableTargetSessions = React.useMemo(() => {
+    return openTabs.filter(t => t.id !== sessionId && !t.isLocal);
+  }, [openTabs, sessionId]);
+
+  const handleOpenServerTransfer = (paths: string[]) => {
+    setServerTransferPaths(paths);
+    if (availableTargetSessions.length > 0) {
+      setServerTransferTargetSession(availableTargetSessions[0].id);
+    }
+    setServerTransferTargetDir('.');
+    setServerTransferResume(true);
+    setServerTransferModalOpen(true);
+  };
+
+  const handleExecuteServerTransfer = () => {
+    if (!serverTransferTargetSession || serverTransferPaths.length === 0) return;
+    setServerTransferModalOpen(false);
+    setBusyAction(t('sftp.transferStartedToast'));
+    setTimeout(() => setBusyAction(null), 2500);
+
+    SftpTransferBetweenSessions(
+      sessionId,
+      serverTransferPaths,
+      serverTransferTargetSession,
+      serverTransferTargetDir || '.',
+      serverTransferResume
+    ).catch((err: any) => {
+      alert(t('sftp.errorTransfer') + (err?.message || err));
+    });
+  };
   const [remotePath, setRemotePath] = useState<string>('.');
   const [localPath, setLocalPath] = useState<string>('/');
   
@@ -296,13 +528,19 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
     }));
   };
 
-  // 终端工作目录联动跟随 (OSC 7 / cd)
+  // 终端工作目录联动跟随 (OSC 7 / cd，增加活跃态与路径归一化判断，阻断频繁触发)
   useEffect(() => {
-    if (directoryFollow && currentTerminalDir && currentTerminalDir !== '.' && currentTerminalDir !== remotePath) {
+    if (!isActive || !directoryFollow || !currentTerminalDir || currentTerminalDir === '.') return;
+    const cleanTermDir = currentTerminalDir.replace(/[/\\]+$/, '');
+    const cleanRemote = remotePath.replace(/[/\\]+$/, '');
+    if (cleanTermDir && cleanTermDir !== cleanRemote) {
       setRemotePath(currentTerminalDir);
       loadRemoteDir(currentTerminalDir);
     }
-  }, [currentTerminalDir, directoryFollow]);
+  }, [currentTerminalDir, directoryFollow, remotePath, isActive]);
+
+  const remotePathRef = useRef(remotePath);
+  remotePathRef.current = remotePath;
 
   useEffect(() => {
     // 优先通过后端 SftpGetwd 获取真实的远程初始绝对路径（如 /home/opc）
@@ -333,10 +571,10 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
     const dropHandler = (x: number, y: number, paths: string[]) => {
       if (paths && paths.length > 0) {
         setBusyAction(t('sftp.busyBatchUpload').replace('{count}', String(paths.length)));
-        SftpUploadPaths(sessionId, paths, remotePath).then(() => {
+        SftpUploadPaths(sessionId, paths, remotePathRef.current).then(() => {
           setTimeout(() => {
             setBusyAction(null);
-            loadRemoteDir(remotePath);
+            loadRemoteDir(remotePathRef.current);
           }, 1000);
         }).catch(err => {
           setBusyAction(null);
@@ -345,14 +583,14 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
       }
     };
 
-    EventsOn('wails:file-drop', dropHandler);
+    const unlistenDrop = EventsOn('wails:file-drop', dropHandler);
 
     // Phase 3: 监听外部编辑器保存回传通知
     const cleanupSync = EventsOn('file-synced', (data: any) => {
       if (data && data.sessionId === sessionId) {
         setSyncNotice({ fileName: data.fileName, time: data.syncedAt });
         setTimeout(() => setSyncNotice(null), 3500);
-        loadRemoteDir(remotePath);
+        loadRemoteDir(remotePathRef.current);
       }
     });
 
@@ -360,11 +598,11 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
     window.addEventListener('click', handleGlobalClick);
 
     return () => {
-      EventsOff('wails:file-drop');
-      cleanupSync();
+      if (typeof unlistenDrop === 'function') unlistenDrop();
+      if (typeof cleanupSync === 'function') cleanupSync();
       window.removeEventListener('click', handleGlobalClick);
     };
-  }, [sessionId, remotePath, t]);
+  }, [sessionId]);
 
   const handleOpenExternalEditor = (file: app.SftpFileInfo) => {
     const full = remotePath.endsWith('/') ? remotePath + file.name : remotePath + '/' + file.name;
@@ -465,26 +703,155 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
   };
 
   // Actions
-  const handleUpload = () => {
-    if (selectedLocal.size === 0) return;
-    const paths = Array.from(selectedLocal).map(name => joinFilePath(localPath, name));
+  const executeUpload = (paths: string[], resume: boolean, targetDir?: string) => {
+    const dst = targetDir || remotePath;
     setBusyAction(t('sftp.busyUpload').replace('{count}', String(paths.length)));
-    SftpUploadPaths(sessionId, paths, remotePath)
+    SftpUploadPathsWithResume(sessionId, paths, dst, resume)
       .then(() => {
         setTimeout(() => { setBusyAction(null); loadRemoteDir(remotePath); }, 1000);
       })
-      .catch(err => { setBusyAction(null); alert(t('sftp.errorUpload') + err); });
+      .catch((err: any) => { setBusyAction(null); alert(t('sftp.errorUpload') + (err?.message || err)); });
   };
 
-  const handleDownload = () => {
-    if (selectedRemote.size === 0) return;
-    const paths = Array.from(selectedRemote).map(name => remotePath + (remotePath.endsWith('/') ? '' : '/') + name);
+  const handleUpload = async () => {
+    if (selectedLocal.size === 0) return;
+    const paths = Array.from(selectedLocal).map(name => joinFilePath(localPath, name));
+
+    // 如果选中的是单个普通文件，检测远端是否已存在部分数据可供续传
+    if (paths.length === 1) {
+      const fileName = Array.from(selectedLocal)[0];
+      const localItem = localFiles.find(f => f.name === fileName);
+      if (localItem && !localItem.isDir) {
+        const targetRemote = remotePath.endsWith('/') ? remotePath + fileName : remotePath + '/' + fileName;
+        try {
+          const check = await SftpCheckFileResume(sessionId, paths[0], true, sessionId, targetRemote, false);
+          if (check && check.canResume) {
+            const pct = check.srcSize > 0 ? Math.floor((check.dstSize / check.srcSize) * 100) : 0;
+            setResumePrompt({
+              open: true,
+              isUpload: true,
+              paths,
+              targetDir: remotePath,
+              fileName,
+              resumedBytes: check.dstSize,
+              totalBytes: check.srcSize,
+              percentage: pct,
+            });
+            return;
+          }
+        } catch (e) {
+          console.warn('Check resume upload error:', e);
+        }
+      }
+    }
+
+    // 默认执行上传（断点续传使能）
+    executeUpload(paths, true);
+  };
+
+  const executeDownload = (paths: string[], resume: boolean, targetDir?: string) => {
+    const dst = targetDir || localPath;
     setBusyAction(t('sftp.busyDownload').replace('{count}', String(paths.length)));
-    SftpDownloadPaths(sessionId, paths, localPath)
+    SftpDownloadPathsWithResume(sessionId, paths, dst, resume)
       .then(() => {
         setTimeout(() => { setBusyAction(null); loadLocalDir(localPath); }, 1000);
       })
-      .catch(err => { setBusyAction(null); alert(t('sftp.errorDownload') + err); });
+      .catch((err: any) => { setBusyAction(null); alert(t('sftp.errorDownload') + (err?.message || err)); });
+  };
+
+  const handleDropOnPanel = async (
+    targetIsRemote: boolean,
+    sourceData: { sessionId: string; isRemote: boolean; sourcePath: string; files: string[] },
+    targetDir: string
+  ) => {
+    const isSameSession = sourceData.sessionId === sessionId;
+
+    // 场景 1：跨服务器直接拖拽直传 (Server-to-Server Direct Stream Transfer)
+    if (sourceData.isRemote && targetIsRemote && !isSameSession) {
+      const fullPaths = sourceData.files.map(f => joinFilePath(sourceData.sourcePath, f));
+      setBusyAction(t('sftp.transferStartedToast') || '跨机直传任务已启动...');
+      setTimeout(() => setBusyAction(null), 3000);
+
+      SftpTransferBetweenSessions(
+        sourceData.sessionId,
+        fullPaths,
+        sessionId,
+        targetDir,
+        true
+      ).then(() => {
+        setTimeout(() => loadRemoteDir(remotePath), 1200);
+      }).catch((err: any) => {
+        setBusyAction(null);
+        alert((t('sftp.errorTransfer') || '跨机直传失败: ') + (err?.message || err));
+      });
+      return;
+    }
+
+    // 场景 2：从本地面板拖拽到远端面板 (Upload)
+    if (!sourceData.isRemote && targetIsRemote) {
+      const fullPaths = sourceData.files.map(f => joinFilePath(sourceData.sourcePath, f));
+      executeUpload(fullPaths, true, targetDir);
+      return;
+    }
+
+    // 场景 3：从远端面板拖拽到本地面板 (Download)
+    if (sourceData.isRemote && !targetIsRemote) {
+      const fullPaths = sourceData.files.map(f => joinFilePath(sourceData.sourcePath, f));
+      executeDownload(fullPaths, true, targetDir);
+      return;
+    }
+  };
+
+  const handleDropNativeFiles = (targetIsRemote: boolean, files: FileList, targetDir: string) => {
+    const filePaths: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const p = (f as any).path;
+      if (p) {
+        filePaths.push(p);
+      }
+    }
+    if (filePaths.length === 0) return;
+
+    if (targetIsRemote) {
+      executeUpload(filePaths, true, targetDir);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (selectedRemote.size === 0) return;
+    const paths = Array.from(selectedRemote).map(name => remotePath + (remotePath.endsWith('/') ? '' : '/') + name);
+
+    // 如果选中的是单个普通文件，检测本地是否已存在部分数据可供续传
+    if (paths.length === 1) {
+      const fileName = Array.from(selectedRemote)[0];
+      const remoteItem = remoteFiles.find(f => f.name === fileName);
+      if (remoteItem && !remoteItem.isDir) {
+        const targetLocal = joinFilePath(localPath, fileName);
+        try {
+          const check = await SftpCheckFileResume(sessionId, paths[0], false, sessionId, targetLocal, true);
+          if (check && check.canResume) {
+            const pct = check.srcSize > 0 ? Math.floor((check.dstSize / check.srcSize) * 100) : 0;
+            setResumePrompt({
+              open: true,
+              isUpload: false,
+              paths,
+              targetDir: localPath,
+              fileName,
+              resumedBytes: check.dstSize,
+              totalBytes: check.srcSize,
+              percentage: pct,
+            });
+            return;
+          }
+        } catch (e) {
+          console.warn('Check resume download error:', e);
+        }
+      }
+    }
+
+    // 默认执行下载（断点续传使能）
+    executeDownload(paths, true);
   };
 
   const handleRemoteDbClick = (file: app.SftpFileInfo) => {
@@ -633,6 +1000,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
       <div className="flex-1 flex min-h-0 relative">
         {/* Local Panel */}
         <SftpListPanel
+          sessionId={sessionId}
           title={t('sftp.localPanel')}
           path={localPath}
           setPath={setLocalPath}
@@ -648,6 +1016,9 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           toggleBookmark={toggleBookmark}
           formatSize={formatSize}
           toggleSelect={toggleSelect}
+          onDropItems={(src, dst) => handleDropOnPanel(false, src, dst)}
+          onDropNativeFiles={(files, dst) => handleDropNativeFiles(false, files, dst)}
+          isActive={isActive}
         />
         
         {/* Center Action Buttons */}
@@ -662,6 +1033,7 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
 
         {/* Remote Panel */}
         <SftpListPanel
+          sessionId={sessionId}
           title={t('sftp.remotePanel')}
           path={remotePath}
           setPath={setRemotePath}
@@ -679,6 +1051,9 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           toggleSelect={toggleSelect}
           isGitRepo={isGitRepo}
           gitStatusMap={gitStatusMap}
+          onDropItems={(src, dst) => handleDropOnPanel(true, src, dst)}
+          onDropNativeFiles={(files, dst) => handleDropNativeFiles(true, files, dst)}
+          isActive={isActive}
         />
       </div>
 
@@ -834,6 +1209,23 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
             >
               <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
               <span>{t('sftp.downloadToPanel')}</span>
+            </button>
+          )}
+
+          {/* 远端文件/目录：发送到其他在线服务器 (Server-to-Server Zero-Disk Transfer) */}
+          {contextMenu.isRemote && (
+            <button
+              onClick={() => {
+                const paths = selectedRemote.size > 1 && selectedRemote.has(contextMenu.file.name)
+                  ? Array.from(selectedRemote).map(n => remotePath + (remotePath.endsWith('/') ? '' : '/') + n)
+                  : [remotePath.endsWith('/') ? remotePath + contextMenu.file.name : remotePath + '/' + contextMenu.file.name];
+                handleOpenServerTransfer(paths);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white flex items-center gap-2 transition-colors text-purple-300"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+              <span>{t('sftp.serverToServer')}</span>
             </button>
           )}
 
@@ -1163,6 +1555,178 @@ export const SftpPanel: React.FC<SftpPanelProps> = ({ sessionId, onClose, onCdTo
           diffData={editorDiffData}
         />
       )}
+
+      {/* 零磁盘服务器直传弹窗 (Server-to-Server Zero-Disk Transfer) */}
+      {serverTransferModalOpen && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-[420px] text-[#cccccc] space-y-4">
+            <h3 className="font-semibold text-xs text-[#cccccc] border-b border-[#2b2b2b] pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-purple-400" />
+                {t('sftp.serverTransferTitle')}
+              </span>
+              <button onClick={() => setServerTransferModalOpen(false)} className="text-[#858585] hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </h3>
+
+            <div className="bg-purple-950/30 border border-purple-800/40 rounded p-2.5 text-[11px] text-purple-200 flex items-start gap-2">
+              <span className="text-base leading-none">⚡</span>
+              <span className="leading-tight">{t('sftp.serverTransferDesc')}</span>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[#858585] block mb-1 font-semibold">{t('sftp.sourceFiles')}</label>
+                <div className="bg-[#1e1e1e] border border-[#3c3c3c] rounded px-2.5 py-1.5 text-[11px] font-mono text-[#cccccc] max-h-20 overflow-y-auto">
+                  {serverTransferPaths.map((p, idx) => (
+                    <div key={idx} className="truncate" title={p}>• {p.split('/').pop() || p}</div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[#858585] block mb-1 font-semibold">{t('sftp.targetServer')}</label>
+                {availableTargetSessions.length === 0 ? (
+                  <div className="text-[11px] text-amber-400/90 bg-amber-950/20 border border-amber-800/30 p-2 rounded">
+                    {t('sftp.noActiveServers')}
+                  </div>
+                ) : (
+                  <select
+                    value={serverTransferTargetSession}
+                    onChange={e => setServerTransferTargetSession(e.target.value)}
+                    className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] outline-none"
+                  >
+                    {availableTargetSessions.map(tTab => (
+                      <option key={tTab.id} value={tTab.id}>
+                        {tTab.title} {tTab.host ? `(${tTab.host})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div>
+                <label className="text-[#858585] block mb-1 font-semibold">{t('sftp.targetPath')}</label>
+                <input
+                  type="text"
+                  value={serverTransferTargetDir}
+                  onChange={e => setServerTransferTargetDir(e.target.value)}
+                  placeholder="."
+                  className="w-full bg-[#1e1e1e] border border-[#3c3c3c] hover:border-[#505050] focus:border-[#0078d4] rounded px-3 py-1.5 text-[#cccccc] font-mono outline-none"
+                />
+              </div>
+
+              <div className="pt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-[#cccccc] select-none hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={serverTransferResume}
+                    onChange={e => setServerTransferResume(e.target.checked)}
+                    className="rounded border-[#3c3c3c] text-purple-600 focus:ring-0 bg-[#1e1e1e]"
+                  />
+                  <span>{t('sftp.resumeTransfer')}</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#2b2b2b]">
+              <button
+                onClick={() => setServerTransferModalOpen(false)}
+                className="px-3 py-1.5 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] rounded font-medium"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                disabled={availableTargetSessions.length === 0 || !serverTransferTargetSession}
+                onClick={handleExecuteServerTransfer}
+                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-medium rounded shadow-sm flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>{t('sftp.startTransferBtn')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 断点续传智能询问弹窗 (Resumable Transfer Mode Prompt) */}
+      {resumePrompt && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#252526] p-5 rounded-md border border-[#2b2b2b] shadow-2xl w-[420px] text-[#cccccc] space-y-4">
+            <h3 className="font-semibold text-xs text-amber-400 border-b border-[#2b2b2b] pb-2 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400" />
+              {t('sftp.resumePromptTitle')}
+            </h3>
+
+            <p className="text-xs text-[#cccccc] leading-relaxed">
+              {t('sftp.resumePromptDesc')
+                .replace('{name}', resumePrompt.fileName)
+                .replace('{resumed}', formatSize(resumePrompt.resumedBytes))
+                .replace('{total}', formatSize(resumePrompt.totalBytes))
+                .replace('{pct}', String(resumePrompt.percentage))}
+            </p>
+
+            <div className="bg-[#1e1e1e] p-3 rounded border border-[#2b2b2b] space-y-1.5 font-mono text-[11px]">
+              <div className="flex justify-between text-[#858585]">
+                <span>{resumePrompt.fileName}</span>
+                <span className="text-amber-400 font-semibold">{resumePrompt.percentage}%</span>
+              </div>
+              <div className="w-full bg-[#181818] rounded-full h-1.5 overflow-hidden border border-[#2b2b2b]">
+                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${resumePrompt.percentage}%` }} />
+              </div>
+              <div className="flex justify-between text-[#858585] text-[10px]">
+                <span>{formatSize(resumePrompt.resumedBytes)}</span>
+                <span>{formatSize(resumePrompt.totalBytes)}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1 border-t border-[#2b2b2b]">
+              <button
+                onClick={() => {
+                  const { paths, isUpload } = resumePrompt;
+                  setResumePrompt(null);
+                  if (isUpload) {
+                    executeUpload(paths, true);
+                  } else {
+                    executeDownload(paths, true);
+                  }
+                }}
+                className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-medium rounded text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{t('sftp.resumeBtn')}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const { paths, isUpload } = resumePrompt;
+                  setResumePrompt(null);
+                  if (isUpload) {
+                    executeUpload(paths, false);
+                  } else {
+                    executeDownload(paths, false);
+                  }
+                }}
+                className="w-full py-2 bg-[#3c3c3c] hover:bg-[#484848] text-[#cccccc] hover:text-white font-medium rounded text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>{t('sftp.overwriteBtn')}</span>
+              </button>
+
+              <button
+                onClick={() => setResumePrompt(null)}
+                className="w-full py-1.5 text-center text-[#858585] hover:text-[#cccccc] text-xs transition-colors cursor-pointer"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export const SftpPanel = React.memo(SftpPanelComponent);
+

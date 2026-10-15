@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -257,6 +258,116 @@ func (a *App) SftpListDir(id string, path string) ([]SftpFileInfo, error) {
 	return fileInfos, nil
 }
 
+
+var transferCancels sync.Map // map[string]context.CancelFunc
+
+// contextReader 包装 io.Reader，支持通过 context.Context 实时中断读取流
+type contextReader struct {
+	ctx context.Context
+	r   io.Reader
+}
+
+func (cr *contextReader) Read(p []byte) (int, error) {
+	select {
+	case <-cr.ctx.Done():
+		return 0, cr.ctx.Err()
+	default:
+		return cr.r.Read(p)
+	}
+}
+
+// CancelSftpTransfer 优雅终止正在运行的 SFTP 传输任务
+func (a *App) CancelSftpTransfer(taskId string) error {
+	if val, ok := transferCancels.Load(taskId); ok {
+		if cancel, ok := val.(context.CancelFunc); ok {
+			cancel()
+		}
+		transferCancels.Delete(taskId)
+		if a.ctx != nil {
+			runtime.EventsEmit(a.ctx, "sftp-progress", map[string]interface{}{
+				"taskId": taskId,
+				"status": "failed",
+				"error":  "传输已被用户取消",
+			})
+		}
+		return nil
+	}
+	return fmt.Errorf("任务不存在或已结束")
+}
+
+// SftpResumeCheckResult 断点续传探测结果模型
+type SftpResumeCheckResult struct {
+	Exists         bool   `json:"exists"`
+	SrcSize        int64  `json:"srcSize"`
+	DstSize        int64  `json:"dstSize"`
+	CanResume      bool   `json:"canResume"`
+	ResumableBytes int64  `json:"resumableBytes"`
+	TargetName     string `json:"targetName"`
+}
+
+// SftpCheckFileResume 探测目标路径是否已存在部分数据以决定是否断点续传
+func (a *App) SftpCheckFileResume(srcSessionId string, srcPath string, isSrcLocal bool, dstSessionId string, dstPath string, isDstLocal bool) (*SftpResumeCheckResult, error) {
+	result := &SftpResumeCheckResult{
+		TargetName: filepath.Base(dstPath),
+	}
+
+	// 1. 获取源端文件大小
+	var srcSize int64
+	if isSrcLocal {
+		stat, err := os.Stat(srcPath)
+		if err != nil {
+			return nil, fmt.Errorf("无法读取本地源文件: %v", err)
+		}
+		srcSize = stat.Size()
+	} else {
+		a.sshManager.Mu.RLock()
+		srcInfo, ok := a.sshManager.Sessions[srcSessionId]
+		a.sshManager.Mu.RUnlock()
+		if !ok || srcInfo.SftpClient == nil {
+			return nil, fmt.Errorf("源会话 SFTP 服务未连接")
+		}
+		targetSrc, _ := resolveRemotePathWithFallback(srcInfo, srcPath)
+		stat, err := srcInfo.SftpClient.Stat(targetSrc)
+		if err != nil {
+			return nil, fmt.Errorf("无法读取远程源文件: %v", err)
+		}
+		srcSize = stat.Size()
+	}
+	result.SrcSize = srcSize
+
+	// 2. 获取目标端文件信息
+	var dstSize int64
+	var dstExists bool
+	if isDstLocal {
+		stat, err := os.Stat(dstPath)
+		if err == nil && !stat.IsDir() {
+			dstExists = true
+			dstSize = stat.Size()
+		}
+	} else {
+		a.sshManager.Mu.RLock()
+		dstInfo, ok := a.sshManager.Sessions[dstSessionId]
+		a.sshManager.Mu.RUnlock()
+		if !ok || dstInfo.SftpClient == nil {
+			return nil, fmt.Errorf("目标会话 SFTP 服务未连接")
+		}
+		targetDst, _ := resolveRemotePathWithFallback(dstInfo, dstPath)
+		stat, err := dstInfo.SftpClient.Stat(targetDst)
+		if err == nil && !stat.IsDir() {
+			dstExists = true
+			dstSize = stat.Size()
+		}
+	}
+
+	result.Exists = dstExists
+	result.DstSize = dstSize
+	if dstExists && dstSize > 0 && dstSize < srcSize {
+		result.CanResume = true
+		result.ResumableBytes = dstSize
+	}
+
+	return result, nil
+}
 
 type progressTracker struct {
 	io.Reader
@@ -582,7 +693,7 @@ func (a *App) SftpDownloadDirectory(id string, remotePath string) error {
 		return nil
 	}
 
-	go a.doRecursiveDownload(id, info, targetRemote, localDir)
+	go a.doRecursiveDownload(id, info, targetRemote, localDir, false)
 	return nil
 }
 
@@ -687,6 +798,11 @@ func (a *App) SftpDelete(id string, remotePath string, isDir bool) error {
 }
 
 func (a *App) SftpUploadPaths(id string, localPaths []string, remoteDir string) error {
+	return a.SftpUploadPathsWithResume(id, localPaths, remoteDir, false)
+}
+
+// SftpUploadPathsWithResume 支持断点续传的本地文件/目录批量上传
+func (a *App) SftpUploadPathsWithResume(id string, localPaths []string, remoteDir string, resume bool) error {
 	a.sshManager.Mu.RLock()
 	info, ok := a.sshManager.Sessions[id]
 	a.sshManager.Mu.RUnlock()
@@ -700,13 +816,13 @@ func (a *App) SftpUploadPaths(id string, localPaths []string, remoteDir string) 
 
 	go func() {
 		for _, localPath := range localPaths {
-			a.doRecursiveUpload(id, info, localPath, remoteDir)
+			a.doRecursiveUpload(id, info, localPath, remoteDir, resume)
 		}
 	}()
 	return nil
 }
 
-func (a *App) doRecursiveUpload(id string, info *core.SessionInfo, localPath string, remoteBaseDir string) {
+func (a *App) doRecursiveUpload(id string, info *core.SessionInfo, localPath string, remoteBaseDir string, resume bool) {
 	stat, err := os.Stat(localPath)
 	if err != nil {
 		return
@@ -721,17 +837,40 @@ func (a *App) doRecursiveUpload(id string, info *core.SessionInfo, localPath str
 		entries, err := os.ReadDir(localPath)
 		if err == nil {
 			for _, entry := range entries {
-				a.doRecursiveUpload(id, info, filepath.Join(localPath, entry.Name()), targetRemotePath)
+				a.doRecursiveUpload(id, info, filepath.Join(localPath, entry.Name()), targetRemotePath, resume)
 			}
 		}
 	} else {
+		// 断点续传探测
+		var startOffset int64
+		var isResuming bool
+		if resume {
+			remoteStat, rErr := info.SftpClient.Stat(targetRemotePath)
+			if rErr == nil && !remoteStat.IsDir() && remoteStat.Size() > 0 && remoteStat.Size() < stat.Size() {
+				startOffset = remoteStat.Size()
+				isResuming = true
+			}
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		transferCancels.Store(taskId, cancel)
+		defer func() {
+			transferCancels.Delete(taskId)
+			cancel()
+		}()
+
+		initialPercentage := 0
+		if stat.Size() > 0 {
+			initialPercentage = int(float64(startOffset) / float64(stat.Size()) * 100)
+		}
+
 		runtime.EventsEmit(a.ctx, "sftp-progress", map[string]interface{}{
 			"sessionId":  id,
 			"taskId":     taskId,
 			"fileName":   baseName,
 			"total":      stat.Size(),
-			"current":    0,
-			"percentage": 0,
+			"current":    startOffset,
+			"percentage": initialPercentage,
 			"speed":      "0 B/s",
 			"status":     "started",
 		})
@@ -743,22 +882,48 @@ func (a *App) doRecursiveUpload(id string, info *core.SessionInfo, localPath str
 		}
 		defer srcFile.Close()
 
-		dstFile, err := info.SftpClient.Create(targetRemotePath)
-		if err != nil {
-			a.pushError(id, taskId, baseName, err)
-			return
+		var dstFile *sftp.File
+		if isResuming {
+			dstFile, err = info.SftpClient.OpenFile(targetRemotePath, os.O_WRONLY)
+			if err != nil {
+				a.pushError(id, taskId, baseName, err)
+				return
+			}
+			if _, err = dstFile.Seek(startOffset, io.SeekStart); err != nil {
+				dstFile.Close()
+				a.pushError(id, taskId, baseName, err)
+				return
+			}
+			if _, err = srcFile.Seek(startOffset, io.SeekStart); err != nil {
+				dstFile.Close()
+				a.pushError(id, taskId, baseName, err)
+				return
+			}
+		} else {
+			dstFile, err = info.SftpClient.Create(targetRemotePath)
+			if err != nil {
+				a.pushError(id, taskId, baseName, err)
+				return
+			}
 		}
 		defer dstFile.Close()
 
 		progress := &ProgressStream{
-			SessionID: id,
-			TaskID:    taskId,
-			FileName:  baseName,
-			TotalSize: stat.Size(),
-			LastTime:  time.Now(),
-			App:       a,
+			SessionID:  id,
+			TaskID:     taskId,
+			FileName:   baseName,
+			TotalSize:  stat.Size(),
+			Written:    startOffset,
+			LastWriter: startOffset,
+			LastTime:   time.Now(),
+			App:        a,
 		}
-		_, err = io.Copy(dstFile, &progressTracker{Reader: srcFile, progress: progress})
+
+		cr := &contextReader{ctx: ctx, r: srcFile}
+		_, err = io.Copy(dstFile, &progressTracker{Reader: cr, progress: progress})
+		if ctx.Err() != nil {
+			return
+		}
 		if err != nil {
 			a.pushError(id, taskId, baseName, err)
 			return
@@ -778,6 +943,11 @@ func (a *App) doRecursiveUpload(id string, info *core.SessionInfo, localPath str
 }
 
 func (a *App) SftpDownloadPaths(id string, remotePaths []string, localDir string) error {
+	return a.SftpDownloadPathsWithResume(id, remotePaths, localDir, false)
+}
+
+// SftpDownloadPathsWithResume 支持断点续传的远程文件/目录批量下载
+func (a *App) SftpDownloadPathsWithResume(id string, remotePaths []string, localDir string, resume bool) error {
 	a.sshManager.Mu.RLock()
 	info, ok := a.sshManager.Sessions[id]
 	a.sshManager.Mu.RUnlock()
@@ -791,13 +961,13 @@ func (a *App) SftpDownloadPaths(id string, remotePaths []string, localDir string
 
 	go func() {
 		for _, remotePath := range remotePaths {
-			a.doRecursiveDownload(id, info, remotePath, localDir)
+			a.doRecursiveDownload(id, info, remotePath, localDir, resume)
 		}
 	}()
 	return nil
 }
 
-func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath string, localBaseDir string) {
+func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath string, localBaseDir string, resume bool) {
 	targetRemote, _ := resolveRemotePathWithFallback(info, remotePath)
 	baseName := filepath.Base(targetRemote)
 	taskId := fmt.Sprintf("download_%d", time.Now().UnixNano())
@@ -821,7 +991,7 @@ func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath 
 		entries, err := info.SftpClient.ReadDir(targetRemote)
 		if err == nil {
 			for _, entry := range entries {
-				a.doRecursiveDownload(id, info, filepath.ToSlash(filepath.Join(targetRemote, entry.Name())), targetLocalPath)
+				a.doRecursiveDownload(id, info, filepath.ToSlash(filepath.Join(targetRemote, entry.Name())), targetLocalPath, resume)
 			}
 		}
 	} else {
@@ -831,13 +1001,36 @@ func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath 
 			return
 		}
 
+		// 断点续传探测
+		var startOffset int64
+		var isResuming bool
+		if resume {
+			localStat, lErr := os.Stat(targetLocalPath)
+			if lErr == nil && !localStat.IsDir() && localStat.Size() > 0 && localStat.Size() < stat.Size() {
+				startOffset = localStat.Size()
+				isResuming = true
+			}
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		transferCancels.Store(taskId, cancel)
+		defer func() {
+			transferCancels.Delete(taskId)
+			cancel()
+		}()
+
+		initialPercentage := 0
+		if stat.Size() > 0 {
+			initialPercentage = int(float64(startOffset) / float64(stat.Size()) * 100)
+		}
+
 		runtime.EventsEmit(a.ctx, "sftp-progress", map[string]interface{}{
 			"sessionId":  id,
 			"taskId":     taskId,
 			"fileName":   baseName,
 			"total":      stat.Size(),
-			"current":    0,
-			"percentage": 0,
+			"current":    startOffset,
+			"percentage": initialPercentage,
 			"speed":      "0 B/s",
 			"status":     "started",
 		})
@@ -849,22 +1042,48 @@ func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath 
 		}
 		defer srcFile.Close()
 
-		dstFile, err := os.Create(targetLocalPath)
-		if err != nil {
-			a.pushError(id, taskId, baseName, fmt.Errorf("创建本地文件失败: %v", err))
-			return
+		var dstFile *os.File
+		if isResuming {
+			dstFile, err = os.OpenFile(targetLocalPath, os.O_WRONLY, 0644)
+			if err != nil {
+				a.pushError(id, taskId, baseName, fmt.Errorf("打开本地断点文件失败: %v", err))
+				return
+			}
+			if _, err = dstFile.Seek(startOffset, io.SeekStart); err != nil {
+				dstFile.Close()
+				a.pushError(id, taskId, baseName, fmt.Errorf("本地文件寻址失败: %v", err))
+				return
+			}
+			if _, err = srcFile.Seek(startOffset, io.SeekStart); err != nil {
+				dstFile.Close()
+				a.pushError(id, taskId, baseName, fmt.Errorf("远程文件寻址失败: %v", err))
+				return
+			}
+		} else {
+			dstFile, err = os.Create(targetLocalPath)
+			if err != nil {
+				a.pushError(id, taskId, baseName, fmt.Errorf("创建本地文件失败: %v", err))
+				return
+			}
 		}
 		defer dstFile.Close()
 
 		progress := &ProgressStream{
-			SessionID: id,
-			TaskID:    taskId,
-			FileName:  baseName,
-			TotalSize: stat.Size(),
-			LastTime:  time.Now(),
-			App:       a,
+			SessionID:  id,
+			TaskID:     taskId,
+			FileName:   baseName,
+			TotalSize:  stat.Size(),
+			Written:    startOffset,
+			LastWriter: startOffset,
+			LastTime:   time.Now(),
+			App:        a,
 		}
-		_, err = io.Copy(io.MultiWriter(dstFile, progress), srcFile)
+
+		cr := &contextReader{ctx: ctx, r: srcFile}
+		_, err = io.Copy(io.MultiWriter(dstFile, progress), cr)
+		if ctx.Err() != nil {
+			return
+		}
 		if err != nil {
 			a.pushError(id, taskId, baseName, fmt.Errorf("下载写入数据失败: %v", err))
 			return
@@ -881,6 +1100,193 @@ func (a *App) doRecursiveDownload(id string, info *core.SessionInfo, remotePath 
 			"status":     "completed",
 		})
 	}
+}
+
+// SftpTransferBetweenSessions 服务端对传：两台在线远程主机之间通过内存 io.Pipe 零磁盘极速对传
+func (a *App) SftpTransferBetweenSessions(srcSessionId string, srcPaths []string, dstSessionId string, dstRemoteDir string, resume bool) error {
+	a.sshManager.Mu.RLock()
+	srcInfo, okSrc := a.sshManager.Sessions[srcSessionId]
+	dstInfo, okDst := a.sshManager.Sessions[dstSessionId]
+	a.sshManager.Mu.RUnlock()
+
+	if !okSrc || srcInfo.SftpClient == nil {
+		return fmt.Errorf("源端会话 %s SFTP 服务未连接", srcSessionId)
+	}
+	if !okDst || dstInfo.SftpClient == nil {
+		return fmt.Errorf("目标端会话 %s SFTP 服务未连接", dstSessionId)
+	}
+
+	go func() {
+		targetDstDir, _ := resolveRemotePathWithFallback(dstInfo, dstRemoteDir)
+		for _, srcPath := range srcPaths {
+			a.doRecursiveSessionTransfer(srcSessionId, srcInfo, srcPath, dstSessionId, dstInfo, targetDstDir, resume)
+		}
+	}()
+	return nil
+}
+
+func (a *App) doRecursiveSessionTransfer(
+	srcSessionId string, srcInfo *core.SessionInfo, srcPath string,
+	dstSessionId string, dstInfo *core.SessionInfo, dstRemoteDir string, resume bool,
+) {
+	resolvedSrc, _ := resolveRemotePathWithFallback(srcInfo, srcPath)
+	stat, err := srcInfo.SftpClient.Stat(resolvedSrc)
+	if err != nil {
+		taskId := fmt.Sprintf("s2s_%d", time.Now().UnixNano())
+		a.pushError(dstSessionId, taskId, filepath.Base(srcPath), fmt.Errorf("获取源端文件信息失败: %v", err))
+		return
+	}
+
+	baseName := filepath.Base(resolvedSrc)
+	targetDstPath := filepath.ToSlash(filepath.Join(dstRemoteDir, baseName))
+
+	if stat.IsDir() {
+		dstInfo.SftpClient.MkdirAll(targetDstPath)
+		entries, err := srcInfo.SftpClient.ReadDir(resolvedSrc)
+		if err == nil {
+			for _, entry := range entries {
+				childSrc := filepath.ToSlash(filepath.Join(resolvedSrc, entry.Name()))
+				a.doRecursiveSessionTransfer(srcSessionId, srcInfo, childSrc, dstSessionId, dstInfo, targetDstPath, resume)
+			}
+		}
+		return
+	}
+
+	taskId := fmt.Sprintf("s2s_%d", time.Now().UnixNano())
+	displayName := fmt.Sprintf("[S2S] %s", baseName)
+
+	// 断点续传探测
+	var startOffset int64
+	var isResuming bool
+	if resume {
+		dstStat, dstErr := dstInfo.SftpClient.Stat(targetDstPath)
+		if dstErr == nil && !dstStat.IsDir() && dstStat.Size() > 0 && dstStat.Size() < stat.Size() {
+			startOffset = dstStat.Size()
+			isResuming = true
+		}
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	transferCancels.Store(taskId, cancel)
+	defer func() {
+		transferCancels.Delete(taskId)
+		cancel()
+	}()
+
+	initialPercentage := 0
+	if stat.Size() > 0 {
+		initialPercentage = int(float64(startOffset) / float64(stat.Size()) * 100)
+	}
+
+	runtime.EventsEmit(a.ctx, "sftp-progress", map[string]interface{}{
+		"sessionId":  dstSessionId,
+		"taskId":     taskId,
+		"fileName":   displayName,
+		"total":      stat.Size(),
+		"current":    startOffset,
+		"percentage": initialPercentage,
+		"speed":      "0 B/s",
+		"status":     "started",
+	})
+
+	srcFile, err := srcInfo.SftpClient.Open(resolvedSrc)
+	if err != nil {
+		a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("打开源端文件失败: %v", err))
+		return
+	}
+	defer srcFile.Close()
+
+	var dstFile *sftp.File
+	if isResuming {
+		dstFile, err = dstInfo.SftpClient.OpenFile(targetDstPath, os.O_WRONLY)
+		if err != nil {
+			a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("打开目标端断点文件失败: %v", err))
+			return
+		}
+		if _, err = dstFile.Seek(startOffset, io.SeekStart); err != nil {
+			dstFile.Close()
+			a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("目标端文件寻址失败: %v", err))
+			return
+		}
+		if _, err = srcFile.Seek(startOffset, io.SeekStart); err != nil {
+			dstFile.Close()
+			a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("源端文件寻址失败: %v", err))
+			return
+		}
+	} else {
+		dstFile, err = dstInfo.SftpClient.Create(targetDstPath)
+		if err != nil {
+			a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("创建目标端文件失败: %v", err))
+			return
+		}
+	}
+	defer dstFile.Close()
+
+	// 零磁盘内存管道直传：通过 io.Pipe 连接源端与目标端流
+	pr, pw := io.Pipe()
+
+	// 读取协程：从 srcFile 读取，压入 pw，使用 256KB 高速缓冲
+	go func() {
+		buf := make([]byte, 256*1024)
+		var streamErr error
+		for {
+			select {
+			case <-ctx.Done():
+				pw.CloseWithError(ctx.Err())
+				return
+			default:
+			}
+			n, rErr := srcFile.Read(buf)
+			if n > 0 {
+				if _, wErr := pw.Write(buf[:n]); wErr != nil {
+					streamErr = wErr
+					break
+				}
+			}
+			if rErr != nil {
+				if rErr != io.EOF {
+					streamErr = rErr
+				}
+				break
+			}
+		}
+		pw.CloseWithError(streamErr)
+	}()
+
+	progress := &ProgressStream{
+		SessionID:  dstSessionId,
+		TaskID:     taskId,
+		FileName:   displayName,
+		TotalSize:  stat.Size(),
+		Written:    startOffset,
+		LastWriter: startOffset,
+		LastTime:   time.Now(),
+		App:        a,
+	}
+
+	cr := &contextReader{ctx: ctx, r: pr}
+	pt := &progressTracker{Reader: cr, progress: progress}
+	_, err = io.Copy(dstFile, pt)
+	pr.Close()
+
+	if ctx.Err() != nil {
+		return
+	}
+	if err != nil {
+		a.pushError(dstSessionId, taskId, displayName, fmt.Errorf("对传数据中断: %v", err))
+		return
+	}
+
+	runtime.EventsEmit(a.ctx, "sftp-progress", map[string]interface{}{
+		"sessionId":  dstSessionId,
+		"taskId":     taskId,
+		"fileName":   displayName,
+		"total":      stat.Size(),
+		"current":    stat.Size(),
+		"percentage": 100,
+		"speed":      "0 B/s",
+		"status":     "completed",
+	})
 }
 
 // OpenRemoteFileWithEditor 下载远端文件到本地缓存，用外部编辑器打开并监听保存自动静默回传

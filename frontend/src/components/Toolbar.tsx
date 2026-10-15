@@ -797,8 +797,10 @@ export function Toolbar({
     <header className="flex flex-col bg-app-toolbar border-b border-app-border z-30 shrink-0 text-app-text select-none">
       {/* 现代一体化 Unified Command Center 顶栏 */}
       <div 
-        className={`wails-drag flex items-center justify-between ${isMac ? 'pl-[76px]' : 'pl-3'} pr-3 h-10.5 bg-app-toolbar relative select-none`}
+        className={`wails-drag flex items-center justify-between ${isMac ? 'pl-[76px]' : 'pl-3'} pr-3 h-[42px] min-h-[42px] bg-app-toolbar relative select-none`}
         style={{
+          height: 42,
+          minHeight: 42,
           '--wails-draggable': 'drag',
           WebkitAppRegion: 'drag',
         } as React.CSSProperties}
@@ -827,7 +829,7 @@ export function Toolbar({
             className="wails-drag flex items-center space-x-2 pr-2.5 border-r border-white/[0.08] cursor-default"
             style={{ '--wails-draggable': 'drag', WebkitAppRegion: 'drag' } as React.CSSProperties}
           >
-            <div className="w-5.5 h-5.5 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-blue-500/25 ring-1 ring-white/20 pointer-events-none">
+            <div className="w-[22px] h-[22px] rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-blue-500/25 ring-1 ring-white/20 pointer-events-none">
               <TermIcon className="h-3 w-3 text-white" />
             </div>
             <span className="text-[12px] font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-cyan-200 to-indigo-200 bg-clip-text text-transparent pointer-events-none select-none">
@@ -1048,7 +1050,16 @@ export function Toolbar({
           {/* 分屏快捷切换 */}
           <div className="flex items-center bg-app-surface border border-app-border rounded-md p-0.5 space-x-0.5 shadow-sm">
             <button
-              onClick={() => setSplitMode(splitMode === 'vertical' ? 'none' : 'vertical')}
+              onClick={() => {
+                if (splitMode === 'vertical') {
+                  setSplitMode('none');
+                } else {
+                  if (tabs.length < 2 && handleCloneTab && activeTab) {
+                    handleCloneTab(activeTab);
+                  }
+                  setSplitMode('vertical');
+                }
+              }}
               className={`p-1.5 rounded transition-colors ${
                 splitMode === 'vertical' ? 'bg-app-accent text-white shadow-sm' : 'text-app-text-muted hover:text-app-text hover:bg-app-hover'
               }`}

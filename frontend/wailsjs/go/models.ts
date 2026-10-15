@@ -206,6 +206,28 @@ export namespace app {
 	        this.mode = source["mode"];
 	    }
 	}
+	export class SftpResumeCheckResult {
+	    exists: boolean;
+	    srcSize: number;
+	    dstSize: number;
+	    canResume: boolean;
+	    resumableBytes: number;
+	    targetName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SftpResumeCheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.exists = source["exists"];
+	        this.srcSize = source["srcSize"];
+	        this.dstSize = source["dstSize"];
+	        this.canResume = source["canResume"];
+	        this.resumableBytes = source["resumableBytes"];
+	        this.targetName = source["targetName"];
+	    }
+	}
 	export class SyncSummary {
 	    sessionsCount: number;
 	    sessionsAdded: number;
@@ -513,8 +535,15 @@ export namespace models {
 	    }
 	}
 	export class HighlightRule {
+	    id?: string;
+	    name?: string;
 	    pattern: string;
 	    color: string;
+	    bgColor?: string;
+	    category?: string;
+	    enabled: boolean;
+	    ignoreCase: boolean;
+	    showInRuler: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new HighlightRule(source);
@@ -522,8 +551,15 @@ export namespace models {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
 	        this.pattern = source["pattern"];
 	        this.color = source["color"];
+	        this.bgColor = source["bgColor"];
+	        this.category = source["category"];
+	        this.enabled = source["enabled"];
+	        this.ignoreCase = source["ignoreCase"];
+	        this.showInRuler = source["showInRuler"];
 	    }
 	}
 	export class StatusBarConfig {
@@ -706,6 +742,7 @@ export namespace models {
 	    fontSmoothing: string;
 	    enableTerminalImages: boolean;
 	    imageStorageLimitMB: number;
+	    enableHighlightRules: boolean;
 	    highlightRules: HighlightRule[];
 	    keyMappings: KeyMapping[];
 	    rightClickAction: string;
@@ -817,6 +854,7 @@ export namespace models {
 	        this.fontSmoothing = source["fontSmoothing"];
 	        this.enableTerminalImages = source["enableTerminalImages"];
 	        this.imageStorageLimitMB = source["imageStorageLimitMB"];
+	        this.enableHighlightRules = source["enableHighlightRules"];
 	        this.highlightRules = this.convertValues(source["highlightRules"], HighlightRule);
 	        this.keyMappings = this.convertValues(source["keyMappings"], KeyMapping);
 	        this.rightClickAction = source["rightClickAction"];
@@ -1104,6 +1142,30 @@ export namespace models {
 	    }
 	}
 	
+	export class HopDiagnosisDetail {
+	    hopIndex: number;
+	    name: string;
+	    fromAddr: string;
+	    toAddr: string;
+	    rttMs: number;
+	    status: string;
+	    errorDetail?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new HopDiagnosisDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hopIndex = source["hopIndex"];
+	        this.name = source["name"];
+	        this.fromAddr = source["fromAddr"];
+	        this.toAddr = source["toAddr"];
+	        this.rttMs = source["rttMs"];
+	        this.status = source["status"];
+	        this.errorDetail = source["errorDetail"];
+	    }
+	}
 	export class HostResourceMetrics {
 	    sessionId: string;
 	    cpuUsage: number;
@@ -1339,6 +1401,26 @@ export namespace models {
 	    }
 	}
 	
+	export class MultiplexChannelDetail {
+	    type: string;
+	    name: string;
+	    sessionId: string;
+	    active: boolean;
+	    description: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MultiplexChannelDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.name = source["name"];
+	        this.sessionId = source["sessionId"];
+	        this.active = source["active"];
+	        this.description = source["description"];
+	    }
+	}
 	export class TopologyTunnel {
 	    sessionId: string;
 	    type: string;
@@ -1365,6 +1447,8 @@ export namespace models {
 	    target: string;
 	    type: string;
 	    label: string;
+	    status?: string;
+	    rttMs?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new TopologyEdge(source);
@@ -1377,6 +1461,8 @@ export namespace models {
 	        this.target = source["target"];
 	        this.type = source["type"];
 	        this.label = source["label"];
+	        this.status = source["status"];
+	        this.rttMs = source["rttMs"];
 	    }
 	}
 	export class TopologyNode {
@@ -1390,6 +1476,7 @@ export namespace models {
 	    uptime: string;
 	    activeTunnelsCount: number;
 	    rttMs: number;
+	    errorMessage?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new TopologyNode(source);
@@ -1407,6 +1494,7 @@ export namespace models {
 	        this.uptime = source["uptime"];
 	        this.activeTunnelsCount = source["activeTunnelsCount"];
 	        this.rttMs = source["rttMs"];
+	        this.errorMessage = source["errorMessage"];
 	    }
 	}
 	export class NetworkTopologyData {
@@ -1473,6 +1561,48 @@ export namespace models {
 	}
 	
 	
+	export class ReachabilityDiagnosisResult {
+	    target: string;
+	    healthy: boolean;
+	    totalRttMs: number;
+	    hops: HopDiagnosisDetail[];
+	    conclusion: string;
+	    suggestion: string;
+	    diagnosedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReachabilityDiagnosisResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.target = source["target"];
+	        this.healthy = source["healthy"];
+	        this.totalRttMs = source["totalRttMs"];
+	        this.hops = this.convertValues(source["hops"], HopDiagnosisDetail);
+	        this.conclusion = source["conclusion"];
+	        this.suggestion = source["suggestion"];
+	        this.diagnosedAt = source["diagnosedAt"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class RemotePortItem {
 	    protocol: string;
 	    localAddr: string;
@@ -1707,8 +1837,11 @@ export namespace models {
 	    port: number;
 	    user: string;
 	    refCount: number;
+	    activeChannelsCount: number;
+	    channelsBreakdown: Record<string, number>;
 	    idleSeconds: number;
 	    activeSince: string;
+	    maxSessionsReached: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new SSHPoolStat(source);
@@ -1721,8 +1854,11 @@ export namespace models {
 	        this.port = source["port"];
 	        this.user = source["user"];
 	        this.refCount = source["refCount"];
+	        this.activeChannelsCount = source["activeChannelsCount"];
+	        this.channelsBreakdown = source["channelsBreakdown"];
 	        this.idleSeconds = source["idleSeconds"];
 	        this.activeSince = source["activeSince"];
+	        this.maxSessionsReached = source["maxSessionsReached"];
 	    }
 	}
 	export class SSHTunnel {
@@ -1766,6 +1902,60 @@ export namespace models {
 	        this.dtr = source["dtr"];
 	        this.rts = source["rts"];
 	    }
+	}
+	export class SessionMultiplexInfo {
+	    sessionId: string;
+	    poolKey: string;
+	    isPooled: boolean;
+	    host: string;
+	    port: number;
+	    user: string;
+	    physicalConnections: number;
+	    activeChannelsCount: number;
+	    channelsBreakdown: Record<string, number>;
+	    channelDetails: MultiplexChannelDetail[];
+	    stealthAuditNote: string;
+	    estimatedRttSavedMs: number;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionMultiplexInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sessionId = source["sessionId"];
+	        this.poolKey = source["poolKey"];
+	        this.isPooled = source["isPooled"];
+	        this.host = source["host"];
+	        this.port = source["port"];
+	        this.user = source["user"];
+	        this.physicalConnections = source["physicalConnections"];
+	        this.activeChannelsCount = source["activeChannelsCount"];
+	        this.channelsBreakdown = source["channelsBreakdown"];
+	        this.channelDetails = this.convertValues(source["channelDetails"], MultiplexChannelDetail);
+	        this.stealthAuditNote = source["stealthAuditNote"];
+	        this.estimatedRttSavedMs = source["estimatedRttSavedMs"];
+	        this.createdAt = source["createdAt"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class SftpFileDetail {
 	    content: string;

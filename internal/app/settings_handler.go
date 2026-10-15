@@ -31,6 +31,99 @@ func (a *App) getSettingsPath() string {
 	return config.GetFilePath("settings.json")
 }
 
+func getDefaultHighlightRules() []models.HighlightRule {
+	return []models.HighlightRule{
+		{
+			ID:          "preset_fatal",
+			Name:        "FATAL / CRITICAL",
+			Pattern:     `\b(?:FATAL|CRITICAL|PANIC|EMERGENCY)\b`,
+			Color:       "#ffffff",
+			BgColor:     "#b91c1c",
+			Category:    "severity",
+			Enabled:     true,
+			IgnoreCase:  true,
+			ShowInRuler: true,
+		},
+		{
+			ID:          "preset_error",
+			Name:        "ERROR / FAIL",
+			Pattern:     `\b(?:ERROR|FAIL(?:ED)?|EXCEPTION|ERR)\b`,
+			Color:       "#f14c4c",
+			BgColor:     "",
+			Category:    "severity",
+			Enabled:     true,
+			IgnoreCase:  true,
+			ShowInRuler: true,
+		},
+		{
+			ID:          "preset_warning",
+			Name:        "WARN / WARNING",
+			Pattern:     `\b(?:WARN(?:ING)?|DEPRECATED)\b`,
+			Color:       "#e5c07b",
+			BgColor:     "",
+			Category:    "severity",
+			Enabled:     true,
+			IgnoreCase:  true,
+			ShowInRuler: true,
+		},
+		{
+			ID:          "preset_success",
+			Name:        "SUCCESS / OK",
+			Pattern:     `\b(?:SUCCESS(?:FUL)?|PASSED|OK|ACTIVE)\b`,
+			Color:       "#89d185",
+			BgColor:     "",
+			Category:    "severity",
+			Enabled:     true,
+			IgnoreCase:  true,
+			ShowInRuler: false,
+		},
+		{
+			ID:          "preset_ipv4",
+			Name:        "IPv4 Address",
+			Pattern:     `\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?::\d{1,5})?\b`,
+			Color:       "#4ec9b0",
+			BgColor:     "",
+			Category:    "network",
+			Enabled:     true,
+			IgnoreCase:  false,
+			ShowInRuler: false,
+		},
+		{
+			ID:          "preset_timestamp",
+			Name:        "Timestamp / Date",
+			Pattern:     `\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?\b|\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b`,
+			Color:       "#73c991",
+			BgColor:     "",
+			Category:    "timestamp",
+			Enabled:     true,
+			IgnoreCase:  false,
+			ShowInRuler: false,
+		},
+		{
+			ID:          "preset_path",
+			Name:        "File Path",
+			Pattern:     `(?:\/[\w.-]+){2,}\/?|\b[A-Za-z]:\\[\w.\-\\]+`,
+			Color:       "#dcdcaa",
+			BgColor:     "",
+			Category:    "path",
+			Enabled:     true,
+			IgnoreCase:  false,
+			ShowInRuler: false,
+		},
+		{
+			ID:          "preset_http_status",
+			Name:        "HTTP 4xx/5xx",
+			Pattern:     `\b(?:5\d{2}|4\d{2})\b`,
+			Color:       "#f48771",
+			BgColor:     "",
+			Category:    "http",
+			Enabled:     true,
+			IgnoreCase:  false,
+			ShowInRuler: false,
+		},
+	}
+}
+
 func (a *App) GetSettings() (models.AppSettings, error) {
 	path := a.getSettingsPath()
 	defaultSettings := models.AppSettings{
@@ -104,6 +197,8 @@ func (a *App) GetSettings() (models.AppSettings, error) {
 		ImageStorageLimitMB:     128,
 		EnableMiniTelemetry:      true,
 		MiniTelemetryIntervalSec: 3,
+		EnableHighlightRules:     true,
+		HighlightRules:           getDefaultHighlightRules(),
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -121,7 +216,7 @@ func (a *App) GetSettings() (models.AppSettings, error) {
 		return defaultSettings, nil
 	}
 
-	// 历史兼容：若老的 settings.json 没有 enableMiniTelemetry 字段，确保默认开启
+	// 历史兼容：若老的 settings.json 没有 enableMiniTelemetry 或 highlightRules 字段，确保默认开启
 	var rawSettings map[string]interface{}
 	if err := json.Unmarshal(data, &rawSettings); err == nil {
 		if _, exists := rawSettings["enableMiniTelemetry"]; !exists {
@@ -129,6 +224,12 @@ func (a *App) GetSettings() (models.AppSettings, error) {
 		}
 		if _, exists := rawSettings["miniTelemetryIntervalSec"]; !exists {
 			settings.MiniTelemetryIntervalSec = 3
+		}
+		if _, exists := rawSettings["enableHighlightRules"]; !exists {
+			settings.EnableHighlightRules = true
+		}
+		if _, exists := rawSettings["highlightRules"]; !exists || len(settings.HighlightRules) == 0 {
+			settings.HighlightRules = getDefaultHighlightRules()
 		}
 	}
 

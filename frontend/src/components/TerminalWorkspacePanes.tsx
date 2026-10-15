@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { app, models } from '../../wailsjs/go/models';
 import { SplitMode } from '../hooks/useTabManager';
 import { TabBar } from './TabBar';
@@ -6,7 +6,7 @@ import { RdpInstance } from './RdpInstance';
 import { VncInstance } from './VncInstance';
 import { TerminalInstance } from './TerminalInstance';
 import { SftpPanel } from './SftpPanel';
-import { WriteSSH } from '../../wailsjs/go/app/App';
+import { WriteSSH, SaveSettings } from '../../wailsjs/go/app/App';
 
 export interface TerminalWorkspacePanesProps {
   openTabs: app.SessionConfig[];
@@ -37,6 +37,7 @@ export interface TerminalWorkspacePanesProps {
   handleLinkedInput: (data: string, tabId: string) => void;
   isRecording: boolean;
   settings: models.AppSettings;
+  setSettings?: (settings: models.AppSettings) => void;
   setIsSettingsOpen: (open: boolean) => void;
   isSyncScroll: boolean;
   handleScrollSync: (ratio: number, sessionId: string) => void;
@@ -67,7 +68,7 @@ export interface TerminalWorkspacePanesProps {
   setCommandBlockModes?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
-export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
+const TerminalWorkspacePanesComponent: React.FC<TerminalWorkspacePanesProps> = ({
   openTabs,
   commandBlockModes,
   setCommandBlockModes,
@@ -98,6 +99,7 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
   handleLinkedInput,
   isRecording,
   settings,
+  setSettings,
   setIsSettingsOpen,
   isSyncScroll,
   handleScrollSync,
@@ -125,6 +127,80 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
   setIsRemoteOpsOpen,
   setIsRealtimeLogOpen,
 }) => {
+  const handleStatusChange = useCallback((sessId: string, status: string) => {
+    setTabStatus(prev => prev[sessId] === status ? prev : ({ ...prev, [sessId]: status }));
+  }, [setTabStatus]);
+
+  const handleTrafficUpdate = useCallback((sessId: string, rx: number, tx: number) => {
+    setTrafficSpeeds(prev => {
+      if (prev[sessId]?.rx === rx && prev[sessId]?.tx === tx) return prev;
+      return { ...prev, [sessId]: { rx, tx } };
+    });
+  }, [setTrafficSpeeds]);
+
+  const handleAddHighlightRule = useCallback((rule: any) => {
+    const existingRules = settings.highlightRules || [];
+    const updated = [...existingRules, rule];
+    const newSettings = new models.AppSettings({ ...settings, highlightRules: updated });
+    setSettings?.(newSettings);
+    SaveSettings(newSettings).catch(console.error);
+  }, [settings, setSettings]);
+
+  const handleOpenSettings = useCallback(() => setIsSettingsOpen(true), [setIsSettingsOpen]);
+  const handleToggleSidebar = useCallback(() => setActiveDockPanel(prev => prev === 'sessions' ? 'none' : 'sessions'), [setActiveDockPanel]);
+  const handleToggleCompose = useCallback(() => setIsComposeOpen(prev => !prev), [setIsComposeOpen]);
+  const handleOpenGlobalSearch = useCallback(() => setIsGlobalSearchOpen(true), [setIsGlobalSearchOpen]);
+  const handleOpenShortcuts = useCallback(() => setIsShortcutRefOpen(true), [setIsShortcutRefOpen]);
+  const handleToggleBroadcast = useCallback(() => setIsBroadcast(prev => !prev), [setIsBroadcast]);
+  const handleToggleSplitVertical = useCallback(() => setSplitMode(prev => prev === 'vertical' ? 'none' : 'vertical'), [setSplitMode]);
+  const handleToggleSplitHorizontal = useCallback(() => setSplitMode(prev => prev === 'horizontal' ? 'none' : 'horizontal'), [setSplitMode]);
+  const handleToggleTunnelMonitor = useCallback(() => setIsTunnelMonitorOpen(prev => !prev), [setIsTunnelMonitorOpen]);
+  const handleToggleHostMonitor = useCallback(() => setIsHostMonitorOpen(prev => !prev), [setIsHostMonitorOpen]);
+  const handleToggleRemoteOps = useCallback(() => setIsRemoteOpsOpen(prev => !prev), [setIsRemoteOpsOpen]);
+  const handleToggleRealtimeLog = useCallback(() => setIsRealtimeLogOpen(prev => !prev), [setIsRealtimeLogOpen]);
+
+  // 确保在双分屏模式（vertical / horizontal）下，如果 secondaryTabId 为空或等于 activeTabId，自动安全分配另一可用 Tab
+  const effectiveSecondaryTabId = useMemo(() => {
+    if (splitMode === 'none' || splitMode === 'grid2x2' || splitMode === 'grid1plus2') return null;
+    if (secondaryTabId && secondaryTabId !== activeTabId && openTabs.some(t => t.id === secondaryTabId)) {
+      return secondaryTabId;
+    }
+    const fallback = openTabs.find(t => t.id !== activeTabId);
+    return fallback ? fallback.id : null;
+  }, [splitMode, secondaryTabId, activeTabId, openTabs]);
+
+  // 记忆化 SFTP 标签页列表引用，阻断无谓的每秒全量 re-render
+  const sftpOpenTabs = useMemo(() => {
+    return openTabs.map(t => ({ id: t.id, title: t.name || t.id, host: t.host, isLocal: t.isLocal }));
+  }, [openTabs]);
+
+  const handleCdToTerminal = useCallback((tabId: string, dir: string) => {
+    const cmd = `cd ${JSON.stringify(dir)}\n`;
+    const encoder = new TextEncoder();
+    const rawBytes = encoder.encode(cmd);
+    let binary = '';
+    for (let i = 0; i < rawBytes.byteLength; i++) {
+      binary += String.fromCharCode(rawBytes[i]);
+    }
+    WriteSSH(tabId, window.btoa(binary));
+  }, []);
+
+  // 终端尺寸稳定报告，严格按值比较，消除向根组件扩散的重绘风暴
+  const handleTerminalReady = useCallback((tabId: string, cols: number, rows: number) => {
+    setTermDimensions(prev => {
+      const existing = prev[tabId];
+      if (existing && existing.cols === cols && existing.rows === rows) return prev;
+      return { ...prev, [tabId]: { cols, rows } };
+    });
+  }, [setTermDimensions]);
+
+  // 自动将计算出的 effectiveSecondaryTabId 同步回父级状态
+  useEffect(() => {
+    if ((splitMode === 'vertical' || splitMode === 'horizontal') && effectiveSecondaryTabId && secondaryTabId !== effectiveSecondaryTabId) {
+      setSecondaryTabId(effectiveSecondaryTabId);
+    }
+  }, [splitMode, effectiveSecondaryTabId, secondaryTabId, setSecondaryTabId]);
+
   return (
     <div className={`flex-1 flex overflow-hidden relative ${
       splitMode === 'grid2x2' ? 'grid grid-cols-2 grid-rows-2 gap-px bg-[#1a1a1a]' :
@@ -133,12 +209,17 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
     }`}>
       {openTabs.map((tab, tabIdx) => {
         const isPrimary = activeTabId === tab.id;
-        const isSecondary = splitMode !== 'none' && splitMode !== 'grid2x2' && splitMode !== 'grid1plus2' && secondaryTabId === tab.id;
+        const isSecondary = splitMode !== 'none' && splitMode !== 'grid2x2' && splitMode !== 'grid1plus2' && effectiveSecondaryTabId === tab.id;
         const isGridVisible = (splitMode === 'grid2x2' && tabIdx < 4) || (splitMode === 'grid1plus2' && tabIdx < 3);
         const isVisible = (splitMode === 'grid2x2' || splitMode === 'grid1plus2') ? isGridVisible : (isPrimary || isSecondary);
 
-        const currentActiveForPane = isPrimary ? activeTabId : (isSecondary ? secondaryTabId : tab.id);
+        const currentActiveForPane = isPrimary ? activeTabId : (isSecondary ? effectiveSecondaryTabId : tab.id);
         const setActiveForPane = (id: string) => isPrimary ? setActiveTabId(id) : setSecondaryTabId(id);
+
+        // 判断当前 tab 是否为首个可见面板（用于在两面板之间渲染 1px 分割线）
+        const isFirstVisible = (splitMode === 'vertical' || splitMode === 'horizontal') && (
+          tab.id === openTabs.find(t => t.id === activeTabId || t.id === effectiveSecondaryTabId)?.id
+        );
 
         return (
           <div
@@ -147,8 +228,8 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
             style={{
               display: isVisible ? 'flex' : 'none',
               flex: (splitMode === 'vertical' || splitMode === 'horizontal') ? '1 1 50%' : (splitMode === 'none' ? '1 1 100%' : undefined),
-              borderRightWidth: splitMode === 'vertical' && isPrimary && secondaryTabId ? '1px' : '0',
-              borderBottomWidth: splitMode === 'horizontal' && isPrimary && secondaryTabId ? '1px' : '0'
+              borderRightWidth: splitMode === 'vertical' && isFirstVisible && effectiveSecondaryTabId ? '1px' : '0',
+              borderBottomWidth: splitMode === 'horizontal' && isFirstVisible && effectiveSecondaryTabId ? '1px' : '0'
             }}
           >
             {/* 独立 Tab 栏 (仅在显示此容器时渲染) */}
@@ -182,9 +263,9 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
                 }}
               />
             )}
-            <div className="flex-1 h-full min-w-0 flex">
+            <div className="flex-1 min-h-0 min-w-0 flex">
               {tab.sessionMode !== 'sftp-only' && (
-                <div className="flex-1 h-full min-w-0">
+                <div className="flex-1 min-h-0 min-w-0 flex flex-col">
                   {tab.protocol === 'rdp' ? (
                     <RdpInstance
                       key={tab.id + "_" + (connectEpochs[tab.id] || 0)}
@@ -266,14 +347,16 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
                       imageStorageLimitMB={(settings as any).imageStorageLimitMB || 128}
                       aiConfig={settings.aiConfig}
                       onClosed={() => { }}
-                      onStatusChange={(sessId, status) => setTabStatus(prev => ({ ...prev, [sessId]: status }))}
+                      onStatusChange={handleStatusChange}
                       isCommandBlockMode={Boolean(commandBlockModes && commandBlockModes[tab.id])}
                       onToggleCommandBlockMode={() => setCommandBlockModes?.(prev => ({ ...prev, [tab.id]: !prev[tab.id] }))}
-                      onTrafficUpdate={(sessId, rx, tx) => setTrafficSpeeds(prev => ({ ...prev, [sessId]: { rx, tx } }))}
-                      onTerminalReady={(cols, rows) => setTermDimensions(prev => ({ ...prev, [tab.id]: { cols, rows } }))}
+                      onTrafficUpdate={handleTrafficUpdate}
+                      onTerminalReady={(cols, rows) => handleTerminalReady(tab.id, cols, rows)}
                       scrollbackLines={settings.scrollbackLines}
                       copyOnSelect={settings.copyOnSelect}
+                      enableHighlightRules={(settings as any).enableHighlightRules !== false}
                       highlightRules={settings.highlightRules || []}
+                      onAddHighlightRule={handleAddHighlightRule}
                       keyMappings={settings.keyMappings || []}
                       rightClickAction={settings.rightClickAction || 'contextMenu'}
                       doubleClickAction={settings.doubleClickAction || 'selectWord'}
@@ -292,19 +375,19 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
                       onZoomIn={handleZoomIn}
                       onZoomOut={handleZoomOut}
                       onZoomReset={handleZoomReset}
-                      onOpenSettings={() => setIsSettingsOpen(true)}
-                      onToggleSidebar={() => setActiveDockPanel(prev => prev === 'sessions' ? 'none' : 'sessions')}
-                      onToggleCompose={() => setIsComposeOpen(prev => !prev)}
+                      onOpenSettings={handleOpenSettings}
+                      onToggleSidebar={handleToggleSidebar}
+                      onToggleCompose={handleToggleCompose}
                       onToggleSftp={handleToggleSftp}
-                      onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
-                      onOpenShortcuts={() => setIsShortcutRefOpen(true)}
-                      onToggleBroadcast={() => setIsBroadcast(prev => !prev)}
-                      onToggleSplitVertical={() => setSplitMode(prev => prev === 'vertical' ? 'none' : 'vertical')}
-                      onToggleSplitHorizontal={() => setSplitMode(prev => prev === 'horizontal' ? 'none' : 'horizontal')}
-                      onToggleTunnelMonitor={() => setIsTunnelMonitorOpen(prev => !prev)}
-                      onToggleHostMonitor={() => setIsHostMonitorOpen(prev => !prev)}
-                      onToggleRemoteOps={() => setIsRemoteOpsOpen(prev => !prev)}
-                      onToggleRealtimeLog={() => setIsRealtimeLogOpen(prev => !prev)}
+                      onOpenGlobalSearch={handleOpenGlobalSearch}
+                      onOpenShortcuts={handleOpenShortcuts}
+                      onToggleBroadcast={handleToggleBroadcast}
+                      onToggleSplitVertical={handleToggleSplitVertical}
+                      onToggleSplitHorizontal={handleToggleSplitHorizontal}
+                      onToggleTunnelMonitor={handleToggleTunnelMonitor}
+                      onToggleHostMonitor={handleToggleHostMonitor}
+                      onToggleRemoteOps={handleToggleRemoteOps}
+                      onToggleRealtimeLog={handleToggleRealtimeLog}
                       encoding={tab.encoding || 'utf-8'}
                       jumpHostSessionId={tab.jumpHostSessionId || ''}
                       termType={tab.termType || 'xterm-256color'}
@@ -339,18 +422,11 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
               {(openSftpTabs.includes(tab.id) || tab.sessionMode === 'sftp-only') && (
                 <SftpPanel
                   sessionId={tab.id}
-                  onClose={() => setOpenSftpTabs(openSftpTabs.filter(id => id !== tab.id))}
+                  isActive={tab.id === activeTabId || tab.id === effectiveSecondaryTabId}
+                  onClose={() => setOpenSftpTabs(prev => prev.filter(id => id !== tab.id))}
                   currentTerminalDir={terminalDirs[tab.id]}
-                  onCdToTerminal={(dir) => {
-                    const cmd = `cd ${JSON.stringify(dir)}\n`;
-                    const encoder = new TextEncoder();
-                    const rawBytes = encoder.encode(cmd);
-                    let binary = '';
-                    for (let i = 0; i < rawBytes.byteLength; i++) {
-                      binary += String.fromCharCode(rawBytes[i]);
-                    }
-                    WriteSSH(tab.id, window.btoa(binary));
-                  }}
+                  openTabs={sftpOpenTabs}
+                  onCdToTerminal={(dir) => handleCdToTerminal(tab.id, dir)}
                 />
               )}
             </div>
@@ -360,3 +436,5 @@ export const TerminalWorkspacePanes: React.FC<TerminalWorkspacePanesProps> = ({
     </div>
   );
 };
+
+export const TerminalWorkspacePanes = React.memo(TerminalWorkspacePanesComponent);

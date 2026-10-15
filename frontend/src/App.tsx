@@ -1144,6 +1144,7 @@ function App() {
                 handleLinkedInput={handleLinkedInput}
                 isRecording={isRecording}
                 settings={settings}
+                setSettings={setSettings}
                 setIsSettingsOpen={setIsSettingsOpen}
                 isSyncScroll={isSyncScroll}
                 handleScrollSync={handleScrollSync}

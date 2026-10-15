@@ -388,7 +388,7 @@ export function StatusBar({
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {poolStats.map((stat, idx) => (
-                    <div key={idx} className="bg-app-surface-secondary/70 p-2.5 rounded-xl border border-app-border space-y-1">
+                    <div key={idx} className="bg-app-surface-secondary/70 p-2.5 rounded-xl border border-app-border space-y-1.5">
                       <div className="flex items-center justify-between text-app-text font-mono text-[11px]">
                         <span className="truncate max-w-[170px]" title={stat.key}>
                           {stat.user}@{stat.host}:{stat.port}
@@ -400,9 +400,19 @@ export function StatusBar({
                               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                           }`}
                         >
-                          {stat.refCount > 0 ? t('statusbar.sessionReuse').replace('{count}', String(stat.refCount)) : t('statusbar.idleSecs').replace('{sec}', String(stat.idleSeconds))}
+                          {stat.refCount > 0 
+                            ? `${stat.activeChannelsCount || stat.refCount} ${t('multiplex.channels')}` 
+                            : t('statusbar.idleSecs').replace('{sec}', String(stat.idleSeconds))}
                         </span>
                       </div>
+                      {stat.channelsBreakdown && (
+                        <div className="flex items-center gap-2 text-[10px] text-app-text-muted font-mono bg-[#141414]/60 px-2 py-0.5 rounded">
+                          <span className="text-sky-400">PTY: {stat.channelsBreakdown.pty || 0}</span>
+                          <span className="text-emerald-400">SFTP: {stat.channelsBreakdown.sftp || 0}</span>
+                          <span className="text-amber-400">Tel: {stat.channelsBreakdown.telemetry || 0}</span>
+                          {stat.channelsBreakdown.tunnel ? <span className="text-purple-400">Tun: {stat.channelsBreakdown.tunnel}</span> : null}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between text-[10px] text-app-text-muted pt-0.5">
                         <span>{t('statusbar.activeSince').replace('{time}', stat.activeSince)}</span>
                         <button

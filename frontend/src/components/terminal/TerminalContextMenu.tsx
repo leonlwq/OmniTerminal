@@ -1,6 +1,6 @@
 import React from 'react';
 import { useI18n } from '../../i18n/I18nContext';
-import { Bookmark, Sparkles } from 'lucide-react';
+import { Bookmark, Sparkles, Highlighter } from 'lucide-react';
 
 interface TerminalContextMenuProps {
   contextMenu: { x: number; y: number } | null;
@@ -22,6 +22,7 @@ interface TerminalContextMenuProps {
   onScreenshot: () => void;
   isCommandBlockMode?: boolean;
   onToggleCommandBlockMode?: () => void;
+  onAddHighlightWord?: (text: string) => void;
 }
 
 export function TerminalContextMenu({
@@ -44,6 +45,7 @@ export function TerminalContextMenu({
   onScreenshot,
   isCommandBlockMode,
   onToggleCommandBlockMode,
+  onAddHighlightWord,
 }: TerminalContextMenuProps) {
   const { t } = useI18n();
   if (!contextMenu) return null;
@@ -120,6 +122,21 @@ export function TerminalContextMenu({
               <span>{t('aiDrawer.title') || 'AI 解释选中内容'}</span>
             </span>
             <span className="text-[11px] text-[#858585] group-hover:text-white font-mono">⌘K</span>
+          </button>
+          <button 
+            onClick={() => {
+              if (selectionText && onAddHighlightWord) {
+                onAddHighlightWord(selectionText.trim());
+              }
+              onClose();
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-[#04395e] hover:text-white transition-colors flex items-center justify-between text-amber-300 group"
+          >
+            <span className="flex items-center gap-1.5 truncate">
+              <Highlighter className="w-3.5 h-3.5 text-amber-400 group-hover:text-white shrink-0" />
+              <span className="truncate">{t('termMenu.highlightSelection') || '高亮此关键词'}</span>
+            </span>
+            <span className="text-[11px] text-[#858585] group-hover:text-white font-mono">⚡</span>
           </button>
           {/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(selectionText.trim()) && (
             <button 

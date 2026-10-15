@@ -347,11 +347,17 @@ func (ps *ProgressStream) Write(p []byte) (int, error) {
 	// 限制进度事件频次为每 150 毫秒一次，或满 100% 触发
 	elapsed := now.Sub(ps.LastTime)
 	if elapsed >= 150*time.Millisecond || ps.Written == ps.TotalSize {
-		speed := float64(ps.Written-ps.LastWriter) / elapsed.Seconds() // Bytes/sec
-		speedStr := formatSpeed(speed)
-		percentage := int(float64(ps.Written) / float64(ps.TotalSize) * 100)
-		if percentage > 100 {
-			percentage = 100
+		speedStr := "0 B/s"
+		if elapsed.Seconds() > 0 {
+			speed := float64(ps.Written-ps.LastWriter) / elapsed.Seconds() // Bytes/sec
+			speedStr = formatSpeed(speed)
+		}
+		percentage := 0
+		if ps.TotalSize > 0 {
+			percentage = int(float64(ps.Written) / float64(ps.TotalSize) * 100)
+			if percentage > 100 {
+				percentage = 100
+			}
 		}
 
 		runtime.EventsEmit(ps.App.ctx, "sftp-progress", map[string]interface{}{

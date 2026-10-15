@@ -22,6 +22,8 @@ export function AddTOTPEntry(arg1:string,arg2:string,arg3:string,arg4:string,arg
 
 export function BatchCheckHostReachability(arg1:Array<string>):Promise<Record<string, models.HostStatusResult>>;
 
+export function CancelSftpTransfer(arg1:string):Promise<void>;
+
 export function ChangeMasterPassword(arg1:string,arg2:string):Promise<void>;
 
 export function CheckHostReachability(arg1:string):Promise<models.HostStatusResult>;
@@ -85,6 +87,8 @@ export function DeleteSession(arg1:string):Promise<void>;
 export function DeleteTOTPEntry(arg1:string):Promise<void>;
 
 export function DetachToNewWindow(arg1:string,arg2:boolean):Promise<void>;
+
+export function DiagnoseTopologyHop(arg1:string,arg2:string):Promise<models.ReachabilityDiagnosisResult>;
 
 export function DisableMasterPassword(arg1:string):Promise<void>;
 
@@ -151,6 +155,8 @@ export function GetRunbookHistory():Promise<Array<models.RunbookExecutionRecord>
 export function GetRunbooks():Promise<Array<models.RunbookTemplate>>;
 
 export function GetSSHPoolStats():Promise<Array<models.SSHPoolStat>>;
+
+export function GetSessionMultiplexInfo(arg1:string):Promise<models.SessionMultiplexInfo>;
 
 export function GetSessionUptime(arg1:string):Promise<number>;
 
@@ -284,6 +290,8 @@ export function SftpCalculateFolderSize(arg1:string,arg2:string):Promise<void>;
 
 export function SftpCancelFolderSize(arg1:string):Promise<void>;
 
+export function SftpCheckFileResume(arg1:string,arg2:string,arg3:boolean,arg4:string,arg5:string,arg6:boolean):Promise<app.SftpResumeCheckResult>;
+
 export function SftpChmod(arg1:string,arg2:string,arg3:number):Promise<void>;
 
 export function SftpCompress(arg1:string,arg2:Array<string>,arg3:string,arg4:string):Promise<void>;
@@ -295,6 +303,8 @@ export function SftpDownloadDirectory(arg1:string,arg2:string):Promise<void>;
 export function SftpDownloadFile(arg1:string,arg2:string):Promise<void>;
 
 export function SftpDownloadPaths(arg1:string,arg2:Array<string>,arg3:string):Promise<void>;
+
+export function SftpDownloadPathsWithResume(arg1:string,arg2:Array<string>,arg3:string,arg4:boolean):Promise<void>;
 
 export function SftpExtract(arg1:string,arg2:string,arg3:string):Promise<void>;
 
@@ -322,9 +332,13 @@ export function SftpRename(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SftpSaveFileWithOptimisticLock(arg1:string,arg2:string,arg3:string,arg4:number):Promise<void>;
 
+export function SftpTransferBetweenSessions(arg1:string,arg2:Array<string>,arg3:string,arg4:string,arg5:boolean):Promise<void>;
+
 export function SftpUploadFile(arg1:string,arg2:string):Promise<void>;
 
 export function SftpUploadPaths(arg1:string,arg2:Array<string>,arg3:string):Promise<void>;
+
+export function SftpUploadPathsWithResume(arg1:string,arg2:Array<string>,arg3:string,arg4:boolean):Promise<void>;
 
 export function SftpVerifyHash(arg1:string,arg2:string,arg3:string,arg4:string):Promise<Record<string, any>>;
 

@@ -19,6 +19,7 @@
   * 粘贴快捷键 `Cmd+V` / `Ctrl+V` 应自动将系统剪切板的文字转换后送达后端 shell。
 * **鼠标右键气泡菜单**：在终端非文字区域点击右键，不应弹出浏览器默认菜单，而应弹出自定义的"复制"、"粘贴"快捷操作浮标。
 * **连接双击快速追加**：双击已有的终端连接（顶部 TabBar 标签页或侧栏活动会话列表）时，自动追加新建一个完全相同的终端连接并立即激活。
+* **动态智能高亮引擎（Highlight Rules）**：对标 WindTerm / MobaXterm，内置 8 大预设规则集（Fatal/Critical、Error/Fail、Warn/Warning、Success/OK、IPv4/Port、Timestamp/Date、FilePath、HTTP 状态码），开箱即用自动着色；基于 xterm.js Decoration API + WebGL 着色器硬件加速，纯显示层渲染，绝不污染底层 PTY 流与系统剪切板；智能检测并在全屏模式（Alternate Buffer 如 vim/htop）下自动避让；支持终端右键“添加为高亮关键词”快速交互与设置中心增删改查。
 
 ## 3. 安全与配置持久化标准
 * **统一主目录与零硬编码**：应用所有配置、凭证、日志、缓存与状态归一化至 `~/.omniterminal`，由 `internal/config` 包统一提供寻址，严禁任何业务模块自行硬编码路径。启动时静默自动创建目录及子目录，严禁检查或遗留历史旧路径。
@@ -55,6 +56,19 @@
   * 网络掉线时，前端与后端应进行联锁事件通信，自动触发 5 秒递减计时并执行重连，最多重试 5 次，带优雅的状态栏红色预警。
 * **凭证备份安全搬迁规范**：
   * 导出的备份文件必须全量使用基于主密码二次派生密钥的 AES-256-GCM 保护，防止多机配置同步时私钥或密码以明文压缩包形式外泄。
+* **SFTP 大文件断点续传与服务端零磁盘直传 (Resumable & Server-to-Server Transfer)**：
+  * **断点续传**：上传与下载时智能探测已存在的目标文件尺寸，弹窗引导用户选择断点续传或覆盖；底层通过 `Seek(startOffset, io.SeekStart)` 续传并校准 `ProgressStream` 速率基准。
+  * **服务端对传**：支持从当前会话直接流式复制至其他活动会话，基于内存 256KB 环形通道 `io.Pipe()` 直连双方 SFTP 流，宿主机零磁盘 I/O 写入。
+* **单通道多路复用与零感知监控 (SSH Multiplexing & Stealth Telemetry)**：
+  * **单连接强约束**：通过 `PooledSSHClient` 统一托管底层物理连接与通道计数（PTY、SFTP、Telemetry、Tunnel），自动多通道共享，避免远程高频登录刷屏。
+  * **零感知无痕采样**：后台遥测（CPU/内存/磁盘）通过复用已建立的 `*ssh.Client.NewSession()` 执行轻量只读读取，sshd 审计 0 记录，PAM 0 次鉴权，杜绝告警误触。
+  * **智能通道溢出分流**：探测到服务器 `MaxSessions` 限制时，连接池自动分流至二级新连接，保证业务操作零阻塞。
+* **多跳链路网络诊断与流光拓扑看板 (Network Topology & Multi-hop Diagnostics)**：
+  * **物理级 RTT 实时采样**：基于 `client.SendRequest("keepalive@openssh.com", true, nil)` 在已认证通道执行轻量探活，精准获取链路真实 RTT，告别伪造数据。
+  * **下游服务自动探测与挂接**：关联活动的端口转发映射（`ActiveTunnels`），自动探测下游服务可用性（如 MySQL/Redis/HTTP）并呈现服务卡片节点。
+  * **故障分段定界诊断引擎**：提供 `DiagnoseTopologyHop(sessionId, targetAddr)`，逐跳探测分析「本地->跳板机」和「跳板机->目标服务」的连通状态，精准识别端口防火墙与服务拒绝并给出排障指引。
+  * **极客流光拓扑看板**：`NetworkTopologyModal` 具备分层视图（Local -> JumpHost -> Target -> Service）、健康流动光效动画、熔断链路高亮示警及右侧交互式排障抽屉。
+
 
 ## 7. 国际化与本地化规范 (i18n & Localization)
 * **默认语言探测**：初始化优先依据 `navigator.language` 探测系统语言（默认支持 `zh-CN`, `en-US`, `ja-JP`, `ko-KR`），并与后端 `AppSettings.Language` 双向同步持久化。
@@ -63,5 +77,7 @@
 ## 8. 代码质量底线
 * **零 Warning 编译**：每次提交前确保 `wails build` 零告警、零报错。
 * **增量修改原则**：修改已有文件时，优先使用精确替换（replace），严禁全文件覆盖。
-* **事件批处理**：后端向前端发送终端数据时，必须使用 10ms 批处理窗口合并碎片化事件，防止高速输出时 IPC 丢包。
+* **事件批处理与渲染降级**：后端向前端发送终端数据时，采用 16ms 帧对齐（60fps）窗口与 64KB 单次批处理上限防爆，防止高速输出时 IPC 丢包与主线程卡死；前端构建 WebGL → @xterm/addon-canvas → DOM 三级平滑降级链，非活动 Tab 释放 GPU context 避免超限；多 Tab 遥测与流量按需休眠，切断根组件重绘风暴。
+* **SFTP 渲染与无死循环防护**：SFTP 文件列表 <=300 项时采用原生 CSS 硬件加速滚动，彻底消除 @tanstack/react-virtual 在 React 19 并发渲染与非活动 Tab (尺寸 0x0) 下的 flushSync 调度重绘死循环；大列表 (>300项) 显式配置 useFlushSync: false 与稳定回调；SftpFileItem 实施 React.memo 行级隔离；HighlightAddon 增设行文本指纹对比 (_lineContentCache)、重入锁 (_isScanning) 与 80ms 节流，彻底斩断 onRender -> registerDecoration -> _fullRefresh 自激振荡死循环。
 * **开发后更新**：任何功能开发完成后，必须同步更新根目录 `AGENTS.md` 中对应任务项的状态标记。
+

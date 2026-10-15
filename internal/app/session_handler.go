@@ -639,6 +639,14 @@ func (a *App) GetSSHPoolStats() []models.SSHPoolStat {
 	return a.sshManager.Pool.GetStats()
 }
 
+// GetSessionMultiplexInfo 获取指定会话的底层多路复用运行详情
+func (a *App) GetSessionMultiplexInfo(sessionId string) (*models.SessionMultiplexInfo, error) {
+	if a.sshManager == nil {
+		return nil, fmt.Errorf("SSH 管理器未就绪")
+	}
+	return a.sshManager.GetSessionMultiplexInfo(sessionId)
+}
+
 // ClosePooledConnection 强制断开并从连接池移除指定连接
 func (a *App) ClosePooledConnection(key string) error {
 	if a.sshManager == nil || a.sshManager.Pool == nil {

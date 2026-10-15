@@ -38,6 +38,10 @@ export function BatchCheckHostReachability(arg1) {
   return window['go']['app']['App']['BatchCheckHostReachability'](arg1);
 }
 
+export function CancelSftpTransfer(arg1) {
+  return window['go']['app']['App']['CancelSftpTransfer'](arg1);
+}
+
 export function ChangeMasterPassword(arg1, arg2) {
   return window['go']['app']['App']['ChangeMasterPassword'](arg1, arg2);
 }
@@ -164,6 +168,10 @@ export function DeleteTOTPEntry(arg1) {
 
 export function DetachToNewWindow(arg1, arg2) {
   return window['go']['app']['App']['DetachToNewWindow'](arg1, arg2);
+}
+
+export function DiagnoseTopologyHop(arg1, arg2) {
+  return window['go']['app']['App']['DiagnoseTopologyHop'](arg1, arg2);
 }
 
 export function DisableMasterPassword(arg1) {
@@ -296,6 +304,10 @@ export function GetRunbooks() {
 
 export function GetSSHPoolStats() {
   return window['go']['app']['App']['GetSSHPoolStats']();
+}
+
+export function GetSessionMultiplexInfo(arg1) {
+  return window['go']['app']['App']['GetSessionMultiplexInfo'](arg1);
 }
 
 export function GetSessionUptime(arg1) {
@@ -562,6 +574,10 @@ export function SftpCancelFolderSize(arg1) {
   return window['go']['app']['App']['SftpCancelFolderSize'](arg1);
 }
 
+export function SftpCheckFileResume(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['app']['App']['SftpCheckFileResume'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
 export function SftpChmod(arg1, arg2, arg3) {
   return window['go']['app']['App']['SftpChmod'](arg1, arg2, arg3);
 }
@@ -584,6 +600,10 @@ export function SftpDownloadFile(arg1, arg2) {
 
 export function SftpDownloadPaths(arg1, arg2, arg3) {
   return window['go']['app']['App']['SftpDownloadPaths'](arg1, arg2, arg3);
+}
+
+export function SftpDownloadPathsWithResume(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['SftpDownloadPathsWithResume'](arg1, arg2, arg3, arg4);
 }
 
 export function SftpExtract(arg1, arg2, arg3) {
@@ -638,12 +658,20 @@ export function SftpSaveFileWithOptimisticLock(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['SftpSaveFileWithOptimisticLock'](arg1, arg2, arg3, arg4);
 }
 
+export function SftpTransferBetweenSessions(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['app']['App']['SftpTransferBetweenSessions'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function SftpUploadFile(arg1, arg2) {
   return window['go']['app']['App']['SftpUploadFile'](arg1, arg2);
 }
 
 export function SftpUploadPaths(arg1, arg2, arg3) {
   return window['go']['app']['App']['SftpUploadPaths'](arg1, arg2, arg3);
+}
+
+export function SftpUploadPathsWithResume(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['SftpUploadPathsWithResume'](arg1, arg2, arg3, arg4);
 }
 
 export function SftpVerifyHash(arg1, arg2, arg3, arg4) {

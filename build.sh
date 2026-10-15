@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-# Clean old artifacts
-rm -rf build/bin/omniterminal* build/bin/OmniTerminal.app OmniTerminal.dmg
-
 function build_all() {
     wails build \
-    -platform windows/amd64,windows/arm64,darwin/amd64,darwin/arm64
+    -platform darwin/arm64,windows/amd64,windows/arm64 \
+    -clean \
+    -trimpath \
+    -ldflags "-s -w"
 }
 
 function package_darwin() {

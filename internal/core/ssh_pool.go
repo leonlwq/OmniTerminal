@@ -12,16 +12,73 @@ import (
 
 // PooledSSHClient 封装被连接池托管的底层 SSH 客户端
 type PooledSSHClient struct {
-	Key         string
-	Host        string
-	Port        int
-	User        string
-	Client      *ssh.Client
-	RefCount    int
-	LastUsed    time.Time
-	ActiveSince time.Time
-	IdleTimer   *time.Timer
-	Mu          sync.Mutex
+	Key                string
+	Host               string
+	Port               int
+	User               string
+	Client             *ssh.Client
+	RefCount           int
+	Channels           map[string]int // "pty", "sftp", "telemetry", "tunnel", etc.
+	MaxSessionsReached bool
+	LastUsed           time.Time
+	ActiveSince        time.Time
+	IdleTimer          *time.Timer
+	Mu                 sync.Mutex
+}
+
+// AddChannel 注册一个活动复用通道
+func (p *PooledSSHClient) AddChannel(chType string) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	if p.Channels == nil {
+		p.Channels = make(map[string]int)
+	}
+	p.Channels[chType]++
+	p.LastUsed = time.Now()
+}
+
+// RemoveChannel 释放一个复用通道
+func (p *PooledSSHClient) RemoveChannel(chType string) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	if p.Channels == nil {
+		return
+	}
+	if p.Channels[chType] > 0 {
+		p.Channels[chType]--
+		if p.Channels[chType] == 0 {
+			delete(p.Channels, chType)
+		}
+	}
+	p.LastUsed = time.Now()
+}
+
+// GetTotalChannels 获取当前底层连接复用的总活跃通道数
+func (p *PooledSSHClient) GetTotalChannels() int {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	total := 0
+	for _, count := range p.Channels {
+		total += count
+	}
+	if total == 0 && p.RefCount > 0 {
+		total = p.RefCount
+	}
+	return total
+}
+
+// GetChannelsBreakdown 获取通道分布副本
+func (p *PooledSSHClient) GetChannelsBreakdown() map[string]int {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	res := make(map[string]int)
+	for k, v := range p.Channels {
+		res[k] = v
+	}
+	if len(res) == 0 && p.RefCount > 0 {
+		res["pty"] = p.RefCount
+	}
+	return res
 }
 
 // SSHConnectionPool 并发安全的 SSH 连接复用与智能连接池
@@ -105,6 +162,7 @@ func (p *SSHConnectionPool) GetOrCreate(
 		User:        user,
 		Client:      newClient,
 		RefCount:    1,
+		Channels:    make(map[string]int),
 		LastUsed:    time.Now(),
 		ActiveSince: time.Now(),
 	}
@@ -209,6 +267,52 @@ func (p *SSHConnectionPool) ClosePooled(key string) error {
 	return nil
 }
 
+// AddChannel 为指定连接池连接增加活跃通道
+func (p *SSHConnectionPool) AddChannel(key string, chType string) {
+	p.Mu.RLock()
+	pooled, ok := p.Pool[key]
+	p.Mu.RUnlock()
+	if ok && pooled != nil {
+		pooled.AddChannel(chType)
+	}
+}
+
+// RemoveChannel 为指定连接池连接移除活跃通道
+func (p *SSHConnectionPool) RemoveChannel(key string, chType string) {
+	p.Mu.RLock()
+	pooled, ok := p.Pool[key]
+	p.Mu.RUnlock()
+	if ok && pooled != nil {
+		pooled.RemoveChannel(chType)
+	}
+}
+
+// GetPooledClient 获取指定池化客户端句柄
+func (p *SSHConnectionPool) GetPooledClient(key string) *PooledSSHClient {
+	p.Mu.RLock()
+	defer p.Mu.RUnlock()
+	return p.Pool[key]
+}
+
+// SetPooledClient 将已有连接注册进连接池
+func (p *SSHConnectionPool) SetPooledClient(key, host string, port int, user string, client *ssh.Client) *PooledSSHClient {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	pooled := &PooledSSHClient{
+		Key:         key,
+		Host:        host,
+		Port:        port,
+		User:        user,
+		Client:      client,
+		RefCount:    1,
+		Channels:    make(map[string]int),
+		LastUsed:    time.Now(),
+		ActiveSince: time.Now(),
+	}
+	p.Pool[key] = pooled
+	return pooled
+}
+
 // GetStats 获取当前连接池中所有连接的运行状态
 func (p *SSHConnectionPool) GetStats() []models.SSHPoolStat {
 	p.Mu.RLock()
@@ -228,14 +332,28 @@ func (p *SSHConnectionPool) GetStats() []models.SSHPoolStat {
 				idleSec = 0
 			}
 		}
+		totalChans := 0
+		breakdown := make(map[string]int)
+		for k, v := range pooled.Channels {
+			breakdown[k] = v
+			totalChans += v
+		}
+		if totalChans == 0 && pooled.RefCount > 0 {
+			totalChans = pooled.RefCount
+			breakdown["pty"] = pooled.RefCount
+		}
+
 		stats = append(stats, models.SSHPoolStat{
-			Key:         pooled.Key,
-			Host:        pooled.Host,
-			Port:        pooled.Port,
-			User:        pooled.User,
-			RefCount:    pooled.RefCount,
-			IdleSeconds: idleSec,
-			ActiveSince: pooled.ActiveSince.Format("2006-01-02 15:04:05"),
+			Key:                 pooled.Key,
+			Host:                pooled.Host,
+			Port:                pooled.Port,
+			User:                pooled.User,
+			RefCount:            pooled.RefCount,
+			ActiveChannelsCount: totalChans,
+			ChannelsBreakdown:   breakdown,
+			IdleSeconds:         idleSec,
+			ActiveSince:         pooled.ActiveSince.Format("2006-01-02 15:04:05"),
+			MaxSessionsReached:  pooled.MaxSessionsReached,
 		})
 		pooled.Mu.Unlock()
 	}

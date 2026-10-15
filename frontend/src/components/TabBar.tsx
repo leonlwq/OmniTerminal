@@ -80,7 +80,8 @@ export function TabBar({
     <div 
       onDoubleClick={handleTabAreaDoubleClick}
       onDragOver={(e) => e.preventDefault()}
-      className="flex items-center bg-app-surface border-b border-app-border px-0 overflow-x-auto scrollbar-none select-none shrink-0 min-h-[35px] h-[35px]"
+      className="flex items-center bg-app-surface border-b border-app-border px-0 overflow-x-auto scrollbar-none select-none shrink-0 min-h-[35px] max-h-[35px] h-[35px] leading-normal"
+      style={{ height: 35, minHeight: 35, maxHeight: 35, flexShrink: 0 }}
     >
       {openTabs.map((t, index) => {
         const status = tabStatus[t.id] || 'connecting';
@@ -136,16 +137,17 @@ export function TabBar({
               if (e) e.stopPropagation();
               handleTabDrop(t.id);
             }}
-            className={`group relative flex items-center gap-2 h-[35px] px-3.5 text-[13px] cursor-pointer transition-colors border-r border-app-border shrink-0 select-none ${
+            className={`group relative flex items-center gap-2 h-[35px] min-h-[35px] max-h-[35px] px-3.5 text-[13px] leading-normal cursor-pointer transition-colors border-r border-app-border shrink-0 select-none ${
               isActive 
                 ? 'bg-app-bg text-white font-medium' 
                 : 'bg-transparent text-app-text-muted hover:text-app-text hover:bg-[#1f1f1f]'
             }`}
+            style={{ height: 35, minHeight: 35, maxHeight: 35, flexShrink: 0 }}
             title={`${rawName}${index < 9 ? ` (⌘${index + 1} / Ctrl+${index + 1})` : ''}`}
           >
             {/* 活动高亮指示 - VS Code 原生顶部湛蓝条 */}
             {isActive && (
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#0078d4]" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#0078d4] z-10" />
             )}
 
             {/* 状态呼吸灯与颜色标签 */}
@@ -215,7 +217,8 @@ export function TabBar({
 
       {/* 新建标签按钮 - VS Code 平铺连贯微纽 */}
       <button 
-        className="flex items-center justify-center h-[35px] w-9 text-app-text-muted hover:text-white hover:bg-[#1f1f1f] border-r border-app-border transition-colors active:scale-95 shrink-0"
+        className="flex items-center justify-center h-[35px] min-h-[35px] max-h-[35px] w-9 text-app-text-muted hover:text-white hover:bg-[#1f1f1f] border-r border-app-border transition-colors active:scale-95 shrink-0"
+        style={{ height: 35, minHeight: 35, maxHeight: 35, flexShrink: 0 }}
         onClick={() => {
           resetSessionFormData();
           setModalMode('create');

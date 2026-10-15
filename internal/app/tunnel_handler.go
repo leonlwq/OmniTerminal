@@ -1,8 +1,14 @@
 package app
 
 import (
+	"fmt"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
+	"omniterminal/internal/core"
 	"omniterminal/internal/models"
 )
 
@@ -21,7 +27,7 @@ func (a *App) AddActiveTunnel(sessionId string, tunnelType string, localAddr str
 	return a.sshManager.StartDynamicTunnel(sessionId, tunnelType, localAddr, remoteAddr)
 }
 
-// GetNetworkTopology 提取当前所有活跃会话、跳板机链路及端口转发隧道的全局网络拓扑结构
+// GetNetworkTopology 提取当前所有活跃会话、跳板机链路及端口转发隧道的全局网络拓扑结构（含真实 RTT 探测与多跳服务）
 func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 	data := &models.NetworkTopologyData{
 		Nodes:   make([]models.TopologyNode, 0),
@@ -52,8 +58,6 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 	}
 
 	a.sshManager.Mu.RLock()
-	defer a.sshManager.Mu.RUnlock()
-
 	activeTunnels := a.sshManager.GetActiveTunnels()
 	for _, t := range activeTunnels {
 		data.Tunnels = append(data.Tunnels, models.TopologyTunnel{
@@ -64,6 +68,32 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 			Status:     "active",
 		})
 	}
+
+	// 并发采集活跃会话的真实 RTT
+	sessionRttMap := make(map[string]int64)
+	var rttMu sync.Mutex
+	var wg sync.WaitGroup
+
+	for id, info := range a.sshManager.Sessions {
+		if info.IsLocal || info.Protocol == "local" {
+			sessionRttMap[id] = 0
+			continue
+		}
+		if info.Client != nil {
+			wg.Add(1)
+			go func(sessId string, cli *core.SessionInfo) {
+				defer wg.Done()
+				rtt, err := core.ProbeSSHSessionRTT(cli.Client, 1200*time.Millisecond)
+				if err != nil || rtt <= 0 {
+					rtt = 1
+				}
+				rttMu.Lock()
+				sessionRttMap[sessId] = rtt
+				rttMu.Unlock()
+			}(id, info)
+		}
+	}
+	wg.Wait()
 
 	for id, info := range a.sshManager.Sessions {
 		cfg := cfgMap[id]
@@ -104,6 +134,11 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 			}
 		}
 
+		realRtt := sessionRttMap[id]
+		if realRtt <= 0 && !info.IsLocal {
+			realRtt = 1
+		}
+
 		data.Nodes = append(data.Nodes, models.TopologyNode{
 			ID:                 id,
 			Label:              info.Name,
@@ -114,7 +149,7 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 			Status:             "connected",
 			Uptime:             uptimeStr,
 			ActiveTunnelsCount: tunnelsCount,
-			RttMs:              15, // 典型内网/公网基准时延
+			RttMs:              realRtt,
 		})
 
 		// 建立链路拓扑边 (Edges)
@@ -125,6 +160,8 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 				Target: id,
 				Type:   "jump_host",
 				Label:  "ProxyJump",
+				Status: "healthy",
+				RttMs:  realRtt,
 			})
 		} else {
 			data.Edges = append(data.Edges, models.TopologyEdge{
@@ -133,11 +170,89 @@ func (a *App) GetNetworkTopology() (*models.NetworkTopologyData, error) {
 				Target: id,
 				Type:   "direct",
 				Label:  info.Protocol,
+				Status: "healthy",
+				RttMs:  realRtt,
 			})
 		}
 	}
 
+	// 2. 为端口转发隧道追加终点服务节点 (Service Nodes) 与多跳边并进行连通性探测
+	for _, t := range activeTunnels {
+		if t.RemoteAddr == "" {
+			continue
+		}
+		info := a.sshManager.Sessions[t.SessionID]
+		if info == nil {
+			continue
+		}
+
+		svcNodeId := fmt.Sprintf("svc_%s_%s", t.SessionID, strings.ReplaceAll(t.RemoteAddr, ":", "_"))
+		host, portStr, err := net.SplitHostPort(t.RemoteAddr)
+		port := 0
+		if err == nil {
+			port, _ = strconv.Atoi(portStr)
+		} else {
+			host = t.RemoteAddr
+		}
+
+		svcLabel := core.InferServiceName(port)
+
+		// 主动通过宿主机的网络通道探测终点服务的连通性
+		online, probeRtt, probeErr := core.ProbeHopViaSSH(info.Client, t.RemoteAddr, 1500*time.Millisecond)
+		nodeStatus := "connected"
+		edgeStatus := "healthy"
+		errMsg := ""
+
+		if !online || probeErr != nil {
+			nodeStatus = "error"
+			edgeStatus = "broken"
+			if probeErr != nil {
+				errMsg = probeErr.Error()
+			} else {
+				errMsg = "无法连通目标服务端口"
+			}
+		}
+
+		data.Nodes = append(data.Nodes, models.TopologyNode{
+			ID:                 svcNodeId,
+			Label:              fmt.Sprintf("%s (%s)", svcLabel, t.RemoteAddr),
+			Host:               host,
+			Port:               port,
+			User:               "service",
+			Type:               "service",
+			Status:             nodeStatus,
+			Uptime:             "Tunnel Active",
+			ActiveTunnelsCount: 0,
+			RttMs:              probeRtt,
+			ErrorMessage:       errMsg,
+		})
+
+		data.Edges = append(data.Edges, models.TopologyEdge{
+			ID:     fmt.Sprintf("edge_tun_%s_%s", t.SessionID, svcNodeId),
+			Source: t.SessionID,
+			Target: svcNodeId,
+			Type:   "tunnel",
+			Label:  fmt.Sprintf("%s %s", t.Type, t.LocalAddr),
+			Status: edgeStatus,
+			RttMs:  probeRtt,
+		})
+	}
+
+	a.sshManager.Mu.RUnlock()
 	return data, nil
 }
+
+// DiagnoseTopologyHop 针对指定会话与下游目标执行深度网络链路排错诊断
+func (a *App) DiagnoseTopologyHop(sessionId string, targetAddr string) (*models.ReachabilityDiagnosisResult, error) {
+	if a.sshManager == nil {
+		return nil, fmt.Errorf("SSH 管理器未就绪")
+	}
+	client, err := a.sshManager.GetSSHClient(sessionId)
+	if err != nil {
+		return nil, fmt.Errorf("无法获取该会话的 SSH 客户端: %v", err)
+	}
+	return core.DiagnoseHopReachability(client, targetAddr, 2*time.Second), nil
+}
+
 
 
