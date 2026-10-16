@@ -7,6 +7,7 @@ import Comparison from '../../components/Comparison.astro';
 import DownloadMatrix from '../../components/DownloadMatrix.astro';
 import QuickStart from '../../components/QuickStart.astro';
 import Footer from '../../components/Footer.astro';
+import { LATEST_VERSION_NUM } from '../../config/version';
 
 const lang = 'ja';
 const siteTitle = "OmniTerminal - クロスプラットフォーム SSH/SFTP クライアント (無料・オープンソース)";
@@ -61,7 +62,7 @@ const siteUrl = "https://omniterminal.leonlwq.com/ja/";
         },
         "description": "サーバークラスター運用およびシステム開発向けのクロスプラットフォーム SSH/SFTP クライアント。Go 並行処理と WebGL GPU ハードウェア加速を採用し、ローカル AES-256-GCM 暗号化とサイドバイサイド SFTP を搭載。",
         "url": "https://omniterminal.leonlwq.com/ja/",
-        "softwareVersion": "1.0.0",
+        "softwareVersion": LATEST_VERSION_NUM,
         "license": "https://opensource.org/licenses/MIT"
       }
     </script>

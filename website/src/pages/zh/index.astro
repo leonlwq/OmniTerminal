@@ -7,6 +7,7 @@ import Comparison from '../../components/Comparison.astro';
 import DownloadMatrix from '../../components/DownloadMatrix.astro';
 import QuickStart from '../../components/QuickStart.astro';
 import Footer from '../../components/Footer.astro';
+import { LATEST_VERSION_NUM } from '../../config/version';
 
 const lang = 'zh';
 const siteTitle = "OmniTerminal - 跨平台 SSH/SFTP 终端客户端 (开源免费)";
@@ -61,7 +62,7 @@ const siteUrl = "https://omniterminal.leonlwq.com/zh/";
         },
         "description": "面向服务器集群运维与系统开发的跨平台 SSH/SFTP 终端客户端。基于 Go 并发长链路架构与 WebGL GPU 硬件加速，支持 AES-256-GCM 本地凭据加密与侧边 SFTP 联动。",
         "url": "https://omniterminal.leonlwq.com/zh/",
-        "softwareVersion": "1.0.0",
+        "softwareVersion": LATEST_VERSION_NUM,
         "license": "https://opensource.org/licenses/MIT"
       }
     </script>

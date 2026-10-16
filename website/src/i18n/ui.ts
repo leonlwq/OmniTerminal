@@ -20,7 +20,7 @@ export const ui = {
     'nav.subtitle': 'Cross-Platform SSH & SFTP Workspace',
 
     // Hero
-    'hero.badge': 'OmniTerminal v1.0.0 Release • Multi-Platform Ready (Mac/Win/Linux)',
+    'hero.badge': 'OmniTerminal {version} Release • Multi-Platform Ready (Mac/Win/Linux)',
     'hero.changelog': 'Release Notes →',
     'hero.title.1': 'Cross-Platform Terminal,',
     'hero.title.highlight1': 'High Performance',
@@ -107,7 +107,7 @@ export const ui = {
     'dl.tag': 'Release Packages',
     'dl.title': 'Download for Your Operating System',
     'dl.desc': 'All packages are built transparently via GitHub Actions CI/CD from source code. Includes release signatures and SHA256 checksums.',
-    'dl.header.title': 'OmniTerminal v1.0.0 Release',
+    'dl.header.title': 'OmniTerminal {version} Release',
     'dl.header.stable': 'Stable Release',
     'dl.header.info': 'Release Date: 2026-10-10 • License: MIT License • Matrix: 7 Multi-Platform Binaries',
     'dl.header.checksum': 'View Release Signatures & SHA256 Checksums →',
@@ -145,7 +145,7 @@ export const ui = {
     'nav.subtitle': '跨平台 SSH/SFTP 终端工作台',
 
     // Hero
-    'hero.badge': 'OmniTerminal v1.0.0 正式发布 · 支持 macOS / Windows / Linux',
+    'hero.badge': 'OmniTerminal {version} 正式发布 · 支持 macOS / Windows / Linux',
     'hero.changelog': '查看发行说明 →',
     'hero.title.1': '现代跨平台终端工作台，',
     'hero.title.highlight1': '高并发长链路',
@@ -232,7 +232,7 @@ export const ui = {
     'dl.tag': '发布版本与安装包',
     'dl.title': '下载对应平台的发布包',
     'dl.desc': '所有二进制文件均由 GitHub Actions CI 流水线从源码自动编译构建，提供完整构建日志与 SHA256 校验和。',
-    'dl.header.title': 'OmniTerminal v1.0.0 正式版',
+    'dl.header.title': 'OmniTerminal {version} 正式版',
     'dl.header.stable': 'Stable Release',
     'dl.header.info': '发布日期: 2026-10-10 • 开源协议: MIT License • 构建矩阵: 7 大跨平台安装包',
     'dl.header.checksum': '查看 Release 详细签名与校验和 →',
@@ -270,7 +270,7 @@ export const ui = {
     'nav.subtitle': 'クロスプラットフォーム SSH/SFTP ターミナル',
 
     // Hero
-    'hero.badge': 'OmniTerminal v1.0.0 正式リリース • macOS / Windows / Linux 対応',
+    'hero.badge': 'OmniTerminal {version} 正式リリース • macOS / Windows / Linux 対応',
     'hero.changelog': 'リリースノート →',
     'hero.title.1': 'クロスプラットフォーム端末環境、',
     'hero.title.highlight1': '高並行処理',
@@ -357,7 +357,7 @@ export const ui = {
     'dl.tag': 'リリースパッケージ',
     'dl.title': 'お使いの OS に合わせたパッケージをダウンロード',
     'dl.desc': 'すべてのバイナリは GitHub Actions CI/CD でソースコードから自動ビルドされています。ビルド署名および SHA256 チェックサムを提供。',
-    'dl.header.title': 'OmniTerminal v1.0.0 正式版',
+    'dl.header.title': 'OmniTerminal {version} 正式版',
     'dl.header.stable': '安定版 (Stable)',
     'dl.header.info': 'リリース日: 2026-10-10 • ライセンス: MIT License • ビルドマトリックス: 7つのクロスプラットフォームパッケージ',
     'dl.header.checksum': 'GitHub Release 署名と SHA256 チェックサム →',
@@ -395,7 +395,7 @@ export const ui = {
     'nav.subtitle': '크로스 플랫폼 SSH/SFTP 터미널',
 
     // Hero
-    'hero.badge': 'OmniTerminal v1.0.0 공식 출시 • macOS / Windows / Linux 지원',
+    'hero.badge': 'OmniTerminal {version} 공식 출시 • macOS / Windows / Linux 지원',
     'hero.changelog': '릴리즈 노트 →',
     'hero.title.1': '크로스 플랫폼 터미널,',
     'hero.title.highlight1': '고동시성 엔진',
@@ -482,7 +482,7 @@ export const ui = {
     'dl.tag': '공식 릴리즈 패키지',
     'dl.title': '사용 중인 운영체제에 맞는 패키지 다운로드',
     'dl.desc': '모든 바이너리는 GitHub Actions CI/CD를 통해 소스 코드로부터 자동 빌드되며, 빌드 서명 및 SHA256 체크섬을 제공합니다.',
-    'dl.header.title': 'OmniTerminal v1.0.0 정식 버전',
+    'dl.header.title': 'OmniTerminal {version} 정식 버전',
     'dl.header.stable': '안정화 버전 (Stable)',
     'dl.header.info': '출시일: 2026-10-10 • 라이선스: MIT License • 빌드 매트릭스: 7개 크로스 플랫폼 바이너리',
     'dl.header.checksum': 'GitHub Release 서명 및 SHA256 체크섬 보기 →',
@@ -514,7 +514,13 @@ export type Lang = keyof typeof ui;
 export type TranslationKey = keyof typeof ui['en'];
 
 export function useTranslations(lang: Lang) {
-  return function t(key: TranslationKey): string {
-    return ui[lang]?.[key] || ui[defaultLang]?.[key] || key;
+  return function t(key: TranslationKey, params?: Record<string, string | number>): string {
+    let str: string = ui[lang]?.[key] || ui[defaultLang]?.[key] || key;
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        str = str.replaceAll(`{${k}}`, String(v));
+      }
+    }
+    return str;
   };
 }

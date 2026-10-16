@@ -7,6 +7,7 @@ import Comparison from '../components/Comparison.astro';
 import DownloadMatrix from '../components/DownloadMatrix.astro';
 import QuickStart from '../components/QuickStart.astro';
 import Footer from '../components/Footer.astro';
+import { LATEST_VERSION_NUM } from '../config/version';
 
 const lang = 'en';
 const siteTitle = "OmniTerminal - Cross-Platform SSH & SFTP Client for macOS, Windows & Linux";
@@ -61,7 +62,7 @@ const siteUrl = "https://omniterminal.leonlwq.com/";
         },
         "description": "A cross-platform SSH and SFTP desktop client for cluster operations and systems engineering. Powered by Go concurrency, WebGL GPU acceleration, and local AES-256-GCM credential encryption.",
         "url": "https://omniterminal.leonlwq.com/",
-        "softwareVersion": "1.0.0",
+        "softwareVersion": LATEST_VERSION_NUM,
         "license": "https://opensource.org/licenses/MIT"
       }
     </script>

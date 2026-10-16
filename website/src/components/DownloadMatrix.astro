@@ -1,5 +1,6 @@
 ---
 import { useTranslations, type Lang } from '../i18n/ui';
+import { REPO, LATEST_VERSION, BASE_DOWNLOAD_URL } from '../config/version';
 
 interface Props {
   lang?: Lang;
@@ -7,10 +8,8 @@ interface Props {
 
 const { lang = 'en' } = Astro.props;
 const t = useTranslations(lang);
-
-const REPO = "leonlwq/OmniTerminal";
-const VERSION = "v1.0.0";
-const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
+const VERSION = LATEST_VERSION;
+const BASE_DOWNLOAD = BASE_DOWNLOAD_URL;
 
 const getFormat = (type: 'mac-dmg' | 'mac-zip' | 'win-zip' | 'linux-tar') => {
   switch (type) {
@@ -132,7 +131,7 @@ const downloads = [
     <div class="p-6 bg-slate-900/90 border-b border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
         <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          {t('dl.header.title')}
+          {t('dl.header.title', { version: LATEST_VERSION })}
           <span class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             {t('dl.header.stable')}
           </span>

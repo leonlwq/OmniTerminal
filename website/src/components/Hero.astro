@@ -2,6 +2,7 @@
 import DownloadButton from './DownloadButton';
 import InteractiveTerminal from './InteractiveTerminal';
 import { useTranslations, type Lang } from '../i18n/ui';
+import { LATEST_VERSION } from '../config/version';
 
 interface Props {
   lang?: Lang;
@@ -21,7 +22,7 @@ const t = useTranslations(lang);
     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 shadow-inner mb-8 hover:border-blue-500/50 transition-colors">
       <span class="flex h-2 w-2 rounded-full bg-blue-400 animate-ping" />
       <span class="text-xs font-medium text-slate-300">
-        {t('hero.badge')}
+        {t('hero.badge', { version: LATEST_VERSION })}
       </span>
       <a href="https://github.com/leonlwq/OmniTerminal/releases" target="_blank" rel="noreferrer" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5">
         {t('hero.changelog')}

@@ -7,6 +7,7 @@ import Comparison from '../../components/Comparison.astro';
 import DownloadMatrix from '../../components/DownloadMatrix.astro';
 import QuickStart from '../../components/QuickStart.astro';
 import Footer from '../../components/Footer.astro';
+import { LATEST_VERSION_NUM } from '../../config/version';
 
 const lang = 'ko';
 const siteTitle = "OmniTerminal - 크로스 플랫폼 SSH/SFTP 터미널 클라이언트 (무료 오픈소스)";
@@ -61,7 +62,7 @@ const siteUrl = "https://omniterminal.leonlwq.com/ko/";
         },
         "description": "서버 클러스터 운영 및 시스템 개발을 위한 크로스 플랫폼 SSH/SFTP 터미널 클라이언트. Go 동시성 아키텍처와 WebGL GPU 가속을 기반으로 로컬 AES-256-GCM 인증 정보 암호화 및 사이드 SFTP 연동을 제공합니다.",
         "url": "https://omniterminal.leonlwq.com/ko/",
-        "softwareVersion": "1.0.0",
+        "softwareVersion": LATEST_VERSION_NUM,
         "license": "https://opensource.org/licenses/MIT"
       }
     </script>

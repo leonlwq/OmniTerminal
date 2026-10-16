@@ -4,6 +4,7 @@ import {
   UploadCloud, FileText, ChevronRight, RefreshCw, 
   Search
 } from 'lucide-react';
+import { LATEST_VERSION } from '../config/version';
 
 interface Props {
   lang?: 'en' | 'zh' | 'ja' | 'ko';
@@ -243,7 +244,7 @@ export default function InteractiveTerminal({ lang = 'en' }: Props) {
             {/* Terminal Screen / Log Canvas */}
             <div className={`flex-1 p-4 font-mono text-[12px] leading-relaxed overflow-y-auto ${currentTheme.bg}`}>
               <div className="text-slate-400 mb-2">
-                Welcome to OmniTerminal v1.0.0 (Darwin arm64) • WebGL GPU Accelerated
+                Welcome to OmniTerminal {LATEST_VERSION} (Darwin arm64) • WebGL GPU Accelerated
               </div>
               
               {commandHistory.map((line, idx) => (

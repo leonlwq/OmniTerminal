@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Download, ChevronDown, Apple, Monitor, Terminal, CheckCircle2 } from 'lucide-react';
+import { REPO, LATEST_VERSION, getReleaseAssetUrl } from '../config/version';
 
-interface ReleaseAsset {
+interface ReleaseAssetDef {
   filename: string;
   os: 'mac' | 'windows' | 'linux';
-  url: string;
   labels: Record<'en' | 'zh' | 'ja' | 'ko', { label: string; arch: string; badge: string }>;
 }
 
-const REPO = 'leonlwq/OmniTerminal';
-const VERSION = 'v1.0.0';
-const BASE_DOWNLOAD = `https://github.com/${REPO}/releases/download/${VERSION}`;
-
-const ALL_ASSETS: ReleaseAsset[] = [
+const RAW_ASSETS: ReleaseAssetDef[] = [
   {
     filename: 'OmniTerminal-macos-arm64.dmg',
     os: 'mac',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.dmg`,
     labels: {
       en: { label: 'macOS (Apple Silicon M-Series)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG Image' },
       zh: { label: 'macOS (Apple Silicon M系列)', arch: 'arm64 (M1/M2/M3/M4)', badge: 'DMG 镜像' },
@@ -27,7 +22,6 @@ const ALL_ASSETS: ReleaseAsset[] = [
   {
     filename: 'OmniTerminal-macos-arm64.zip',
     os: 'mac',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-macos-arm64.zip`,
     labels: {
       en: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (Portable ZIP)', badge: 'ZIP Archive' },
       zh: { label: 'macOS (Apple Silicon ZIP)', arch: 'arm64 (免安装包)', badge: 'ZIP 压缩包' },
@@ -38,7 +32,6 @@ const ALL_ASSETS: ReleaseAsset[] = [
   {
     filename: 'OmniTerminal-macos-intel.dmg',
     os: 'mac',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-macos-intel.dmg`,
     labels: {
       en: { label: 'macOS (Intel 64-bit)', arch: 'x86_64', badge: 'DMG Image' },
       zh: { label: 'macOS (Intel 芯片)', arch: 'x86_64', badge: 'DMG 镜像' },
@@ -49,7 +42,6 @@ const ALL_ASSETS: ReleaseAsset[] = [
   {
     filename: 'OmniTerminal-windows-amd64.zip',
     os: 'windows',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-windows-amd64.zip`,
     labels: {
       en: { label: 'Windows 64-bit (Portable)', arch: 'x86_64 / amd64', badge: 'Portable ZIP' },
       zh: { label: 'Windows 64位 (绿色免安装)', arch: 'x86_64 / amd64', badge: 'ZIP 绿色版' },
@@ -60,7 +52,6 @@ const ALL_ASSETS: ReleaseAsset[] = [
   {
     filename: 'OmniTerminal-windows-arm64.zip',
     os: 'windows',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-windows-arm64.zip`,
     labels: {
       en: { label: 'Windows ARM64 (Surface / Snapdragon)', arch: 'arm64', badge: 'Portable ZIP' },
       zh: { label: 'Windows ARM64 (Surface / 骁龙)', arch: 'arm64', badge: 'ZIP 绿色版' },
@@ -71,7 +62,6 @@ const ALL_ASSETS: ReleaseAsset[] = [
   {
     filename: 'OmniTerminal-linux-amd64.tar.gz',
     os: 'linux',
-    url: `${BASE_DOWNLOAD}/OmniTerminal-linux-amd64.tar.gz`,
     labels: {
       en: { label: 'Linux 64-bit (Universal)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz Archive' },
       zh: { label: 'Linux 64位 (通用标准包)', arch: 'x86_64 (glibc 2.35+)', badge: 'tar.gz 标准包' },
@@ -88,6 +78,7 @@ interface Props {
 export default function DownloadButton({ lang = 'en' }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [detectedOs, setDetectedOs] = useState<'mac-arm' | 'mac-intel' | 'windows' | 'linux'>('mac-arm');
+  const [currentVersion, setCurrentVersion] = useState<string>(LATEST_VERSION);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -101,19 +92,46 @@ export default function DownloadButton({ lang = 'en' }: Props) {
     } else if (ua.includes('mac') || platform.includes('mac')) {
       setDetectedOs('mac-arm');
     }
+
+    // 客户端运行时异步探测 GitHub 最新 Release，若有最新版本则动态更新
+    let active = true;
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && data?.tag_name) {
+          const remoteTag = String(data.tag_name).trim();
+          setCurrentVersion(remoteTag.startsWith('v') ? remoteTag : `v${remoteTag}`);
+        }
+      } catch (_) {
+        // 请求失败或离线时保留构建期静态注入的 LATEST_VERSION
+      }
+    };
+    fetchLatest();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const getPrimaryAsset = (): ReleaseAsset => {
+  const allAssets = useMemo(() => {
+    return RAW_ASSETS.map((asset) => ({
+      ...asset,
+      url: getReleaseAssetUrl(asset.filename, currentVersion),
+    }));
+  }, [currentVersion]);
+
+  const getPrimaryAsset = () => {
     switch (detectedOs) {
       case 'windows':
-        return ALL_ASSETS[3]; // Windows amd64
+        return allAssets[3]; // Windows amd64
       case 'linux':
-        return ALL_ASSETS[5]; // Linux
+        return allAssets[5]; // Linux
       case 'mac-intel':
-        return ALL_ASSETS[2]; // Mac Intel
+        return allAssets[2]; // Mac Intel
       case 'mac-arm':
       default:
-        return ALL_ASSETS[0]; // Mac ARM64
+        return allAssets[0]; // Mac ARM64
     }
   };
 
@@ -165,10 +183,10 @@ export default function DownloadButton({ lang = 'en' }: Props) {
   }[lang];
 
   const releaseTitle = {
-    en: `Release Packages (${VERSION})`,
-    zh: `全平台正式发布包 (${VERSION})`,
-    ja: `公式リリースパッケージ (${VERSION})`,
-    ko: `공식 릴리즈 패키지 (${VERSION})`,
+    en: `Release Packages (${currentVersion})`,
+    zh: `全平台正式发布包 (${currentVersion})`,
+    ja: `公式リリースパッケージ (${currentVersion})`,
+    ko: `공식 릴리즈 패키지 (${currentVersion})`,
   }[lang];
 
   const viewNotesText = {
@@ -195,7 +213,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
               {downloadText} <span className="text-blue-300 font-normal">{primaryLabel}</span>
             </div>
             <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 leading-tight">
-              <span>{primaryBadge}</span> • <span>{VERSION}</span>
+              <span>{primaryBadge}</span> • <span>{currentVersion}</span>
             </div>
           </div>
         </a>
@@ -233,7 +251,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
               {releaseTitle}
             </div>
             <div className="divide-y divide-slate-800/60 max-h-96 overflow-y-auto">
-              {ALL_ASSETS.map((asset) => {
+              {allAssets.map((asset) => {
                 const info = asset.labels[lang] || asset.labels.en;
                 return (
                   <a
@@ -262,7 +280,7 @@ export default function DownloadButton({ lang = 'en' }: Props) {
             </div>
             <div className="p-2 bg-slate-950/60 rounded-xl mt-1 text-center">
               <a
-                href={`https://github.com/${REPO}/releases/tag/${VERSION}`}
+                href={`https://github.com/${REPO}/releases/tag/${currentVersion}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium"

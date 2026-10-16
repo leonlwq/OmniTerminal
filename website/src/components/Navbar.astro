@@ -1,5 +1,6 @@
 ---
 import { useTranslations, type Lang } from '../i18n/ui';
+import { LATEST_VERSION } from '../config/version';
 
 interface Props {
   lang?: Lang;
@@ -29,7 +30,7 @@ const homeUrl = currentLangItem.path;
         <span class="font-bold text-base tracking-wide text-white flex items-center gap-2">
           OmniTerminal
           <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            v1.0.0
+            {LATEST_VERSION}
           </span>
         </span>
         <span class="text-[10px] text-slate-400 -mt-0.5 whitespace-nowrap truncate max-w-[200px] sm:max-w-xs md:max-w-none">{t('nav.subtitle')}</span>
