@@ -64,4 +64,10 @@ func TestContainerHandlerValidation(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for empty filePath in WriteContainerFile, got nil")
 	}
+
+	// 4. 测试打印功能空参校验
+	err = app.PrintTerminalDocument("test", "")
+	if err == nil {
+		t.Fatalf("expected error for empty htmlContent in PrintTerminalDocument, got nil")
+	}
 }

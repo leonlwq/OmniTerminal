@@ -232,6 +232,8 @@ export function OpenRemoteFileWithEditor(arg1:string,arg2:string,arg3:string):Pr
 
 export function OpenZmodemFiles():Promise<Array<app.ZmodemFile>>;
 
+export function PrintTerminalDocument(arg1:string,arg2:string):Promise<void>;
+
 export function ReadContainerFile(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string):Promise<string>;
 
 export function ReadLogContent(arg1:string):Promise<string>;

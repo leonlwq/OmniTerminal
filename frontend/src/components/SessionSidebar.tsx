@@ -1,8 +1,8 @@
 import React from 'react';
-import { Search, ChevronRight, Columns, Lock, X, Terminal as TermIcon, Activity, RefreshCw, ArrowLeftRight, Plus, FolderPlus } from 'lucide-react';
+import { Search, ChevronRight, Columns, Lock, X, Terminal as TermIcon, Activity, RefreshCw, ArrowLeftRight, FolderPlus, CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
 import { app } from '../../wailsjs/go/models';
 import { SessionTree } from './SessionTree';
-import { HostStatusResult } from '../types';
+import { HostStatusResult, ProbeFeedback } from '../types';
 import { useI18n } from '../i18n/I18nContext';
 
 interface SessionSidebarProps {
@@ -29,7 +29,12 @@ interface SessionSidebarProps {
   handleCloseTab: (id: string, e?: React.MouseEvent) => void;
   onProbeReachability?: () => void;
   isProbingReachability?: boolean;
+  probeFeedback?: ProbeFeedback | null;
+  clearProbeFeedback?: () => void;
+  onExpandAll?: () => void;
   dockSide?: 'left' | 'right';
+  sidebarWidth?: number;
+  onSidebarWidthChange?: (width: number) => void;
   onToggleSide?: () => void;
   onContextMenuBlank?: (e: React.MouseEvent) => void;
   onNewSession?: () => void;
@@ -80,7 +85,12 @@ export function SessionSidebar({
   handleDuplicateTab,
   onProbeReachability,
   isProbingReachability,
+  probeFeedback,
+  clearProbeFeedback,
+  onExpandAll,
   dockSide = 'left',
+  sidebarWidth,
+  onSidebarWidthChange,
   onToggleSide,
   onContextMenuBlank,
   onNewSession,
@@ -104,6 +114,98 @@ export function SessionSidebar({
   customTabNames = {},
 }: SessionSidebarProps) {
   const { t } = useI18n();
+
+  // 侧栏宽度可调节（支持 LocalStorage 持久化与左右停靠自由伸缩）
+  const [internalWidth, setInternalWidth] = React.useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('omniterminal_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 180 && parsed <= 800) {
+          return parsed;
+        }
+      }
+    } catch (_) {}
+    return 272; // 默认 272px (w-68)
+  });
+
+  const width = sidebarWidth ?? internalWidth;
+  const setWidth = React.useCallback((newWidth: number) => {
+    setInternalWidth(newWidth);
+    onSidebarWidthChange?.(newWidth);
+  }, [onSidebarWidthChange]);
+
+  const [isDragging, setIsDragging] = React.useState(false);
+  const isDraggingRef = React.useRef(false);
+  const widthRef = React.useRef(width);
+  widthRef.current = width;
+
+  // 组件卸载时安全重置拖拽状态与鼠标样式
+  React.useEffect(() => {
+    return () => {
+      isDraggingRef.current = false;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, []);
+
+  // 左右拖拽调整宽度
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    const startX = e.clientX;
+    const startWidth = widthRef.current;
+
+    // 拖拽期间全局禁用文字选区与修改鼠标样式
+    const origUserSelect = document.body.style.userSelect;
+    const origCursor = document.body.style.cursor;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const delta = (dockSide === 'left')
+        ? moveEvent.clientX - startX
+        : startX - moveEvent.clientX;
+      const minW = 180;
+      const maxW = Math.max(minW, Math.min(Math.floor(window.innerWidth * 0.6), 750));
+      const nextWidth = Math.max(minW, Math.min(maxW, startWidth + delta));
+      setWidth(nextWidth);
+    };
+
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      document.body.style.userSelect = origUserSelect || '';
+      document.body.style.cursor = origCursor || '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp, true);
+      window.removeEventListener('blur', onMouseUp);
+      try {
+        localStorage.setItem('omniterminal_sidebar_width', widthRef.current.toString());
+      } catch (_) {}
+    };
+
+    // 使用捕获阶段 (capture: true) 避免因 iframe/xterm 内部 stopPropagation 导致 mouseup 丢失
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp, true);
+    window.addEventListener('blur', onMouseUp);
+  }, [dockSide, setWidth]);
+
+  // 双击把手恢复默认宽度 272px
+  const handleDoubleClickReset = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWidth(272);
+    try {
+      localStorage.setItem('omniterminal_sidebar_width', '272');
+    } catch (_) {}
+  }, [setWidth]);
+
   const availableTags = React.useMemo(() => {
     const set = new Set<string>();
     sessions.forEach(s => {
@@ -118,7 +220,27 @@ export function SessionSidebar({
   }, [sessions]);
 
   return (
-    <aside className={`w-68 bg-app-surface ${dockSide === 'left' ? 'border-r' : 'border-l'} border-app-border flex flex-col shrink-0 select-none`}>
+    <aside
+      style={{ width: `${width}px` }}
+      className={`relative bg-app-surface ${dockSide === 'left' ? 'border-r' : 'border-l'} border-app-border flex flex-col shrink-0 select-none`}
+    >
+      {/* 左右拖拽调整宽度把手 (Draggable Resizer Handle) */}
+      <div
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClickReset}
+        className={`absolute top-0 bottom-0 ${
+          dockSide === 'left' ? '-right-1' : '-left-1'
+        } w-2 z-20 group cursor-col-resize flex items-center justify-center select-none`}
+        title={t('sidebar.dragResizeTooltip', '拖拽调整侧栏宽度，双击恢复默认')}
+      >
+        <div
+          className={`h-full w-[2px] transition-colors duration-150 ${
+            isDragging
+              ? 'bg-[#0078d4]'
+              : 'group-hover:bg-[#0078d4]/40'
+          }`}
+        />
+      </div>
       {/* 搜索栏区 - VS Code 侧栏搜索框风格 */}
       <div className="p-2 border-b border-app-border flex items-center gap-1.5">
         <div className="relative flex-1">
@@ -214,17 +336,6 @@ export function SessionSidebar({
             </span>
           </div>
           <div className="flex items-center space-x-1 shrink-0">
-            {onNewSession && (
-              <button
-                type="button"
-                onClick={onNewSession}
-                className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 bg-[#0078d4] hover:bg-[#006cbe] active:bg-[#005a9e] text-white rounded transition-colors active:scale-95 shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
-                title={t('sidebar.newSessionTooltip') || "新建主机会话 (Ctrl+N)"}
-              >
-                <Plus className="w-3 h-3" />
-                <span>{t('sidebar.addResource') || '+ 资源'}</span>
-              </button>
-            )}
             {onNewFolder && (
               <button
                 type="button"
@@ -238,17 +349,68 @@ export function SessionSidebar({
             {onProbeReachability && (
               <button
                 type="button"
-                onClick={onProbeReachability}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onProbeReachability();
+                }}
                 disabled={isProbingReachability}
-                className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 bg-app-surface hover:bg-app-hover text-app-accent border border-app-border rounded transition-colors active:scale-95"
+                className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 bg-app-surface hover:bg-app-hover text-app-accent border border-app-border rounded transition-colors active:scale-95 disabled:opacity-60 cursor-pointer"
                 title={t('sidebar.probeTooltip') || "一键探测所有主机的在线连通性与网络延迟"}
               >
-                <Activity className={`w-3 h-3 ${isProbingReachability ? 'animate-spin' : ''}`} />
+                <Activity className={`w-3 h-3 ${isProbingReachability ? 'animate-spin text-app-accent' : ''}`} />
                 <span>{isProbingReachability ? (t('sidebar.probing') || '探测中') : (t('sidebar.probe') || '探测')}</span>
               </button>
             )}
           </div>
         </div>
+
+        {/* 探测完成状态轻量通知条 */}
+        {probeFeedback && (
+          <div className={`mx-1 my-1 px-2.5 py-1.5 rounded-md text-[11px] flex items-center justify-between border shadow-sm transition-all animate-fade-in ${
+            probeFeedback.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : probeFeedback.type === 'warning'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                : probeFeedback.type === 'error'
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                  : 'bg-app-surface border-app-border text-app-text-muted'
+          }`}>
+            <div className="flex items-center gap-1.5 truncate">
+              {probeFeedback.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />}
+              {probeFeedback.type === 'warning' && <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />}
+              {probeFeedback.type === 'error' && <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-400" />}
+              {probeFeedback.type === 'info' && <Info className="w-3.5 h-3.5 shrink-0 text-blue-400" />}
+              <span className="truncate">{probeFeedback.message}</span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              {onExpandAll && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExpandAll();
+                  }}
+                  className="text-[10px] text-app-accent hover:underline px-1 py-0.5 rounded hover:bg-app-hover cursor-pointer"
+                  title={t('sessionTreeContext.expandAll') || '展开全部目录'}
+                >
+                  {t('sidebar.expandAll') || '展开全部'}
+                </button>
+              )}
+              {clearProbeFeedback && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearProbeFeedback();
+                  }}
+                  className="p-0.5 text-slate-400 hover:text-white rounded hover:bg-app-hover transition-colors cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         
         {treeData && renderTreeNode ? (
           treeData.length === 0 ? (

@@ -194,6 +194,42 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
     const isExpanded = expandedFolders.includes(config.id);
 
     if (isFolder) {
+      // 递归获取该文件夹下所有可探测的叶子会话配置
+      const getFolderLeafSessions = (tn: TreeNode): app.SessionConfig[] => {
+        let list: app.SessionConfig[] = [];
+        for (const child of tn.children) {
+          if (child.config.isFolder) {
+            list = list.concat(getFolderLeafSessions(child));
+          } else {
+            list.push(child.config);
+          }
+        }
+        return list;
+      };
+
+      const folderLeaves = getFolderLeafSessions(node);
+      const remoteLeaves = folderLeaves.filter(s => !s.isFolder && !s.isLocal && s.host);
+      const totalRemoteInFolder = remoteLeaves.length;
+
+      let onlineCount = 0;
+      let offlineCount = 0;
+      let probedCount = 0;
+      let totalLatency = 0;
+
+      for (const s of remoteLeaves) {
+        const reach = hostReachabilityMap[s.id];
+        if (reach) {
+          probedCount++;
+          if (reach.online) {
+            onlineCount++;
+            totalLatency += reach.latencyMs;
+          } else {
+            offlineCount++;
+          }
+        }
+      }
+      const avgLatency = onlineCount > 0 ? Math.round(totalLatency / onlineCount) : 0;
+
       return (
         <div key={config.id} className="w-full">
           <div
@@ -217,7 +253,7 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
             className="group flex items-center justify-between px-2 py-1.5 rounded-md mx-1 cursor-pointer hover:bg-app-hover text-app-text transition-colors select-none"
             style={{ paddingLeft: `${depth * 16 + 8}px` }}
           >
-            <div className="flex items-center space-x-2 min-w-0">
+            <div className="flex items-center space-x-2 min-w-0 flex-1 mr-1">
               {isExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#858585]" />
               ) : (
@@ -229,6 +265,44 @@ export const SessionTree: React.FC<SessionTreeProps> = ({
                 <Folder className="h-4 w-4 text-[#dcb67a] shrink-0" />
               )}
               <span className="text-[13px] font-medium truncate text-app-text">{config.name}</span>
+
+              {/* 文件夹连通性聚合感知状态指示灯与在线计数 */}
+              {totalRemoteInFolder > 0 && (
+                <div className="flex items-center gap-1.5 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      probedCount === 0
+                        ? 'bg-slate-600'
+                        : offlineCount === 0
+                          ? (avgLatency < 200 ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]')
+                          : (onlineCount > 0
+                              ? 'bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]'
+                              : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]')
+                    }`}
+                    title={
+                      probedCount === 0
+                        ? `${config.name}: ${totalRemoteInFolder} ${t('sessionTree.unprobedHosts') || '台主机未探测'}`
+                        : offlineCount === 0
+                          ? `${config.name}: ${t('sessionTree.allOnline') || '全部在线'} (${onlineCount}/${totalRemoteInFolder}) · ${avgLatency}ms`
+                          : `${config.name}: ${onlineCount}/${totalRemoteInFolder} ${t('sessionTree.online') || '在线'} (${offlineCount} ${t('sessionTree.offline') || '离线'})`
+                    }
+                  />
+                  <span
+                    className={`text-[10px] px-1 py-0.2 rounded font-mono border leading-none ${
+                      probedCount === 0
+                        ? 'bg-app-surface text-app-text-muted border-app-border/40'
+                        : offlineCount === 0
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : (onlineCount > 0
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              : 'bg-rose-500/10 text-rose-400 border-rose-500/20')
+                    }`}
+                    title={`${config.name}: ${onlineCount}/${totalRemoteInFolder} ${t('sessionTree.online') || '在线'}`}
+                  >
+                    {onlineCount}/{totalRemoteInFolder}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 shrink-0 transition-opacity">

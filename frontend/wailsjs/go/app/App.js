@@ -458,6 +458,10 @@ export function OpenZmodemFiles() {
   return window['go']['app']['App']['OpenZmodemFiles']();
 }
 
+export function PrintTerminalDocument(arg1, arg2) {
+  return window['go']['app']['App']['PrintTerminalDocument'](arg1, arg2);
+}
+
 export function ReadContainerFile(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
   return window['go']['app']['App']['ReadContainerFile'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }

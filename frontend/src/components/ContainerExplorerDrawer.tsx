@@ -66,6 +66,8 @@ interface ContainerExplorerDrawerProps {
   onClose: () => void;
   sessions?: any[];
   activeSessions?: any[];
+  dockSide?: 'left' | 'right';
+  activeTabId?: string | null;
   onOpenContainerTerminal?: (opts: {
     title: string;
     sessionId?: string;
@@ -82,11 +84,18 @@ interface ContainerExplorerDrawerProps {
   }) => void;
 }
 
+const DEFAULT_DRAWER_WIDTH = 340;
+const DEFAULT_FILES_WIDTH = 580;
+const MIN_DRAWER_WIDTH = 240;
+const MAX_DRAWER_WIDTH = 900;
+
 export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = ({
   isOpen,
   onClose,
   sessions,
   activeSessions,
+  dockSide = 'left',
+  activeTabId,
   onOpenContainerTerminal,
   onOpenTerminal,
 }) => {
@@ -100,6 +109,25 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShell, setSelectedShell] = useState<string>('/bin/bash');
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // 自定义伸缩宽度与持久化
+  const [customWidth, setCustomWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('omniterminal_container_drawer_width');
+      if (saved) {
+        const val = parseInt(saved, 10);
+        if (!isNaN(val) && val >= MIN_DRAWER_WIDTH && val <= MAX_DRAWER_WIDTH) {
+          return val;
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_DRAWER_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+
   const [logModal, setLogModal] = useState<{
     isOpen: boolean;
     name: string;
@@ -133,9 +161,69 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
     loading: boolean;
   } | null>(null);
 
+  // 智能默认选中当前活跃的 SSH 会话
+  useEffect(() => {
+    if (!isOpen) return;
+    if (activeTabId && hostSessions.some(s => s.id === activeTabId)) {
+      setSelectedHost(prev => {
+        if (prev === 'local' || !hostSessions.some(s => s.id === prev)) {
+          return activeTabId;
+        }
+        return prev;
+      });
+    }
+  }, [isOpen, activeTabId, hostSessions]);
+
+  // 左右拖拽调节宽度
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = customWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      // 若右侧停靠，向左拉伸增加宽度
+      const newWidth = dockSide === 'right' ? startWidth - deltaX : startWidth + deltaX;
+      const clamped = Math.max(MIN_DRAWER_WIDTH, Math.min(MAX_DRAWER_WIDTH, newWidth));
+      setCustomWidth(clamped);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp, true);
+      window.removeEventListener('blur', handleMouseUp);
+      setCustomWidth(current => {
+        try {
+          localStorage.setItem('omniterminal_container_drawer_width', String(current));
+        } catch {
+          // ignore
+        }
+        return current;
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp, true);
+    window.addEventListener('blur', handleMouseUp);
+  }, [customWidth, dockSide]);
+
+  // 双击把手恢复默认宽度
+  const handleDoubleClickHandle = useCallback(() => {
+    const defaultW = activeContainerForFiles ? DEFAULT_FILES_WIDTH : DEFAULT_DRAWER_WIDTH;
+    setCustomWidth(defaultW);
+    try {
+      localStorage.setItem('omniterminal_container_drawer_width', String(defaultW));
+    } catch {
+      // ignore
+    }
+  }, [activeContainerForFiles]);
+
   // Wails Go IPC 方法调用
   const loadData = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const wailsApp = (window as any).go?.app?.App;
       if (!wailsApp) {
@@ -156,6 +244,10 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
       }
     } catch (err: any) {
       console.warn('Load containers error:', err);
+      const errMsg = err?.message || String(err);
+      setFetchError(errMsg);
+      setContainers([]);
+      setPods([]);
     } finally {
       setLoading(false);
     }
@@ -489,8 +581,30 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
       return a.name.localeCompare(b.name);
     });
 
+  const isRightDock = dockSide === 'right';
+  const borderClass = isRightDock ? 'border-l' : 'border-r';
+  const currentWidth = activeContainerForFiles ? Math.max(customWidth, DEFAULT_FILES_WIDTH) : customWidth;
+
   return (
-    <div className={`absolute inset-y-0 left-12 ${activeContainerForFiles ? 'w-[520px]' : 'w-96'} bg-[#181818] border-r border-[#2b2b2b] z-30 flex flex-col text-[#cccccc] shadow-2xl transition-all duration-200 select-none`}>
+    <aside
+      style={{ width: `${currentWidth}px` }}
+      className={`relative ${borderClass} bg-[#181818] border-[#2b2b2b] flex flex-col shrink-0 text-[#cccccc] select-none ${
+        isResizing ? 'select-none transition-none' : 'transition-[width] duration-75'
+      }`}
+    >
+      {/* 边缘拖拽伸缩把手 */}
+      <div
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClickHandle}
+        title={t('common.resizeTip', '按住拖拽调节宽度，双击恢复默认')}
+        className={`absolute top-0 bottom-0 ${isRightDock ? '-left-1' : '-right-1'} w-2 cursor-col-resize z-20 group hover:bg-[#0078d4]/40 transition-colors ${
+          isResizing ? 'bg-[#0078d4]' : 'bg-transparent'
+        }`}
+      >
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-8 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none transition-opacity">
+          <div className="w-0.5 h-4 bg-white/70 rounded-full" />
+        </div>
+      </div>
       {/* 视图 1: 容器内联虚拟文件浏览器 */}
       {activeContainerForFiles ? (
         <>
@@ -970,8 +1084,34 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
 
             {((activeMode === 'docker' && filteredContainers.length === 0) ||
               (activeMode === 'k8s' && filteredPods.length === 0)) && (
-              <div className="text-center py-16 text-[#858585] text-xs">
-                {loading ? t('common.loading') : t('container.noContainers')}
+              <div className="text-center py-12 px-4 text-[#858585] text-xs space-y-3">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <RefreshCw className="w-5 h-5 animate-spin text-[#0078d4]" />
+                    <span>{t('common.loading')}</span>
+                  </div>
+                ) : fetchError ? (
+                  <div className="p-3.5 bg-amber-950/30 border border-amber-800/50 rounded text-amber-200 text-xs text-left space-y-2.5">
+                    <div className="flex items-center gap-2 font-semibold text-amber-300">
+                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>{t('container.scanFailed', '获取容器列表异常')}</span>
+                    </div>
+                    <p className="font-mono text-[11px] break-all text-amber-200/90 whitespace-pre-wrap leading-relaxed">
+                      {fetchError}
+                    </p>
+                    <div className="pt-1 flex items-center gap-2">
+                      <button
+                        onClick={loadData}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-700/40 hover:bg-amber-700/60 rounded text-[11px] text-white transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        {t('common.retry', '重新重试')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>{t('container.noContainers')}</div>
+                )}
               </div>
             )}
           </div>
@@ -1047,6 +1187,6 @@ export const ContainerExplorerDrawer: React.FC<ContainerExplorerDrawerProps> = (
           </div>
         </div>
       )}
-    </div>
+    </aside>
   );
 };

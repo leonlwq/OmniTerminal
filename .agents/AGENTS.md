@@ -6,7 +6,12 @@
 * **现代专业工作台范式 (Modern Pro Workspace Paradigm)**：使用精致微圆角（`rounded-md` 4~6px）、现代紧凑排版、清晰视觉层次。
 * **一体化现代顶栏**：Unified Command Header 整合应用 Logo、折叠菜单、居中 Omnibar 快速直连输入（带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
 * **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余灰色包裹框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
-* **左侧赛博极客 Activity Bar 与会话导航**：提供 48px 赛博霓虹活动栏（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），独立语义色彩、微光阴影及精准激活指示条；会话导航标题强制单行不折行（`whitespace-nowrap shrink-0`），提供高辨识度的“+ 资源”蓝色微胶囊按钮与新建目录按钮，搜索框支持标签与 IP 快捷过滤。
+* **左侧赛博极客 Activity Bar 与会话导航**：提供 48px 赛博霓虹活动栏（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），独立语义色彩、微光阴影及精准激活指示条；会话导航标题强制单行不折行（`whitespace-nowrap shrink-0`），去除冗余堆叠的按钮保持极简紧凑，提供新建目录与主机连通性探测快捷入口，搜索框支持标签与 IP 快捷过滤；连通性探测支持平滑加载微动画、折叠目录级联状态感知（绿/黄/红状态指示灯与在线/总数计数徽标）、结果通知条与一键展开目录；支持左右拖拽边缘把手自由实时调节宽度（180px~750px，高亮流光蓝指示条），支持双击把手快速恢复默认 272px 宽度，并基于 localStorage 自动持久化；全局新建会话统一由顶栏主按钮及快捷键（`Ctrl+N`）驱动。
+* **容器探索抽屉 (ContainerExplorerDrawer) 与多级探测规范**：
+  * **流式自适应排版 (Adaptive Flex Layout)**：作为 `<aside>` 伸缩流直接参与主工作台 Flex 布局，坚决杜绝 `absolute` 浮动脱标遮挡终端工作区；宽度变化时通过 `ResizeObserver` 联动触发终端 PTY 与 xterm.js 自动重排行列。
+  * **实时左右拖拽伸缩**：支持边缘把手在 240px~900px 间自由左右拖拽缩放（低调精致微光），双击重置默认宽度，自动保存设置至 localStorage；自适应左停靠与右停靠。
+  * **智能当前会话对齐**：打开抽屉时优先自动选中当前处于活动状态的远程 SSH 会话主机。
+  * **三级格式降级与权限容错**：自动注入完整系统 PATH；支持自动尝试 `sudo -n` 免密提权执行与 Podman 兼容；支持「灵活 JSON -> 标准制表符 TSV -> 原生终端 Table」三级降级解析，并在异常时展示结构化排障提示与一键重试。
 * **经典状态栏 (StatusBar)**：24px 极致紧凑高度与 11px 字阶，集成“命令广播”、“终端录制”、“连通性复用 (N/M)”、实时网络流量吞吐与字符编码弹窗。
 * **中部平滑胶囊页签 (Capsule Tabs)**：支持双击打开新 Tab，Tab 栏在终端上方，支持拖拽、锁定、分屏与状态呼吸指示灯。
 * **右侧 SFTP 并排联动**：点击"SFTP 传输"时，在当前终端 Tab 内部的右侧并排划出文件管理器，维持命令行和远程文件浏览的上下文关联。
@@ -76,7 +81,11 @@
   * **下游服务自动探测与挂接**：关联活动的端口转发映射（`ActiveTunnels`），自动探测下游服务可用性（如 MySQL/Redis/HTTP）并呈现服务卡片节点。
   * **故障分段定界诊断引擎**：提供 `DiagnoseTopologyHop(sessionId, targetAddr)`，逐跳探测分析「本地->跳板机」和「跳板机->目标服务」的连通状态，精准识别端口防火墙与服务拒绝并给出排障指引。
   * **极客流光拓扑看板**：`NetworkTopologyModal` 具备分层视图（Local -> JumpHost -> Target -> Service）、健康流动光效动画、熔断链路高亮示警及右侧交互式排障抽屉。
-
+* **终端高保真打印与导出规范 (Terminal Printing & Export Engine)**：
+  * **多范围智能提取**：支持「当前可视屏幕（Visible Screen）」、「全部会话缓冲区（Full Scrollback Buffer）」以及选区文本（Selected Text）精准提取与行/字符数统计。
+  * **高保真纸张排版与参数微调**：提供白底省墨纸张模式（Clean Paper）与暗黑极客模式（Dark Geek）；支持行号切换、页眉时间戳水印切换与多阶字号微调（11px / 13px / 15px），仿真 A4 打印纸预览。
+  * **双通道无阻塞物理打印**：前端通过隔离隐藏 iframe 与标准 `@page` 打印样式触发 `iframe.contentWindow.print()`；后端提供统一的 `PrintTerminalDocument(title, htmlContent)` 接口，自动写入缓存并通过系统原生调用打开，杜绝桌面端 WebKit / WebView2 中原生 `window.print()` 失效或黑屏错乱。
+  * **多元化导出能力**：支持一键导出打印级 HTML / PDF 以及一键复制格式化打印文本。
 
 ## 7. 国际化与本地化规范 (i18n & Localization)
 * **默认语言探测**：初始化优先依据 `navigator.language` 探测系统语言（默认支持 `zh-CN`, `en-US`, `ja-JP`, `ko-KR`），并与后端 `AppSettings.Language` 双向同步持久化。

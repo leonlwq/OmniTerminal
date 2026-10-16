@@ -17,6 +17,7 @@ import { activeTerminals, searchAddons, terminalBuffers } from './TerminalInstan
 import * as models from '../../wailsjs/go/models';
 import { MacroManagerModal } from './MacroManagerModal';
 import { UpdateModal } from './UpdateModal';
+import { PrintTerminalModal } from './PrintTerminalModal';
 import appIcon from '../assets/images/appicon.png';
 
 // Menu item type supporting separators and shortcut annotations
@@ -301,6 +302,7 @@ export function Toolbar({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // 串口会话控制状态
   const activeTab = tabs.find(t => t.id === activeTabId);
@@ -454,7 +456,10 @@ export function Toolbar({
       }
       return;
     }
-    if (item === '打印(P)...' || item === '打印终端(P)...') { window.print(); return; }
+    if (item === '打印(P)...' || item === '打印终端(P)...' || item === '打印...') {
+      setIsPrintModalOpen(true);
+      return;
+    }
     if (item === '退出(X)') { Quit(); return; }
 
     // 编辑
@@ -1499,6 +1504,14 @@ export function Toolbar({
         isChecking={isCheckingUpdate}
         updateInfo={updateInfo as any}
         currentVersion={CURRENT_VERSION}
+      />
+
+      <PrintTerminalModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        activeTab={activeTab || null}
+        getLines={() => (activeTabId && terminalBuffers[activeTabId] ? terminalBuffers[activeTabId]() : [])}
+        terminal={activeTabId ? activeTerminals[activeTabId] : null}
       />
     </header>
   );

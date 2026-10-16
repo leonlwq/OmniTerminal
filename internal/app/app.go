@@ -3,10 +3,12 @@ package app
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	goruntime "runtime"
 	"strings"
 	"time"
@@ -409,6 +411,38 @@ func (a *App) SaveTerminalLog(content string, defaultName string) error {
 		return nil // User cancelled
 	}
 	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// PrintTerminalDocument 将终端文本格式化为标准独立打印文档，并通过系统默认程序打开执行打印
+func (a *App) PrintTerminalDocument(title string, htmlContent string) error {
+	if htmlContent == "" {
+		return errors.New("打印内容为空")
+	}
+
+	cacheDir := config.GetSubDir("cache")
+	sanitizer := regexp.MustCompile(`[^a-zA-Z0-9_\.\-]`)
+	safeTitle := sanitizer.ReplaceAllString(title, "_")
+	if safeTitle == "" {
+		safeTitle = "terminal_print"
+	}
+	tmpFileName := fmt.Sprintf("%s_%d.html", safeTitle, time.Now().UnixNano())
+	tmpFilePath := filepath.Join(cacheDir, tmpFileName)
+
+	if err := os.WriteFile(tmpFilePath, []byte(htmlContent), 0644); err != nil {
+		return fmt.Errorf("生成打印文档失败: %w", err)
+	}
+
+	var cmd *exec.Cmd
+	switch goruntime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", tmpFilePath)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", "", tmpFilePath)
+	default:
+		cmd = exec.Command("xdg-open", tmpFilePath)
+	}
+	core.HideConsoleWindow(cmd)
+	return cmd.Start()
 }
 
 // SaveZmodemFile opens a save file dialog and saves the base64 encoded data to disk

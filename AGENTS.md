@@ -50,8 +50,14 @@
 - **VS Code Dark Modern 现代工程美学**：基底 `#1e1e1e`，镀铬与侧栏 `#181818`，面板卡片 `#252526`，微边框 `#2b2b2b`，主字阶 `#cccccc`，经典高亮蓝 `#0078d4`。
 - **一体化顶栏与 Command Center**：Unified Header 整合品牌、Omnibar 快速连接检索胶囊（居中对齐、带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
 - **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余的灰色包裹内框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
-- **会话侧栏 (SessionSidebar)**：标题规范为“会话导航”，强制单行不折行（`whitespace-nowrap shrink-0`），显式提供高辨识度的“+ 资源”蓝色微胶囊按钮与新建目录按钮；搜索框支持标签与 IP 快捷过滤。
+- **会话侧栏 (SessionSidebar) 与连通性探测感知**：标题规范为“会话导航”，强制单行不折行（`whitespace-nowrap shrink-0`），去除冗余堆叠的按钮保持极简紧凑，提供新建目录与主机连通性探测快捷入口；搜索框支持标签与 IP 快捷过滤；连通性探测（Probe）支持平滑微动画反馈、折叠目录级联状态感知（绿/黄/红状态指示灯与在线/总数计数徽标）、结果浮动通知条与一键展开所有目录；支持左右拖拽边缘把手自由实时调节宽度（180px~750px，高亮流光蓝指示条），支持双击把手快速恢复默认 272px 宽度，并基于 localStorage 自动持久化；全局新建会话统一由顶栏主按钮及快捷键（`Ctrl+N`）驱动。
 - **极客赛博活动栏 (ActivityBar)**：全面升级为赛博霓虹色彩体系（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），每个模块具备独立的语义色彩、微光阴影及精准的激活指示条。
+- **会话侧栏 (SessionSidebar) 与容器抽屉 (ContainerExplorerDrawer) 实时拖拽伸缩与自适应排版约定**：采用标准 Flex 弹性流式排版（作为 `<aside>` 参与整体布局，杜绝绝对定位浮动遮挡终端工作区），终端基于 ResizeObserver 实时自动重排行列字符；支持左右拖拽边缘把手自由实时调节宽度（240px~900px，低调精致微光），支持双击把手快速恢复默认宽度，并基于 localStorage 自动持久化；支持左侧/右侧停靠（`dockSide`）的弹性翻转计算；打开容器抽屉时智能优先自动对齐当前激活的终端 SSH 会话。
+- **容器与微服务探测引擎全景兼容规范 (Multi-Tier Docker/Podman Engine)**：`[x]`
+  - **环境 PATH 自动注入**：针对远程 SSH 非登录/非交互式会话环境变量不全的问题，自动注入包含 `/usr/local/bin`、`/usr/bin`、`/snap/bin`、`~/.docker/bin` 在内的完整 PATH，彻底解决 `command not found`。
+  - **权限受限智能平滑提权**：当普通用户（如 `opc`、`ec2-user`、`ubuntu`）无 Docker socket 访问权限时，探测引擎与操作命令自动尝试 `sudo -n` 执行与 Podman 兼容执行，杜绝无意义的权限拒绝报错。
+  - **三级格式降级解析**：构建「灵活 JSON 键值提取 -> 普适性制表符格式 (TSV) -> 原生终端表格文本 (Table)」三级容错解析器，即使遇到旧版本 Docker、Podman 或定制输出也能精准识别提取 ID、Names、Image、Status 与 Ports。
+  - **结构化排障与可交互重试**：遇到不可用异常时，抽屉直观展示带原因说明的错误排障卡片并支持一键重新重试，杜绝静默失败显示为空。
 - **经典状态栏 (StatusBar)**：24px 极致紧凑高度与 11px 字阶，集成“命令广播”、“终端录制”、“连通性复用 (N/M)”、实时网络流量吞吐与字符编码弹窗。
 - **应用全景图标规范 (App Icon & Packaging Standard)**：基于 3D 霓虹终端与极客立体 O 胶囊设计，1024×1024 画布满铺率达 96%（BBox 约 984×896），四周仅保留原生微呼吸间距；彻底消除 macOS LaunchServices Legacy Platter 自动垫白底问题；全链路同步产出 16~1024px Retina 级 Apple 原生 `.icns`、Windows 多尺寸 `.ico`、系统托盘高清图及前端资源。
 
@@ -65,9 +71,21 @@
   - 全量子功能面板与弹窗（100% 词条键值化，4 种语言完整对齐）：
     - 万能命令中心（`CommandPaletteModal`）、OmniAI 智能运维对话抽屉（`OmniAIChatDrawer`）、版本检测更新（`UpdateModal`）、参数化 SOP Runbook 运维手册（`RunbookManagerModal`）、AI Copilot 模态框（`OmniAICopilotModal`）、大模型接入配置（`AIConfigModal`）。
     - 标签页右键菜单（`TabContextMenu`）、终端右键菜单（`TerminalContextMenu`）、会话树右键菜单（`SessionTreeContextMenu`）、危险命令安全粘贴拦截（`SafePasteModal`）、主机健康巡检大盘（`InspectionReportModal`）。
-    - SFTP 双栏文件传输管理器（`SftpPanel`）、多行命令撰写抽屉（`ComposePane`）、端到端加密云同步（`CloudSyncModal`）、TOTP / MFA 令牌管理（`TOTPManagerModal`）、SSH 身份密钥管理（`KeyManagerModal`）、端口转发与隧道监控（`TunnelMonitorModal`）、快捷键速查（`ShortcutReferenceModal`）、标签页工作台管理（`TabManagerModal`）、全局搜索（`GlobalSearchModal`）、历史命令检索（`CommandHistoryModal`）。
+    - SFTP 双栏文件传输管理器（`SftpPanel`）、多行命令撰写抽屉（`ComposePane`）、端到端加密云同步（`CloudSyncModal`）、TOTP / MFA 令牌管理（`TOTPManagerModal`）、SSH 身份密钥管理（`KeyManagerModal`）、端口转发与隧道监控（`TunnelMonitorModal`）、快捷键速查（`ShortcutReferenceModal`）、标签页工作台管理（`TabManagerModal`）、全局搜索（`GlobalSearchModal`）、历史命令检索（`CommandHistoryModal`）、终端打印与导出预览（`PrintTerminalModal`）。
     - 会话配置全量 6 大选项卡：`SessionConnectionTab`、`SessionAppearanceTab`、`SessionAuthTab`、`SessionTerminalTab`、`SessionTunnelTab`、`SessionAuditTab`。
   - 彻底清除各子功能页面直接硬编码中文，杜绝在非中文语言下回退默认中文。
+
+### 终端高保真打印与导出规范 (Terminal Printing & Export Engine)
+
+- **多范围智能提取 (Multi-Scope Extraction)**：`[x]`
+  - 支持「当前可视屏幕（Visible Screen）」、「全部会话缓冲区（Full Scrollback Buffer）」以及存在高亮选区时的「当前选中文本（Selected Text）」，自动计算行数与字符数。
+- **高保真纸张排版与参数微调**：`[x]`
+  - 提供白底省墨纸张模式（Clean Paper）与暗黑极客模式（Dark Geek）；
+  - 支持行号切换、页眉时间戳水印切换与多阶字号微调（11px / 13px / 15px），居中呈现仿真 A4 打印纸预览。
+- **双通道无阻塞物理打印 (Dual-Channel Printing Pipeline)**：`[x]`
+  - 前端基于隔离隐藏 iframe 与标准 `@page` 打印样式触发 `iframe.contentWindow.print()`；
+  - 后端提供统一的 `PrintTerminalDocument(title, htmlContent)` 接口，自动写入缓存并通过系统原生调用打开，杜绝桌面端 WebKit / WebView2 中原生 `window.print()` 失效或黑屏错乱。
+  - 支持一键导出标准打印级 HTML / PDF 以及一键复制格式化打印文本。
 
 ### SFTP 高性能文件引擎与高级传输规范 (SFTP Engine & Resumable Transfer)
 

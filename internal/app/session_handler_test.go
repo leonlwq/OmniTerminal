@@ -29,3 +29,17 @@ func TestExportToSSHConfig(t *testing.T) {
 		t.Errorf("expected header in sshConfig, got %s", sshConfig)
 	}
 }
+
+func TestBatchCheckHostReachability(t *testing.T) {
+	app := &App{
+		isUnlocked: true,
+	}
+	results, err := app.BatchCheckHostReachability(nil)
+	if err != nil {
+		t.Fatalf("BatchCheckHostReachability error: %v", err)
+	}
+	t.Logf("Probe results count: %d", len(results))
+	for id, r := range results {
+		t.Logf("Session %s: online=%v, latency=%dms, err=%s", id, r.Online, r.LatencyMs, r.Error)
+	}
+}

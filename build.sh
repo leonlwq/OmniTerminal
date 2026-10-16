@@ -19,7 +19,6 @@ function package_darwin() {
         cp -R build/bin/omniterminal-amd64.app build/bin/OmniTerminal.app
     fi
 
-    # 确保注入符合 Apple macOS 标准规范的全套 ICNS 高清图标，杜绝白边底盘
     if [ -f "build/appicon.png" ] && [ -d "build/bin/OmniTerminal.app/Contents/Resources" ]; then
         ICONSET_TMP=$(mktemp -d)/omni.iconset
         mkdir -p "$ICONSET_TMP"

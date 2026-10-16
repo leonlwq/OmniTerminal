@@ -6,6 +6,11 @@ export interface HostStatusResult {
   error?: string;
 }
 
+export interface ProbeFeedback {
+  type: 'success' | 'warning' | 'info' | 'error';
+  message: string;
+}
+
 export interface HostResourceMetrics {
   sessionId: string;
   cpuUsage: number;

@@ -554,6 +554,8 @@ function App() {
     hostReachabilityMap,
     isProbingReachability,
     triggerBatchProbeReachability,
+    probeFeedback,
+    clearProbeFeedback,
   } = useHostReachability({
     sessions,
     isLocked,
@@ -1088,8 +1090,11 @@ function App() {
             tabStatus={tabStatus}
             handleCloseTab={onRequestCloseTab}
             handleDuplicateTab={handleDuplicateTab}
-            onProbeReachability={() => triggerBatchProbeReachability()}
+            onProbeReachability={() => triggerBatchProbeReachability(undefined, true)}
             isProbingReachability={isProbingReachability}
+            probeFeedback={probeFeedback}
+            clearProbeFeedback={clearProbeFeedback}
+            onExpandAll={handleExpandAllFolders}
             dockSide={dockSide}
             onToggleSide={() => setDockSide(prev => prev === 'left' ? 'right' : 'left')}
             onContextMenuBlank={handleSidebarBlankContextMenu}
@@ -1110,6 +1115,8 @@ function App() {
           <ContainerExplorerDrawer
             isOpen={true}
             onClose={() => setActiveDockPanel('none')}
+            dockSide="left"
+            activeTabId={activeTabId}
             activeSessions={activeSessionsForContainers}
             onOpenTerminal={handleConnectContainer}
           />
@@ -1330,8 +1337,11 @@ function App() {
             setOpenSftpTabs={setOpenSftpTabs}
             tabStatus={tabStatus}
             handleCloseTab={onRequestCloseTab}
-            onProbeReachability={() => triggerBatchProbeReachability()}
+            onProbeReachability={() => triggerBatchProbeReachability(undefined, true)}
             isProbingReachability={isProbingReachability}
+            probeFeedback={probeFeedback}
+            clearProbeFeedback={clearProbeFeedback}
+            onExpandAll={handleExpandAllFolders}
             dockSide={dockSide}
             onToggleSide={() => setDockSide(prev => prev === 'left' ? 'right' : 'left')}
             onContextMenuBlank={handleSidebarBlankContextMenu}
@@ -1352,6 +1362,8 @@ function App() {
           <ContainerExplorerDrawer
             isOpen={true}
             onClose={() => setActiveDockPanel('none')}
+            dockSide="right"
+            activeTabId={activeTabId}
             activeSessions={activeSessionsForContainers}
             onOpenTerminal={handleConnectContainer}
           />
@@ -1498,7 +1510,7 @@ function App() {
         toggleFolder={toggleFolder}
         handleExpandAllFolders={handleExpandAllFolders}
         handleCollapseAllFolders={handleCollapseAllFolders}
-        triggerBatchProbeReachability={triggerBatchProbeReachability}
+        triggerBatchProbeReachability={() => triggerBatchProbeReachability(undefined, true)}
       />
 
       {/* 全局辅助与运维类弹窗聚合容器 */}
