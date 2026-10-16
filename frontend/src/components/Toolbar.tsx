@@ -11,7 +11,7 @@ import {
   Activity, Server, Sparkles, Cloud, Sun, Moon, Laptop, Share2,
   Wrench, SlidersHorizontal, Zap, Maximize2
 } from 'lucide-react';
-import { SaveTerminalLog, SetSerialDTR, SetSerialRTS, SendSerialBreak, SaveSettings } from '../../wailsjs/go/app/App';
+import { SaveTerminalLog, SetSerialDTR, SetSerialRTS, SendSerialBreak, SaveSettings, CheckAppUpdate, GetAppVersion } from '../../wailsjs/go/app/App';
 import { WindowToggleMaximise, WindowMinimise, Quit, BrowserOpenURL, EventsOn, ClipboardSetText, ClipboardGetText } from '../../wailsjs/runtime/runtime';
 import { activeTerminals, searchAddons, terminalBuffers } from './TerminalInstance';
 import * as models from '../../wailsjs/go/models';
@@ -300,7 +300,8 @@ export function Toolbar({
 }: ToolbarProps) {
   const [isMacroModalOpen, setIsMacroModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateResult, setUpdateResult] = useState<any>(null);
+  const [appVersion, setAppVersion] = useState<string>("v1.0.0");
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
@@ -333,9 +334,12 @@ export function Toolbar({
     if (!activeTabId) return;
     SendSerialBreak(activeTabId).catch(() => {});
   };
-  const CURRENT_VERSION = "v1.0.0"; // For demonstration
 
-  
+  useEffect(() => {
+    GetAppVersion().then((ver: string) => {
+      if (ver) setAppVersion(ver);
+    }).catch(() => {});
+  }, []);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [menuSearch, setMenuSearch] = useState('');
   const [popover, setPopover] = useState<'lang'|'font'|'opacity'|'theme'|'toolbox'|null>(null);
@@ -658,15 +662,30 @@ export function Toolbar({
   const checkForUpdates = async () => {
     setIsUpdateModalOpen(true);
     setIsCheckingUpdate(true);
-    setUpdateInfo(null);
     try {
-      const res = await fetch('https://api.github.com/repos/leonlwq/omniterminal/releases/latest');
-      if (res.ok) {
-        const data = await res.json();
-        setUpdateInfo(data);
+      const res = await CheckAppUpdate();
+      if (res) {
+        setUpdateResult(res);
+        if (res.currentVersion) setAppVersion(res.currentVersion);
       }
     } catch (e) {
-      console.error("Update check failed", e);
+      console.warn("Backend CheckAppUpdate failed, fallback to GitHub API:", e);
+      try {
+        const res = await fetch('https://api.github.com/repos/leonlwq/omniterminal/releases/latest');
+        if (res.ok) {
+          const data = await res.json();
+          setUpdateResult({
+            hasUpdate: data.tag_name !== appVersion,
+            currentVersion: appVersion,
+            latestVersion: data.tag_name,
+            releaseNotes: data.body,
+            htmlUrl: data.html_url,
+            targetAsset: null,
+          });
+        }
+      } catch (err) {
+        console.error("Update check failed", err);
+      }
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -1502,8 +1521,8 @@ export function Toolbar({
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
         isChecking={isCheckingUpdate}
-        updateInfo={updateInfo as any}
-        currentVersion={CURRENT_VERSION}
+        updateResult={updateResult}
+        currentVersion={appVersion}
       />
 
       <PrintTerminalModal

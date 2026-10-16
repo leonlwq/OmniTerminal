@@ -11,6 +11,9 @@ const (
 	DirName = ".omniterminal"
 )
 
+// AppVersion 当前应用版本号，可由编译时 -ldflags "-X omniterminal/internal/config.AppVersion=..." 动态注入
+var AppVersion = "v1.0.0"
+
 var cleanupOnce sync.Once
 
 // cleanLegacyFiles 清理历史遗留的无用诊断文件

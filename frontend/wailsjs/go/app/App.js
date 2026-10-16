@@ -34,8 +34,16 @@ export function AddTOTPEntry(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
   return window['go']['app']['App']['AddTOTPEntry'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
+export function ApplyAppUpdateAndRestart(arg1) {
+  return window['go']['app']['App']['ApplyAppUpdateAndRestart'](arg1);
+}
+
 export function BatchCheckHostReachability(arg1) {
   return window['go']['app']['App']['BatchCheckHostReachability'](arg1);
+}
+
+export function CancelAppUpdateDownload() {
+  return window['go']['app']['App']['CancelAppUpdateDownload']();
 }
 
 export function CancelSftpTransfer(arg1) {
@@ -44,6 +52,10 @@ export function CancelSftpTransfer(arg1) {
 
 export function ChangeMasterPassword(arg1, arg2) {
   return window['go']['app']['App']['ChangeMasterPassword'](arg1, arg2);
+}
+
+export function CheckAppUpdate() {
+  return window['go']['app']['App']['CheckAppUpdate']();
 }
 
 export function CheckHostReachability(arg1) {
@@ -228,6 +240,10 @@ export function GenerateTOTPCode(arg1) {
 
 export function GetActiveTunnels() {
   return window['go']['app']['App']['GetActiveTunnels']();
+}
+
+export function GetAppVersion() {
+  return window['go']['app']['App']['GetAppVersion']();
 }
 
 export function GetAuthProfiles() {
@@ -688,6 +704,10 @@ export function ShowMainWindow() {
 
 export function ShowWindow() {
   return window['go']['app']['App']['ShowWindow']();
+}
+
+export function StartAppUpdateDownload(arg1, arg2) {
+  return window['go']['app']['App']['StartAppUpdateDownload'](arg1, arg2);
 }
 
 export function StartRemoteLogTail(arg1, arg2, arg3) {

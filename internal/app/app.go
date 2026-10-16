@@ -30,6 +30,7 @@ type App struct {
 	sleepInhibitor   *core.SleepInhibitor
 	autoStartManager *core.AutoStartManager
 	trayManager      *core.TrayManager
+	updateManager    *core.UpdateManager
 }
 
 // NewApp creates a new App application struct
@@ -39,6 +40,7 @@ func NewApp() *App {
 		isUnlocked:       false,
 		sleepInhibitor:   core.NewSleepInhibitor(),
 		autoStartManager: core.NewAutoStartManager(),
+		updateManager:    core.NewUpdateManager(),
 	}
 	a.trayManager = core.NewTrayManager(
 		func() {

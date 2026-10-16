@@ -20,11 +20,17 @@ export function AddActiveTunnel(arg1:string,arg2:string,arg3:string,arg4:string)
 
 export function AddTOTPEntry(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:number,arg7:number):Promise<models.TOTPEntry>;
 
+export function ApplyAppUpdateAndRestart(arg1:string):Promise<void>;
+
 export function BatchCheckHostReachability(arg1:Array<string>):Promise<Record<string, models.HostStatusResult>>;
+
+export function CancelAppUpdateDownload():Promise<void>;
 
 export function CancelSftpTransfer(arg1:string):Promise<void>;
 
 export function ChangeMasterPassword(arg1:string,arg2:string):Promise<void>;
+
+export function CheckAppUpdate():Promise<models.UpdateCheckResult>;
 
 export function CheckHostReachability(arg1:string):Promise<models.HostStatusResult>;
 
@@ -117,6 +123,8 @@ export function GenerateKeyPair(arg1:string):Promise<Record<string, string>>;
 export function GenerateTOTPCode(arg1:string):Promise<models.TOTPCodeResult>;
 
 export function GetActiveTunnels():Promise<Array<models.TunnelStatusInfo>>;
+
+export function GetAppVersion():Promise<string>;
 
 export function GetAuthProfiles():Promise<Array<models.AuthProfile>>;
 
@@ -347,6 +355,8 @@ export function SftpVerifyHash(arg1:string,arg2:string,arg3:string,arg4:string):
 export function ShowMainWindow():Promise<void>;
 
 export function ShowWindow():Promise<void>;
+
+export function StartAppUpdateDownload(arg1:string,arg2:boolean):Promise<void>;
 
 export function StartRemoteLogTail(arg1:string,arg2:string,arg3:number):Promise<void>;
 

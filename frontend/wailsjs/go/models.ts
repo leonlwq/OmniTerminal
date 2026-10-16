@@ -2121,6 +2121,72 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	    }
 	}
+	export class UpdateAssetInfo {
+	    name: string;
+	    downloadUrl: string;
+	    size: number;
+	    browserUrl: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateAssetInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.downloadUrl = source["downloadUrl"];
+	        this.size = source["size"];
+	        this.browserUrl = source["browserUrl"];
+	    }
+	}
+	export class UpdateCheckResult {
+	    hasUpdate: boolean;
+	    currentVersion: string;
+	    latestVersion: string;
+	    releaseTitle: string;
+	    releaseNotes: string;
+	    publishedAt: string;
+	    htmlUrl: string;
+	    platformOS: string;
+	    platformArch: string;
+	    targetAsset?: UpdateAssetInfo;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateCheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hasUpdate = source["hasUpdate"];
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.releaseTitle = source["releaseTitle"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.publishedAt = source["publishedAt"];
+	        this.htmlUrl = source["htmlUrl"];
+	        this.platformOS = source["platformOS"];
+	        this.platformArch = source["platformArch"];
+	        this.targetAsset = this.convertValues(source["targetAsset"], UpdateAssetInfo);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class WSLDistroInfo {
 	    name: string;
 	    isDefault: boolean;
