@@ -5,9 +5,11 @@
 
 APP_NAME       := OmniTerminal
 BINARY_NAME    := omniterminal
-VERSION        ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "1.0.0")
+RAW_VERSION    ?= $(shell git describe --tags --always 2>/dev/null || echo "v1.0.1")
+VERSION        ?= $(shell echo "$(RAW_VERSION)" | sed -E 's/^([^v])/v\1/')
 COMMIT         ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME     ?= $(shell date -u '+%Y-%m-%d_%H:%M:%S')
+LDFLAGS        := -s -w -X omniterminal/internal/config.AppVersion=$(VERSION)
 
 # 宿主机环境自动探测
 UNAME_S        := $(shell uname -s)
@@ -123,17 +125,17 @@ dev:
 
 ## build: 构建当前平台生产应用
 build:
-	@echo "$(GREEN)==> 正在为当前系统编译生产版本: $(HOST_OS)/$(HOST_ARCH)...$(RESET)"
+	@echo "$(GREEN)==> 正在为当前系统编译生产版本: $(HOST_OS)/$(HOST_ARCH) (版本: $(VERSION))...$(RESET)"
 	@rm -rf $(BUILD_DIR)/$(APP_NAME).app $(BUILD_DIR)/$(BINARY_NAME).app
-	@$(WAILS) build -platform $(HOST_OS)/$(HOST_ARCH)
+	@$(WAILS) build -platform $(HOST_OS)/$(HOST_ARCH) -ldflags "$(LDFLAGS)"
 	@echo "$(GREEN)✔ 编译完成: $(BUILD_DIR)/$(RESET)"
 
 ## build-darwin: 构建 macOS 桌面版本
 build-darwin:
 	@ARCH_TARGET=$${ARCH:-$(HOST_ARCH)}; \
-	echo "$(GREEN)==> 正在编译 macOS ($$ARCH_TARGET) 桌面应用...$(RESET)"; \
+	echo "$(GREEN)==> 正在编译 macOS ($$ARCH_TARGET) 桌面应用 (版本: $(VERSION))...$(RESET)"; \
 	rm -rf $(BUILD_DIR)/$(APP_NAME).app $(BUILD_DIR)/$(BINARY_NAME)-$$ARCH_TARGET.app; \
-	$(WAILS) build -platform darwin/$$ARCH_TARGET; \
+	$(WAILS) build -platform darwin/$$ARCH_TARGET -ldflags "$(LDFLAGS)"; \
 	if [ -d "$(BUILD_DIR)/$(BINARY_NAME)-$$ARCH_TARGET.app" ]; then \
 		rm -rf $(BUILD_DIR)/$(APP_NAME).app; \
 		cp -R $(BUILD_DIR)/$(BINARY_NAME)-$$ARCH_TARGET.app $(BUILD_DIR)/$(APP_NAME).app; \
@@ -143,21 +145,21 @@ build-darwin:
 ## build-windows: 构建 Windows 二进制
 build-windows:
 	@ARCH_TARGET=$${ARCH:-amd64}; \
-	echo "$(GREEN)==> 正在编译 Windows ($$ARCH_TARGET) 二进制...$(RESET)"; \
-	$(WAILS) build -platform windows/$$ARCH_TARGET; \
+	echo "$(GREEN)==> 正在编译 Windows ($$ARCH_TARGET) 二进制 (版本: $(VERSION))...$(RESET)"; \
+	$(WAILS) build -platform windows/$$ARCH_TARGET -ldflags "$(LDFLAGS)"; \
 	echo "$(GREEN)✔ Windows 二进制已生成: $(BUILD_DIR)/$(BINARY_NAME)-$$ARCH_TARGET.exe$(RESET)"
 
 ## build-linux: 构建 Linux 二进制
 build-linux:
 	@ARCH_TARGET=$${ARCH:-amd64}; \
-	echo "$(GREEN)==> 正在编译 Linux ($$ARCH_TARGET) 二进制...$(RESET)"; \
-	$(WAILS) build -platform linux/$$ARCH_TARGET; \
+	echo "$(GREEN)==> 正在编译 Linux ($$ARCH_TARGET) 二进制 (版本: $(VERSION))...$(RESET)"; \
+	$(WAILS) build -platform linux/$$ARCH_TARGET -ldflags "$(LDFLAGS)"; \
 	echo "$(GREEN)✔ Linux 二进制已生成: $(BUILD_DIR)/$(BINARY_NAME)-$$ARCH_TARGET$(RESET)"
 
 ## build-all: 跨平台全量构建
 build-all:
-	@echo "$(CYAN)==> 开始全平台多架构矩阵构建...$(RESET)"
-	@$(WAILS) build -platform windows/amd64,windows/arm64,darwin/amd64,darwin/arm64
+	@echo "$(CYAN)==> 开始全平台多架构矩阵构建 (版本: $(VERSION))...$(RESET)"
+	@$(WAILS) build -platform windows/amd64,windows/arm64,darwin/amd64,darwin/arm64 -ldflags "$(LDFLAGS)"
 	@echo "$(GREEN)✔ 全平台构建全部完成!$(RESET)"
 
 ## package-darwin: 打包 macOS DMG 安装盘

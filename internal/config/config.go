@@ -12,7 +12,7 @@ const (
 )
 
 // AppVersion 当前应用版本号，可由编译时 -ldflags "-X omniterminal/internal/config.AppVersion=..." 动态注入
-var AppVersion = "v1.0.0"
+var AppVersion = "v1.0.1"
 
 var cleanupOnce sync.Once
 

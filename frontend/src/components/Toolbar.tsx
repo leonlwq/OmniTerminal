@@ -301,7 +301,7 @@ export function Toolbar({
   const [isMacroModalOpen, setIsMacroModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [updateResult, setUpdateResult] = useState<any>(null);
-  const [appVersion, setAppVersion] = useState<string>("v1.0.0");
+  const [appVersion, setAppVersion] = useState<string>("v1.0.1");
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 

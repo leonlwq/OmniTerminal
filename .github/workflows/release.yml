@@ -61,7 +61,10 @@ jobs:
 
       - name: Build Wails App
         shell: bash
-        run: wails build -platform ${{ matrix.platform }} -clean
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "Building OmniTerminal for ${{ matrix.platform }} with AppVersion=${VERSION}..."
+          wails build -platform ${{ matrix.platform }} -clean -ldflags "-s -w -X omniterminal/internal/config.AppVersion=${VERSION}"
 
       - name: Package Assets (macOS)
         if: runner.os == 'macOS'

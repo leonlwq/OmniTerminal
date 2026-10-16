@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
+VERSION=$(git describe --tags --always 2>/dev/null || echo "v1.0.1")
+if [[ "$VERSION" != v* ]]; then
+    VERSION="v$VERSION"
+fi
+
 function build_all() {
+    echo "==> 正在编译 OmniTerminal (版本: ${VERSION})..."
     wails build \
     -platform darwin/arm64,windows/amd64,windows/arm64 \
     -clean \
     -trimpath \
-    -ldflags "-s -w"
+    -ldflags "-s -w -X omniterminal/internal/config.AppVersion=${VERSION}"
 }
 
 function package_darwin() {

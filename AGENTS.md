@@ -135,6 +135,19 @@
 - **4 国语言全量本地化对齐**：`[x]`
   - `zh-CN`、`en-US`、`ja-JP`、`ko-KR` 四种语言全量覆盖拓扑节点、连线状态、诊断排障文案。
 
+### 全自动应用内流式热更新与重启规范 (In-App Auto-Update & Seamless Relaunch)
+
+- **智能架构匹配与平台资产精准定位**：`[x]`
+  - 后端基于 `runtime.GOOS` 与 `runtime.GOARCH`（macOS arm64 / Intel、Windows amd64 / arm64、Linux amd64）自动比对 GitHub Release Assets，自动筛选出与当前宿主机硬件相匹配的安装包（如 `OmniTerminal-macos-arm64.zip`），彻底告别手动去 Releases 页面翻找架构安装包。
+- **流式分块下载与国内镜像加速通道**：`[x]`
+  - 后端通过 `DownloadUpdate` 分块下载更新包并实时计算瞬时速率与进度百分比，通过 Wails 事件 `app_update_progress` 实时推送前端呈现微动画进度条；内置 GitHub Proxy 镜像加速通道，彻底消除国内直连 GitHub 超时与下载缓慢问题。
+- **跨平台原子热替换与自动拉起（In-Place Replace & Relaunch）**：`[x]`
+  - **macOS**：原生提取 `.zip` 中的 `OmniTerminal.app`，自动执行 `xattr -rd com.apple.quarantine` 清除隔离属性；后台守护脚本在旧进程退出后原子覆盖安装路径并执行 `open -a` 自动重新拉起应用。
+  - **Windows**：提取 `OmniTerminal.exe`，通过脱离式批处理等待主进程 PID 退出后 `move /y` 覆盖并自动重启。
+  - **Linux**：解压二进制文件，利用 Unix inode 替换特性覆盖后赋予 `0755` 权限并后台拉起。
+- **四国语言 100% 词条对齐**：`[x]`
+  - 下载进度、重启确认、镜像加速提示、更新日志等在 `zh-CN`、`en-US`、`ja-JP`、`ko-KR` 四种语言中全量本地化。
+
 ### 代码质量底线
 
 - **零 Warning 编译**：每次提交与合并前确保 `wails build` 与 `go test ./...` 及 `./build.sh` 零告警、零报错。

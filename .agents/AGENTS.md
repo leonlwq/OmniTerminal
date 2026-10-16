@@ -87,6 +87,11 @@
   * **双通道无阻塞物理打印**：前端通过隔离隐藏 iframe 与标准 `@page` 打印样式触发 `iframe.contentWindow.print()`；后端提供统一的 `PrintTerminalDocument(title, htmlContent)` 接口，自动写入缓存并通过系统原生调用打开，杜绝桌面端 WebKit / WebView2 中原生 `window.print()` 失效或黑屏错乱。
   * **多元化导出能力**：支持一键导出打印级 HTML / PDF 以及一键复制格式化打印文本。
 
+* **全自动应用内流式热更新与重启 (In-App Auto-Update & Seamless Relaunch)**：
+  * **智能架构精准匹配**：基于 `runtime.GOOS` 与 `runtime.GOARCH`（macOS arm64/Intel、Windows amd64/arm64、Linux amd64）自动比对 GitHub Release Assets 筛选最优安装包。
+  * **流式分块下载与镜像加速**：后端分块拉取更新包并计算速率，通过 `app_update_progress` 事件实时广播进度；内置 GitHub Proxy 镜像加速。
+  * **跨平台原子热替换与拉起**：macOS 解压 `.zip` 并移除隔离属性后守护进程替换拉起；Windows 脱离式批处理替换并重启；Linux in-place 替换二进制并重启。
+
 ## 7. 国际化与本地化规范 (i18n & Localization)
 * **默认语言探测**：初始化优先依据 `navigator.language` 探测系统语言（默认支持 `zh-CN`, `en-US`, `ja-JP`, `ko-KR`），并与后端 `AppSettings.Language` 双向同步持久化。
 * **界面与子功能全量词条覆盖**：首页工作台、菜单栏、活动栏、会话侧栏、状态栏、全局偏好设置 9 大选项卡、会话配置 6 大选项卡、SFTP 双栏管理器、SOP Runbook、万能命令中心、OmniAI 对话抽屉、AI Copilot、右键上下文菜单及全量子功能弹窗杜绝硬编码文本，全部统一通过 `useI18n()` 词典进行映射，实现 4 种语言 100% 同步对齐。
