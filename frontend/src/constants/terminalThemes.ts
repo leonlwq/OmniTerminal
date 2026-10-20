@@ -3,7 +3,7 @@
 export const THEMES: { [key: string]: any } = {
   "VS Code Dark Modern": {
     background: '#181818',
-    foreground: '#cccccc',
+    foreground: '#ffffff',
     cursor: '#ffffff',
     cursorAccent: '#181818',
     selectionBackground: '#264f78',
