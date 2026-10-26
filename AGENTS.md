@@ -43,6 +43,7 @@
 - **逐跳探测连接泄漏防护**：`ProbeHopViaSSH` 增设超时竞态取消信道 `done`，当外部探测超时提前退出时，若异步 `client.Dial` 后续建连成功，立即安全关闭底层连接，杜绝远端 SSH Channel 与 TCP socket 残留泄漏。
 - **Hook 依赖指纹化与 IPC 洁净化**：`useSessionSharing` 采用会话 ID 序列指纹（`tabIdsFingerprint`）合并 `useEffect`，彻底杜绝 Tab 内部属性（字号、编码、标题）变动时注销/重注 Wails 事件与重复拉取 `GetShareSessionStatus`；`useWorkspaceSync` 将 `WindowSetTitle` 依赖收敛至 `activeTabName`，工作区自动保存基于结构指纹防抖；`useSessionConnection` 采用函数式状态更新解除 `handleConnect` 与 `openTabs` 的依赖耦合；`useAppThemeEffect` 剔除无用的 `openTabs` 依赖；`useAutoLock` 增设 1000ms 活动节流，杜绝鼠标微小位移时的高频定时器启停。
 - **内存泄漏防护**：React 组件卸载生命周期必须显式执行 `EventsOn` 返回的注销函数，严禁调用全局 `EventsOff` 导致多 Tab 事件混乱。
+- **macOS 原生窗口安全感知与幽灵死区防护（Phantom Dead Zone Prevention）**：在 macOS 系统托盘（`NSStatusItem`）与 Dock 激活唤醒流程中，严禁无差别遍历 `[NSApp windows]` 并执行 `[w setIsVisible:YES]` / `[w makeKeyAndOrderFront:nil]`；必须严格过滤排除 `NSStatusBarWindow`、菜单弹出窗口（`_NSMenuWindow` / `NSCarbonMenuWindow`）、Tooltip 与系统私有面板，且在主线程异步调度关闭菜单后再激活，彻底杜绝菜单收起残留不可见幽灵窗口遮挡屏幕死区。
 
 ### 界面设计美学约定
 

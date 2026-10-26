@@ -16,15 +16,52 @@ static id globalTrayTarget = nil;
 static NSStatusItem *globalStatusItem = nil;
 static BOOL dockReopenHooked = NO;
 
-static void trayShowIMP(id self, SEL _cmd, id sender) {
-    for (NSWindow *w in [NSApp windows]) {
-        if (![w isKindOfClass:[NSPanel class]]) {
-            [w makeKeyAndOrderFront:nil];
-            [w setIsVisible:YES];
-        }
+static BOOL isAppMainWindow(NSWindow *w) {
+    if (w == nil) {
+        return NO;
     }
-    [NSApp activateIgnoringOtherApps:YES];
-    onTrayShowClicked();
+    // 排除 NSPanel 等浮动面板
+    if ([w isKindOfClass:[NSPanel class]]) {
+        return NO;
+    }
+    // 排除 NSStatusBarWindow (状态栏项宿主窗口)
+    Class sbClass = NSClassFromString(@"NSStatusBarWindow");
+    if (sbClass && [w isKindOfClass:sbClass]) {
+        return NO;
+    }
+    // 排除类名包含 Menu, Status, Popup, ToolTip 或私有 _NS 开头的系统内部窗口
+    NSString *className = NSStringFromClass([w class]);
+    if ([className containsString:@"Status"] ||
+        [className containsString:@"Menu"] ||
+        [className containsString:@"Popup"] ||
+        [className containsString:@"ToolTip"] ||
+        [className hasPrefix:@"_NS"]) {
+        return NO;
+    }
+    // 主应用窗口必须具备标题栏样式且允许成为 Key/Main 窗口
+    if (![w canBecomeMainWindow] && ![w canBecomeKeyWindow]) {
+        return NO;
+    }
+    if ((w.styleMask & NSWindowStyleMaskTitled) == 0) {
+        return NO;
+    }
+    return YES;
+}
+
+static void showMainWindowSafely() {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (NSWindow *w in [NSApp windows]) {
+            if (isAppMainWindow(w)) {
+                [w makeKeyAndOrderFront:nil];
+            }
+        }
+        [NSApp activateIgnoringOtherApps:YES];
+        onTrayShowClicked();
+    });
+}
+
+static void trayShowIMP(id self, SEL _cmd, id sender) {
+    showMainWindowSafely();
 }
 
 static void trayQuitIMP(id self, SEL _cmd, id sender) {
@@ -32,14 +69,7 @@ static void trayQuitIMP(id self, SEL _cmd, id sender) {
 }
 
 static BOOL customAppReopenHandler(id self, SEL _cmd, NSApplication *sender, BOOL hasVisibleWindows) {
-    for (NSWindow *w in [sender windows]) {
-        if (![w isKindOfClass:[NSPanel class]]) {
-            [w makeKeyAndOrderFront:nil];
-            [w setIsVisible:YES];
-        }
-    }
-    [sender activateIgnoringOtherApps:YES];
-    onTrayShowClicked();
+    showMainWindowSafely();
     return YES;
 }
 
@@ -86,20 +116,13 @@ static void setupDarwinAppReopen() {
                 usingBlock:^(NSNotification *note) {
                     BOOL hasVisible = NO;
                     for (NSWindow *w in [NSApp windows]) {
-                        if ([w isVisible] && ![w isKindOfClass:[NSPanel class]]) {
+                        if ([w isVisible] && isAppMainWindow(w)) {
                             hasVisible = YES;
                             break;
                         }
                     }
                     if (!hasVisible) {
-                        for (NSWindow *w in [NSApp windows]) {
-                            if (![w isKindOfClass:[NSPanel class]]) {
-                                [w makeKeyAndOrderFront:nil];
-                                [w setIsVisible:YES];
-                            }
-                        }
-                        [NSApp activateIgnoringOtherApps:YES];
-                        onTrayShowClicked();
+                        showMainWindowSafely();
                     }
                 }];
         }
@@ -193,14 +216,17 @@ static void showDarwinTray() {
             NSMenuItem *showItem = [[NSMenuItem alloc] initWithTitle:@"🖥️ 显示主窗口" action:@selector(onShowAction:) keyEquivalent:@""];
             [showItem setTarget:globalTrayTarget];
             [menu addItem:showItem];
+            [showItem release];
 
             [menu addItem:[NSMenuItem separatorItem]];
 
             NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"🚪 退出 OmniTerminal" action:@selector(onQuitAction:) keyEquivalent:@"q"];
             [quitItem setTarget:globalTrayTarget];
             [menu addItem:quitItem];
+            [quitItem release];
 
             globalStatusItem.menu = menu;
+            [menu release];
         } else if (globalStatusItem.button) {
             NSImage *icon = getAppTrayIcon();
             if (icon) {
