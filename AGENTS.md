@@ -50,7 +50,7 @@
 
 - **现代专业工作台范式 (Modern Pro Workspace Paradigm)**：使用精致微圆角（`rounded-md` 4~6px）、现代紧凑排版、清晰视觉层次。
 - **VS Code Dark Modern 现代工程美学**：基底 `#1e1e1e`，镀铬与侧栏 `#181818`，面板卡片 `#252526`，微边框 `#2b2b2b`，主字阶 `#cccccc`，经典高亮蓝 `#0078d4`。
-- **一体化顶栏与 Command Center**：Unified Header 整合品牌、Omnibar 快速连接检索胶囊（居中对齐、带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
+- **一体化顶栏与 Command Center**：Unified Header 去除左上角冗余的重复应用图标与品牌文字（macOS 原生红绿灯窗口控制按钮后直接留白衔接主菜单与快捷新建胶囊，避免贴靠挤压），居中整合自适应弹性宽度的 Omnibar 快速连接检索胶囊（带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
 - **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余的灰色包裹内框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
 - **会话侧栏 (SessionSidebar) 与连通性探测感知**：标题规范为“会话导航”，强制单行不折行（`whitespace-nowrap shrink-0`），去除冗余堆叠的按钮保持极简紧凑，提供新建目录与主机连通性探测快捷入口；搜索框支持标签与 IP 快捷过滤；连通性探测（Probe）支持平滑微动画反馈、折叠目录级联状态感知（绿/黄/红状态指示灯与在线/总数计数徽标）、结果浮动通知条与一键展开所有目录；支持左右拖拽边缘把手自由实时调节宽度（180px~750px，高亮流光蓝指示条），支持双击把手快速恢复默认 272px 宽度，并基于 localStorage 自动持久化；全局新建会话统一由顶栏主按钮及快捷键（`Ctrl+N`）驱动。
 - **极客赛博活动栏 (ActivityBar)**：全面升级为赛博霓虹色彩体系（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），每个模块具备独立的语义色彩、微光阴影及精准的激活指示条。

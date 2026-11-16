@@ -4,7 +4,7 @@
 
 ## 1. 界面与布局规范 (UI/UX)
 * **现代专业工作台范式 (Modern Pro Workspace Paradigm)**：使用精致微圆角（`rounded-md` 4~6px）、现代紧凑排版、清晰视觉层次。
-* **一体化现代顶栏**：Unified Command Header 整合应用 Logo、折叠菜单、居中 Omnibar 快速直连输入（带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
+* **一体化现代顶栏**：Unified Command Header 去除左上角冗余的重复应用图标与品牌文字（macOS 红绿灯窗口按钮后直接留白衔接折叠菜单与新建胶囊，杜绝左上角挤压），居中整合自适应 Omnibar 快速直连输入（带 `⌘K` / `Ctrl+K` 快捷键胶囊）、工作区工具组，以及右侧高质感幻彩渐变 OmniAI 智能运维胶囊按钮（`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600` 配星芒与霓虹光晕）。
 * **首页工作台 (QuickStartPage)**：无边框极客悬浮排版（彻底去除多余灰色包裹框），3D 品牌 Logo 配合多层环境流光悬浮呈现；高饱和蓝光新建连接按钮（`shadow-[0_0_24px_rgba(0,120,212,0.55)]`）与荧光青深色玻璃本地终端按钮（`border-cyan-500/40 text-cyan-300`）；三大核心能力指引卡片采用语义化霓虹边框与独立图标徽章（Indigo 多端会话管理、Amber 极速飞梭直连、Emerald 企业级安全盾配全息星芒）。
 * **左侧赛博极客 Activity Bar 与会话导航**：提供 48px 赛博霓虹活动栏（会话 Indigo、容器 Cyan、SFTP Emerald、隧道 Green、密钥 Amber、任务 Rose、日志 Pink、OmniAI Purple），独立语义色彩、微光阴影及精准激活指示条；会话导航标题强制单行不折行（`whitespace-nowrap shrink-0`），去除冗余堆叠的按钮保持极简紧凑，提供新建目录与主机连通性探测快捷入口，搜索框支持标签与 IP 快捷过滤；连通性探测支持平滑加载微动画、折叠目录级联状态感知（绿/黄/红状态指示灯与在线/总数计数徽标）、结果通知条与一键展开目录；支持左右拖拽边缘把手自由实时调节宽度（180px~750px，高亮流光蓝指示条），支持双击把手快速恢复默认 272px 宽度，并基于 localStorage 自动持久化；全局新建会话统一由顶栏主按钮及快捷键（`Ctrl+N`）驱动。
 * **容器探索抽屉 (ContainerExplorerDrawer) 与多级探测规范**：

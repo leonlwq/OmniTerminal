@@ -18,7 +18,6 @@ import * as models from '../../wailsjs/go/models';
 import { MacroManagerModal } from './MacroManagerModal';
 import { UpdateModal } from './UpdateModal';
 import { PrintTerminalModal } from './PrintTerminalModal';
-import appIcon from '../assets/images/appicon.png';
 
 // Menu item type supporting separators and shortcut annotations
 interface MenuItem {
@@ -822,10 +821,11 @@ export function Toolbar({
     <header className="flex flex-col bg-app-toolbar border-b border-app-border z-30 shrink-0 text-app-text select-none">
       {/* 现代一体化 Unified Command Center 顶栏 */}
       <div 
-        className={`wails-drag flex items-center justify-between ${isMac ? 'pl-[76px]' : 'pl-3'} pr-3 h-[42px] min-h-[42px] bg-app-toolbar relative select-none`}
+        className={`wails-drag flex items-center justify-between ${isMac ? 'pl-[80px]' : 'pl-3'} pr-3 h-[42px] min-h-[42px] bg-app-toolbar relative select-none`}
         style={{
           height: 42,
           minHeight: 42,
+          paddingLeft: isMac ? 80 : 12,
           '--wails-draggable': 'drag',
           WebkitAppRegion: 'drag',
         } as React.CSSProperties}
@@ -847,23 +847,8 @@ export function Toolbar({
           }
         }}
       >
-        {/* 左侧：Logo、应用主菜单、快速新建 */}
+        {/* 左侧：应用主菜单、快速新建 */}
         <div className="flex items-center space-x-2 shrink-0">
-          {/* OmniTerminal 品牌 Logo (Squircle 微晶质感，支持窗口拖拽) */}
-          <div 
-            className="wails-drag flex items-center space-x-2 pr-2.5 border-r border-white/[0.08] cursor-default"
-            style={{ '--wails-draggable': 'drag', WebkitAppRegion: 'drag' } as React.CSSProperties}
-          >
-            <img 
-              src={appIcon} 
-              alt="OmniTerminal" 
-              className="w-[22px] h-[22px] object-contain drop-shadow-sm pointer-events-none select-none" 
-            />
-            <span className="text-[12px] font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-cyan-200 to-indigo-200 bg-clip-text text-transparent pointer-events-none select-none">
-              OmniTerminal
-            </span>
-          </div>
-
           {/* 应用主菜单 (净化 Windows 助记符，Mac 风格柔和微胶囊) */}
           <div 
             ref={menuRef} 
@@ -998,13 +983,13 @@ export function Toolbar({
         </div>
 
         {/* 中间：居中 Command Center (VS Code 顶栏搜索栏风格) */}
-        <div className="flex-1 max-w-lg mx-3 flex items-center justify-center shrink h-full">
+        <div className="flex-1 max-w-lg min-w-0 mx-3 flex items-center justify-center shrink h-full">
           <form
             onSubmit={handleQuickConnect}
-            className="wails-no-drag relative flex items-center w-full bg-app-input hover:bg-app-hover/50 focus-within:bg-app-input border border-app-border hover:border-app-border-subtle focus-within:border-app-accent focus-within:ring-1 focus-within:ring-app-accent rounded-lg px-3 py-1 h-[30px] transition-all shadow-inner"
+            className="wails-no-drag relative flex items-center w-full min-w-0 bg-app-input hover:bg-app-hover/50 focus-within:bg-app-input border border-app-border hover:border-app-border-subtle focus-within:border-app-accent focus-within:ring-1 focus-within:ring-app-accent rounded-lg px-3 py-1 h-[30px] transition-all shadow-inner"
             style={{ '--wails-draggable': 'no-drag', WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
-            <div className="text-app-accent flex items-center mr-2">
+            <div className="text-app-accent flex items-center mr-2 shrink-0">
               <Zap className="h-3.5 w-3.5" />
             </div>
             <input
@@ -1017,7 +1002,7 @@ export function Toolbar({
               autoCorrect="off"
               spellCheck={false}
               autoComplete="off"
-              className="flex-1 bg-transparent text-[12.5px] text-app-text placeholder:text-app-text-muted focus:outline-none font-mono"
+              className="flex-1 min-w-0 bg-transparent text-[12.5px] text-app-text placeholder:text-app-text-muted focus:outline-none font-mono"
             />
             {quickConnectInput ? (
               <button
