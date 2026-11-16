@@ -26,6 +26,7 @@
   * 粘贴快捷键 `Cmd+V` / `Ctrl+V` 应自动将系统剪切板的文字转换后送达后端 shell。
 * **鼠标右键气泡菜单**：在终端非文字区域点击右键，不应弹出浏览器默认菜单，而应弹出自定义的"复制"、"粘贴"快捷操作浮标。
 * **连接双击快速追加**：双击已有的终端连接（顶部 TabBar 标签页或侧栏活动会话列表）时，自动追加新建一个完全相同的终端连接并立即激活。
+* **本地 Shell 语言环境真实性校验与防退化规范（Local Shell UTF-8 Locale Verification）**：针对 macOS GUI 启动时 `AppleLocale` 返回混合标识（如 `en_CN`、`zh-Hans-CN`）或裸 `UTF-8` 在 `/usr/share/locale` 下不存在完整 `LC_CTYPE` + `LC_COLLATE` 定义，导致 `setlocale` 失败退化为 `"C"` 并引发 `ls` 中文文件名显示为 `???` 的问题，必须通过 `isValidSystemLocale` 与 `resolveValidUTF8Locale` 验证系统 locale 目录存在性并归一化映射至 `en_US.UTF-8` / `zh_CN.UTF-8`，默认 UTF-8 模式下仅设置 `LANG` 与 `LC_CTYPE` 并清理非法 `LC_ALL`。
 * **动态智能高亮引擎（Highlight Rules）**：对标 WindTerm / MobaXterm，内置 8 大预设规则集（Fatal/Critical、Error/Fail、Warn/Warning、Success/OK、IPv4/Port、Timestamp/Date、FilePath、HTTP 状态码），开箱即用自动着色；基于 xterm.js Decoration API + WebGL 着色器硬件加速，纯显示层渲染，绝不污染底层 PTY 流与系统剪切板；智能检测并在全屏模式（Alternate Buffer 如 vim/htop）下自动避让；支持终端右键“添加为高亮关键词”快速交互与设置中心增删改查。
 
 ## 3. 安全与配置持久化标准

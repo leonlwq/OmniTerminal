@@ -75,13 +75,28 @@ func TestConnectInvalidHost(t *testing.T) {
 func TestDetectSystemLocale(t *testing.T) {
 	loc := detectSystemLocale()
 	if loc == "" {
-		t.Errorf("Expected non-empty system locale")
+		t.Fatalf("Expected non-empty system locale")
+	}
+	if !isValidSystemLocale(loc) {
+		t.Errorf("Expected detectSystemLocale() to return a valid system locale, got %q", loc)
+	}
+
+	// 验证 macOS 混合地区标识 (如 en_CN, zh-Hans-CN, 裸 UTF-8) 能够正确归一化为真实存在的有效 UTF-8 locale
+	if got := resolveValidUTF8Locale("en_CN"); got != "en_US.UTF-8" {
+		t.Errorf("Expected resolveValidUTF8Locale(\"en_CN\") = \"en_US.UTF-8\", got %q", got)
+	}
+	if got := resolveValidUTF8Locale("zh-Hans-CN"); got != "zh_CN.UTF-8" {
+		t.Errorf("Expected resolveValidUTF8Locale(\"zh-Hans-CN\") = \"zh_CN.UTF-8\", got %q", got)
+	}
+	if got := resolveValidUTF8Locale("UTF-8"); got != "" {
+		t.Errorf("Expected resolveValidUTF8Locale(\"UTF-8\") = \"\", got %q", got)
 	}
 }
 
 func TestGetLocalShellEnv(t *testing.T) {
 	env := getLocalShellEnv("utf-8")
 	var hasLang, hasTerm, hasColorterm bool
+	var langVal string
 	for _, e := range env {
 		if e == "TERM=xterm-256color" {
 			hasTerm = true
@@ -91,6 +106,10 @@ func TestGetLocalShellEnv(t *testing.T) {
 		}
 		if len(e) >= 5 && e[:5] == "LANG=" {
 			hasLang = true
+			langVal = e[5:]
+		}
+		if len(e) >= 7 && e[:7] == "LC_ALL=" {
+			t.Errorf("Expected LC_ALL not to be forcibly injected in default UTF-8 mode, got %s", e)
 		}
 	}
 	if !hasTerm {
@@ -101,6 +120,9 @@ func TestGetLocalShellEnv(t *testing.T) {
 	}
 	if !hasLang {
 		t.Errorf("Expected LANG to be set in env")
+	}
+	if !isValidSystemLocale(langVal) {
+		t.Errorf("Expected LANG=%q to be a valid system locale", langVal)
 	}
 }
 

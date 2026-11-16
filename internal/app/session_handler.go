@@ -700,6 +700,7 @@ func (a *App) ExecuteCommandOnSessions(sessionIds []string, command string) (map
 				if runtime.GOOS == "windows" {
 					cmd = exec.Command("cmd.exe", "/c", command)
 				}
+				cmd.Env = core.GetLocalShellEnv(info.Encoding)
 				core.HideConsoleWindow(cmd)
 				out, err := cmd.CombinedOutput()
 				res.Output = string(out)

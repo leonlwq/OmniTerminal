@@ -28,6 +28,7 @@
   - **鼠标选区自动复制**：选中文本释放鼠标或特定配置下，自动同步至系统剪贴板。
   - **右键自定义行为**：支持配置为弹出气泡菜单或直接粘贴剪切板，杜绝浏览器默认右键菜单。
   - **连接双击快速追加**：双击已有的终端连接（TabBar 标签页或侧栏活动会话）时，自动追加新建一个完全相同的终端连接（保持名称、主机、认证及环境变量一致）并立即激活。
+  - **本地 Shell 语言环境真实性校验与防退化规范（Local Shell UTF-8 Locale Verification）**：针对 macOS GUI 应用（Finder/Dock 启动）缺失环境变量或 `AppleLocale` 返回混合区域标识（如 `en_CN`、`zh-Hans-CN`，对应目录在 `/usr/share/locale` 下并不存在，或裸 `UTF-8` 缺失 `LC_COLLATE`）导致 `setlocale(LC_ALL, "")` 失败并退化为 ASCII `"C"` 模式（使 `ls` 等命令将中文文件名渲染为 `???`）的问题，`detectSystemLocale` 与 `resolveValidUTF8Locale` 必须校验 `/usr/share/locale/<locale>/LC_CTYPE` 与 `LC_COLLATE` 真实存在性，自动将混合标识回退映射为合法的 `en_US.UTF-8` / `zh_CN.UTF-8`，并在默认 UTF-8 模式下仅注入 `LANG` 与 `LC_CTYPE`、剔除无效 `LC_ALL` 干扰，与 macOS 原生 `Terminal.app` 行为保持 100% 一致。
   - **动态智能高亮引擎（Highlight Rules）**：对标 WindTerm / MobaXterm，内置 8 大预设规则集（Fatal/Critical、Error/Fail、Warn/Warning、Success/OK、IPv4/Port、Timestamp/Date、FilePath、HTTP 状态码），开箱即用自动着色；基于 xterm.js Decoration API + WebGL 着色器硬件加速，纯显示层渲染，绝不污染底层 PTY 流与系统剪切板；智能检测并在全屏模式（Alternate Buffer 如 vim/htop）下自动避让；支持终端右键“添加为高亮关键词”快速交互与设置中心增删改查。
 
 ### 性能与诊断日志约定（Zero Hot-path Logging）

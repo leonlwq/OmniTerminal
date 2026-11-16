@@ -1416,35 +1416,165 @@ func encodeFromUTF8(data []byte, encName string) ([]byte, error) {
 
 
 
-func detectSystemLocale() string {
-	for _, envKey := range []string{"LC_ALL", "LC_CTYPE", "LANG"} {
-		if val := os.Getenv(envKey); val != "" && !strings.EqualFold(val, "C") && !strings.EqualFold(val, "POSIX") {
-			if strings.Contains(strings.ToLower(val), "utf") {
-				return val
-			}
-			return val + ".UTF-8"
-		}
+// isValidSystemLocale 校验给定的 locale 名称在当前操作系统中是否为完整且合法的本地化环境。
+// 在 macOS 上，诸如 "en_CN.UTF-8"、"zh_Hans_CN.UTF-8" 或裸 "UTF-8" 在 /usr/share/locale 下并不存在完整定义
+// （例如 /usr/share/locale/UTF-8 仅含 LC_CTYPE 而缺失 LC_COLLATE），一旦赋给 LANG 或 LC_ALL 会导致
+// setlocale(LC_ALL, "") 失败并强制回退至 ASCII "C" 模式，进而引发 ls 等命令将中文显示为 "???"。
+func isValidSystemLocale(loc string) bool {
+	loc = strings.TrimSpace(loc)
+	if loc == "" ||
+		strings.EqualFold(loc, "C") ||
+		strings.EqualFold(loc, "POSIX") ||
+		strings.EqualFold(loc, "UTF-8") ||
+		strings.EqualFold(loc, "UTF8") {
+		return false
 	}
 
 	if runtime.GOOS == "darwin" {
-		out, err := exec.Command("defaults", "read", "-g", "AppleLocale").Output()
-		if err == nil {
-			loc := strings.TrimSpace(string(out))
-			if idx := strings.Index(loc, "@"); idx != -1 {
-				loc = loc[:idx]
-			}
-			loc = strings.ReplaceAll(loc, "-", "_")
-			if loc != "" {
-				return loc + ".UTF-8"
-			}
+		if loc == "C.UTF-8" {
+			_, err := os.Stat("/usr/share/locale/C.UTF-8/LC_CTYPE")
+			return err == nil
 		}
-		outLang, errLang := exec.Command("defaults", "read", "-g", "AppleLanguages").Output()
-		if errLang == nil && strings.Contains(string(outLang), "zh") {
-			return "zh_CN.UTF-8"
+		_, errCtype := os.Stat("/usr/share/locale/" + loc + "/LC_CTYPE")
+		_, errCollate := os.Stat("/usr/share/locale/" + loc + "/LC_COLLATE")
+		return errCtype == nil && errCollate == nil
+	}
+
+	return strings.Contains(strings.ToLower(loc), "utf")
+}
+
+// resolveValidUTF8Locale 将原始 locale 标识（如 macOS AppleLocale 的 "en_CN"、"zh-Hans-CN" 等）
+// 归一化并映射为系统真实存在的有效 UTF-8 locale（如 "en_US.UTF-8"、"zh_CN.UTF-8"）。
+func resolveValidUTF8Locale(raw string) string {
+	loc := strings.TrimSpace(raw)
+	loc = strings.Trim(loc, `"'`)
+	if loc == "" {
+		return ""
+	}
+	if idx := strings.Index(loc, "@"); idx != -1 {
+		loc = loc[:idx]
+	}
+
+	// 剥离编码后缀以统一处理基础语言/地区标签
+	base := loc
+	if dotIdx := strings.Index(base, "."); dotIdx != -1 {
+		base = base[:dotIdx]
+	}
+	base = strings.ReplaceAll(base, "-", "_")
+
+	if base == "" ||
+		strings.EqualFold(base, "C") ||
+		strings.EqualFold(base, "POSIX") ||
+		strings.EqualFold(base, "UTF_8") ||
+		strings.EqualFold(base, "UTF8") {
+		return ""
+	}
+
+	// 处理包含 Hans / Hant 脚本子标签的 Apple 语言标识
+	upperBase := strings.ToUpper(base)
+	if strings.HasPrefix(upperBase, "ZH_HANS") {
+		base = "zh_CN"
+	} else if strings.HasPrefix(upperBase, "ZH_HANT_HK") || strings.HasPrefix(upperBase, "ZH_HANT_MO") {
+		base = "zh_HK"
+	} else if strings.HasPrefix(upperBase, "ZH_HANT") {
+		base = "zh_TW"
+	}
+
+	// 1. 优先尝试直接拼接 .UTF-8（例如 zh_CN.UTF-8, en_US.UTF-8）
+	exactCandidate := base + ".UTF-8"
+	if isValidSystemLocale(exactCandidate) {
+		return exactCandidate
+	}
+
+	// 2. 若直接拼接的地区组合在系统 locale 库中不存在（例如 macOS 常见的 AppleLocale="en_CN"），
+	// 对齐 macOS Terminal.app 行为，按主语言代码回退至对应的标准 UTF-8 locale
+	lang := strings.ToLower(base)
+	if underIdx := strings.Index(lang, "_"); underIdx != -1 {
+		lang = lang[:underIdx]
+	}
+
+	var mapped string
+	switch lang {
+	case "zh":
+		if strings.Contains(upperBase, "TW") {
+			mapped = "zh_TW.UTF-8"
+		} else if strings.Contains(upperBase, "HK") || strings.Contains(upperBase, "MO") {
+			mapped = "zh_HK.UTF-8"
+		} else {
+			mapped = "zh_CN.UTF-8"
+		}
+	case "en":
+		mapped = "en_US.UTF-8"
+	case "ja":
+		mapped = "ja_JP.UTF-8"
+	case "ko":
+		mapped = "ko_KR.UTF-8"
+	case "fr":
+		mapped = "fr_FR.UTF-8"
+	case "de":
+		mapped = "de_DE.UTF-8"
+	case "es":
+		mapped = "es_ES.UTF-8"
+	case "ru":
+		mapped = "ru_RU.UTF-8"
+	case "pt":
+		mapped = "pt_BR.UTF-8"
+	case "it":
+		mapped = "it_IT.UTF-8"
+	}
+
+	if mapped != "" && isValidSystemLocale(mapped) {
+		return mapped
+	}
+
+	return ""
+}
+
+func detectSystemLocale() string {
+	// 1. 优先检查环境变量中已配置的具体区域 UTF-8 locale（排除泛化的 C.UTF-8 / UTF-8 以免掩盖系统真实语言偏好）
+	for _, envKey := range []string{"LC_ALL", "LANG", "LC_CTYPE"} {
+		val := strings.TrimSpace(os.Getenv(envKey))
+		if val == "" || strings.EqualFold(val, "C.UTF-8") || strings.EqualFold(val, "C.utf8") {
+			continue
+		}
+		if resolved := resolveValidUTF8Locale(val); resolved != "" {
+			return resolved
 		}
 	}
 
-	return "zh_CN.UTF-8"
+	// 2. macOS 平台通过系统偏好读取 AppleLocale 与 AppleLanguages 并校验映射
+	if runtime.GOOS == "darwin" {
+		if out, err := exec.Command("defaults", "read", "-g", "AppleLocale").Output(); err == nil {
+			if resolved := resolveValidUTF8Locale(string(out)); resolved != "" {
+				return resolved
+			}
+		}
+		if outLang, errLang := exec.Command("defaults", "read", "-g", "AppleLanguages").Output(); errLang == nil {
+			for _, line := range strings.Split(string(outLang), "\n") {
+				cleaned := strings.TrimSpace(strings.Trim( strings.TrimSpace(line), `(),;"'`))
+				if cleaned == "" {
+					continue
+				}
+				if resolved := resolveValidUTF8Locale(cleaned); resolved != "" {
+					return resolved
+				}
+			}
+		}
+	}
+
+	// 3. 兜底返回经系统验证存在的 UTF-8 locale
+	for _, fallback := range []string{"zh_CN.UTF-8", "en_US.UTF-8", "C.UTF-8"} {
+		if isValidSystemLocale(fallback) {
+			return fallback
+		}
+	}
+
+	return "en_US.UTF-8"
+}
+
+// GetLocalShellEnv 构建本地终端与本地命令执行的标准环境变量集合
+func GetLocalShellEnv(customEncoding string) []string {
+	return getLocalShellEnv(customEncoding)
 }
 
 func getLocalShellEnv(customEncoding string) []string {
@@ -1484,21 +1614,30 @@ func getLocalShellEnv(customEncoding string) []string {
 		envMap["PATH"] = curPath
 	}
 
-	// 确保 UTF-8 语言环境 (解决 macOS/Linux 终端下中文文件名等被判定为不可打印字符而显示为 ? 问号乱码的问题)
-	targetLocale := "zh_CN.UTF-8"
+	// 确保有效的 UTF-8 语言环境 (解决 macOS/Linux 终端下因无效 locale 退化为 C 导致中文文件名显示为 ? 问号乱码的问题)
 	if customEncoding != "" && !strings.EqualFold(customEncoding, "utf-8") && !strings.EqualFold(customEncoding, "utf8") {
+		var targetLocale string
 		if strings.EqualFold(customEncoding, "gbk") || strings.EqualFold(customEncoding, "gb2312") || strings.EqualFold(customEncoding, "gb18030") {
 			targetLocale = "zh_CN.GB18030"
 		} else {
 			targetLocale = customEncoding
 		}
+		envMap["LANG"] = targetLocale
+		envMap["LC_CTYPE"] = targetLocale
+		envMap["LC_ALL"] = targetLocale
 	} else {
-		targetLocale = detectSystemLocale()
+		targetLocale := detectSystemLocale()
+		envMap["LANG"] = targetLocale
+		envMap["LC_CTYPE"] = targetLocale
+		// 不强行注入 LC_ALL，并清理宿主环境中可能残留的非法/C LC_* 变量，
+		// 既确保默认子进程 100% 启用有效 UTF-8 locale，又允许用户在 ~/.zshrc 中自定义覆盖 LANG
+		delete(envMap, "LC_ALL")
+		for _, lcKey := range []string{"LC_COLLATE", "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC", "LC_TIME"} {
+			if val, ok := envMap[lcKey]; ok && !isValidSystemLocale(val) {
+				delete(envMap, lcKey)
+			}
+		}
 	}
-
-	envMap["LANG"] = targetLocale
-	envMap["LC_CTYPE"] = targetLocale
-	envMap["LC_ALL"] = targetLocale
 
 	res := make([]string, 0, len(envMap))
 	for k, v := range envMap {

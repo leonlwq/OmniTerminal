@@ -199,7 +199,7 @@ func (m *SSHManager) ConnectMosh(
 
 	// 5. 本地通过 PTY 启动 mosh-client
 	cmd := exec.Command(moshClientPath, host, strconv.Itoa(udpPort))
-	cmd.Env = append(os.Environ(), fmt.Sprintf("MOSH_KEY=%s", sessionKey))
+	cmd.Env = append(getLocalShellEnv(encoding), fmt.Sprintf("MOSH_KEY=%s", sessionKey))
 
 	var ptmx io.ReadWriteCloser
 	if runtime.GOOS == "windows" {
